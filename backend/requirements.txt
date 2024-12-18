@@ -1,0 +1,6 @@
+flask
+flask-pymongo
+flask-mail
+dnspython
+pandas
+openpyxl
