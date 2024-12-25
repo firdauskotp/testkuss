@@ -136,7 +136,7 @@ def admin_login():
             return redirect(url_for("dashboard"))  # Redirect to the dashboard
         else:
             flash("Invalid username or password.", "danger")
-            return redirect(url_for("login"))
+            return redirect(url_for("admin_login"))
 
     return render_template("login.html")
 
@@ -154,7 +154,7 @@ def logout():
     flash("You have been logged out.", "success")
     return redirect(url_for("index"))
 
-@app.route("/client-login")
+@app.route("/client-login", methods=["GET", "POST"])
 def client_login():
     if request.method == "POST":
         username = request.form["username"]
@@ -168,10 +168,10 @@ def client_login():
             session["user_id"] = str(user["_id"])
             session["username"] = user["username"]
             flash("Login successful!", "success")
-            return redirect(url_for("customer-help"))  # Redirect to the dashboard
+            return redirect(url_for("customer_form"))  # Redirect to the dashboard
         else:
             flash("Invalid username or password.", "danger")
-            return redirect(url_for("login"))
+            return redirect(url_for("client_login"))
 
     return render_template("client-login.html")
 
