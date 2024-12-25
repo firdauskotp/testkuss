@@ -4,3 +4,4 @@ flask-mail
 dnspython
 pandas
 openpyxl
+certifi

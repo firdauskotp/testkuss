@@ -9,6 +9,13 @@ Task distribution
 7. Khid - QA
 
 ## Running the App
+
+Change directory to the backend folder
+
+```
+cd backend
+```
+
 Install the required libraries:
 ```
 pip install -r requirements.txt
@@ -17,4 +24,11 @@ Start the Flask app:
 ```
 python app.py
 ```
+
+If Mac:
+
+```
+python3 app.py
+```
+
 Open `http://127.0.0.1:5000/` in your browser.

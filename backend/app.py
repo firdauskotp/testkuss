@@ -4,9 +4,17 @@ from werkzeug.security import check_password_hash
 from flask_mail import Mail, Message
 from datetime import datetime
 import certifi  # Only needed for Mac
+from werkzeug.utils import secure_filename
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secretkey'
+
+UPLOAD_FOLDER = "static/uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # MongoDB Configuration
 MONGO_URI = 'mongodb+srv://firdauskotp:stayhumbleeh@cluster0.msdva.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
@@ -20,12 +28,18 @@ login_collection=login_db['log']
 login_cust_db=mongo['login_cust']
 login_cust_collection=login_cust_db['logg']
 
+# Configure email settings
+SMTP_SERVER = "your_smtp_server"
+SMTP_PORT = 587
+SMTP_USERNAME = "firdausbeacon@gmail.com"
+SMTP_PASSWORD = ""
+
 # Flask-Mail Configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'firdausbeacon@gmail.com'
-app.config['MAIL_PASSWORD'] = 'ChihiroBlaiddyd2019'
+app.config['MAIL_PASSWORD'] = ''
 mail = Mail(app)
 
 # Routes
@@ -33,8 +47,10 @@ mail = Mail(app)
 def customer_form():
     """Form for customers to create new cases."""
     if request.method == "POST":
-        # Extract customer form data
+        # Auto-increment case number
         case_no = db.case_issue.count_documents({}) + 1
+
+        # Extract customer form data
         premise_name = request.form.get("premise_name")
         location = request.form.get("location")
         serial_number = request.form.get("serial_number")
@@ -42,7 +58,7 @@ def customer_form():
         issues = request.form.getlist("issues")
         remarks = request.form.get("remarks", "")
 
-        # Insert new case
+        # Insert new case into MongoDB
         db.case_issue.insert_one({
             "case_no": case_no,
             "premise_name": premise_name,
@@ -51,15 +67,15 @@ def customer_form():
             "model": model,
             "issues": issues,
             "remarks": remarks,
-            "revisit_date": None,
-            "staff_name": None,
-            "signature": None,
             "created_at": datetime.now(),
-            "updated_at": None,
         })
 
-        flash(f"New case #{case_no} created successfully!", "success")
-        return redirect(url_for("customer_form"))
+        # Send emails to the customer and admin
+        send_email_to_customer(case_no)
+        send_email_to_admin(case_no)
+
+        # Redirect to success page
+        return redirect(url_for("case_success", case_no=case_no))
 
     return render_template("customer-complaint-form.html")
 
@@ -67,37 +83,44 @@ def customer_form():
 @app.route("/staff-help/<int:case_no>", methods=["GET", "POST"])
 def staff_form(case_no):
     """Form for staff to update and manage cases."""
-    case_details = db.case_issue.find_one({"case_no": case_no})
-    if not case_details:
-        flash(f"Case #{case_no} not found!", "danger")
-        return redirect(url_for("customer_form"))
+    #case_details = db.case_issue.find_one({"case_no": case_no})
+   # if not case_details:
+    #    flash(f"Case #{case_no} not found!", "danger")
+    #    return redirect(url_for("customer_form"))
 
     if request.method == "POST":
-        # Extract staff form data
-        actions = request.form.getlist("actions")
+        # Extract form data
+        actions_done = request.form.getlist("actions")
         remarks = request.form.get("remarks", "")
-        revisit_date = request.form.get("revisit_date", None)
-        staff_name = request.form.get("staff_name", "")
-        signature = request.files.get("signature")
+        case_closed = request.form.get("case_closed")
+        revisit_date = request.form.get("appointment_date")
+        revisit_time = request.form.get("appointment_time")
+        staff_name = request.form.get("staff_name")
+        
+        # Handle signature file upload
+        signature = None
+        if "signature" in request.files:
+            file = request.files["signature"]
+            if file and file.filename:
+                filename = secure_filename(f"case_{case_no}_{file.filename}")
+                file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                signature = os.path.join(app.config["UPLOAD_FOLDER"], filename)
 
-        # Save signature file if uploaded
-        signature_path = None
-        if signature:
-            signature_path = f"static/uploads/{case_no}_signature.png"
-            signature.save(signature_path)
-
-        # Update case
+        # Update case in MongoDB
         db.case_issue.update_one(
             {"case_no": case_no},
             {"$set": {
-                "actions": actions,
+                "actions_done": actions_done,
                 "remarks": remarks,
+                "case_closed": case_closed,
                 "revisit_date": revisit_date,
+                "revisit_time": revisit_time,
                 "staff_name": staff_name,
-                "signature": signature_path,
+                "signature": signature,
                 "updated_at": datetime.now(),
             }}
         )
+
 
         # Send Email Notification
         msg = Message("Case Updated", sender="firdausbeacon@gmail.com", recipients=["team-email@example.com"])
@@ -113,11 +136,49 @@ def staff_form(case_no):
         flash(f"Case #{case_no} updated successfully!", "success")
         return redirect(url_for("staff_form", case_no=case_no))
 
-    return render_template("staff-complaint-form.html", case=case_details)
+    case_data = db.case_issue.find_one({"case_no": case_no})
+    return render_template("staff-complaint-form.html", case_no=case_no, case_data=case_data)
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/case-success/<int:case_no>")
+def case_success(case_no):
+    """Success page after creating a case."""
+    return render_template("case-success.html", case_no=case_no)
+
+
+def send_email_to_customer(case_no):
+    """Send a confirmation email to the customer."""
+    subject = f"Case #{case_no} Created Successfully"
+    body = f"Thank you for submitting your case. Your case number is #{case_no}. Our staff will get in touch with you shortly."
+    send_email("customer_email@example.com", subject, body)
+
+
+def send_email_to_admin(case_no):
+    """Notify admin about a new case creation."""
+    subject = f"New Case #{case_no} Created"
+    body = f"A new case with case number #{case_no} has been created. Please check the system for details."
+    send_email("admin_email@example.com", subject, body)
+
+
+def send_email(to_email, subject, body):
+    """Generic function to send an email."""
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = SMTP_USERNAME
+        msg["To"] = to_email
+        msg["Subject"] = subject
+
+        msg.attach(MIMEText(body, "plain"))
+
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():

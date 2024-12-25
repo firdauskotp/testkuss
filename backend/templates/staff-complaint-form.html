@@ -1,125 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Case Form</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f9f9f9;
-            font-family: Arial, sans-serif;
-        }
-        .form-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-        }
-        h3, h5 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .underline {
-            text-decoration: underline;
-        }
-        .form-control, .form-check-input {
-            margin-bottom: 15px;
-        }
-        .table td {
-            vertical-align: middle;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Case Form</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+    }
+    .form-container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .form-container h4 {
+      text-decoration: underline;
+    }
+    .acknowledgement-title {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .table {
+      margin-top: 10px;
+    }
+    .submit-btn {
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-    <div class="form-container">
-        <h3>CASE NO: #{{ case.case_no }}</h3>
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Create a New Case</h2>
+    <form method="POST" action="/" enctype="multipart/form-data">
+      <!-- Premise Name -->
+      <div class="form-group">
+        <label for="premise_name">Premise Name:</label>
+        <input type="text" class="form-control" id="premise_name" name="premise_name" required>
+      </div>
 
-        <h5 class="text-left">Premise Name: {{ case.premise_name }}</h5>
-        <h5 class="text-left">#1 - Location: {{ case.location }}</h5>
-        <h5 class="text-left">#1 - S/N: {{ case.sn }}</h5>
-        <h5 class="text-left">#1 - Model: {{ case.model }}</h5>
+      <!-- Location -->
+      <div class="form-group">
+        <label for="location">Location:</label>
+        <input type="text" class="form-control" id="location" name="location" required>
+      </div>
 
-        <h5 class="underline">ISSUE(S)</h5>
-        <div class="form-group">
+      <!-- Serial Number -->
+      <div class="form-group">
+        <label for="serial_number">Serial Number:</label>
+        <input type="text" class="form-control" id="serial_number" name="serial_number" required>
+      </div>
+
+      <!-- Model -->
+      <div class="form-group">
+        <label for="model">Model:</label>
+        <input type="text" class="form-control" id="model" name="model" required>
+      </div>
+
+      <!-- Issues -->
+      <div class="form-group">
+        <label for="issues">Issues:</label>
+        <div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="weak_scent" name="issues" value="Weak Scent">
+            <label class="form-check-label" for="weak_scent">Weak Scent</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="no_oil" name="issues" value="No Oil">
+            <label class="form-check-label" for="no_oil">No Oil</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="no_mist" name="issues" value="No Mist">
+            <label class="form-check-label" for="no_mist">No Mist</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="noisy_motor" name="issues" value="Noisy Motor">
+            <label class="form-check-label" for="noisy_motor">Noisy Motor</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="weak_batteries" name="issues" value="Weak Batteries">
+            <label class="form-check-label" for="weak_batteries">Weak Batteries</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="faulty_power_adapter" name="issues" value="Faulty Power Adapter">
+            <label class="form-check-label" for="faulty_power_adapter">Faulty Power Adapter</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="form-group">
+        <label for="remarks-issues">Remarks (if any):</label>
+        <textarea class="form-control" id="remarks-issues" name="remarks-issues" rows="3"></textarea>
+      </div>
+
+      <h5 style="text-align: center;">ACTIONS DONE</h5>
             <div class="form-check">
-                <input type="checkbox" name="issues" value="Weak Scent" class="form-check-input"> Weak Scent
+              <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="alcoholCleaning">
+              <label class="form-check-label" for="alcoholCleaning">Alcohol Cleaning</label>
             </div>
             <div class="form-check">
-                <input type="checkbox" name="issues" value="No Oil" class="form-check-input"> No Oil
+              <input class="form-check-input" type="checkbox" name="actions" value="Oil Refill" id="oilRefill">
+              <label class="form-check-label" for="oilRefill">Oil Refill</label>
             </div>
             <div class="form-check">
-                <input type="checkbox" name="issues" value="No Mist" class="form-check-input"> No Mist
+              <input class="form-check-input" type="checkbox" name="actions" value="Timer Settings" id="timerSettings">
+              <label class="form-check-label" for="timerSettings">Timer Settings</label>
             </div>
-        </div>
-
-        <h5 class="underline">ACTIONS DONE</h5>
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Alcohol Cleaning" class="form-check-input"> Alcohol Cleaning
-        </div>
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Oil Refill" class="form-check-input"> Oil Refill
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Checked Timer Settings" class="form-check-input"> Checked Timer Settings
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Replaced Straw" class="form-check-input"> Replaced Straw / Mist Head
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Replaced Batteries" class="form-check-input"> Replaced Batteries
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Replaced Faulty Machine" class="form-check-input"> Replaced Faulty Machine (Same Model)
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Changed Machine" class="form-check-input"> Changed Machine (Different Model)
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" name="actions" value="Replaced Faulty Power Adapter" class="form-check-input"> Replaced Faulty Power Adapter
-        </div>
-
-        <div class="form-group">
-            <label for="remarks">Remarks (if any):</label>
-            <input type="text" class="form-control" name="remarks" placeholder="Enter remarks">
-        </div>
-
-        <h5 class="text-center underline">ACKNOWLEDGEMENT</h5>
-        <div class="form-group">
-            <label for="acknowledge">Case Closed?</label>
             <div class="form-check">
-                <input type="checkbox" name="closed" value="Yes" class="form-check-input"> Yes
-                <input type="checkbox" name="closed" value="No" class="form-check-input"> No
+              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Straw / Mist Head" id="replaceStraw">
+              <label class="form-check-label" for="replaceStraw">Replaced Straw / Mist Head</label>
             </div>
-        </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Batteries" id="replaceBatteries">
+              <label class="form-check-label" for="replaceBatteries">Replaced Batteries</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Faulty Machine (Same Model)" id="replaceMachineSame">
+              <label class="form-check-label" for="replaceMachineSame">Replaced Faulty Machine (Same Model)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions" value="Changed Machine (Different Model)" id="changeMachineDifferent">
+              <label class="form-check-label" for="changeMachineDifferent">Changed Machine (Different Model)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Faulty Power Adapter" id="replaceAdapter">
+              <label class="form-check-label" for="replaceAdapter">Replaced Faulty Power Adapter</label>
+            </div>
 
-        <table class="table table-bordered">
-            <tr><td>Select Appointment Date & Time ↓</td></tr>
-            <tr>
-                <td><input type="date" class="form-control" name="revisit_date"></td>
-                <td><input type="time" class="form-control" name="revisit_time"></td>
-            </tr>
-        </table>
+            <!-- Acknowledgement -->
+            <h5 class="acknowledgement-title">ACKNOWLEDGEMENT</h5>
+            <div class="form-group">
+              <label for="remarks-acknowledgement">Remarks (if any):</label>
+              <textarea class="form-control" id="remarks-acknowledgement" name="remarks-acknowledgement" rows="3"></textarea>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="case-closed" value="Yes" id="caseClosedYes">
+              <label class="form-check-label" for="caseClosedYes">Case Closed? Yes</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="case-closed" value="No" id="caseClosedNo">
+              <label class="form-check-label" for="caseClosedNo">No, revisit on:</label>
+            </div>
+            
+            <!-- Appointment Table -->
+            <div class="table-responsive mt-3" id="appointmentTable" style="display: none;">
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <td>Select Appointment Date & Time:</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <input type="date" class="form-control" name="appointment-date">
+                    </td>
+                    <td>
+                      <input type="time" class="form-control" name="appointment-time">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-        <div class="form-group">
-            <label for="staff_name">Staff Name:</label>
-            <input type="text" class="form-control" name="staff_name" placeholder="Enter staff name">
-        </div>
+            <!-- Staff Name -->
+            <div class="form-group">
+              <label for="staffName">Staff Name:</label>
+              <input type="text" class="form-control" id="staffName" name="staff-name">
+            </div>
 
-        <div class="form-group">
-            <label for="signature">Signature:</label>
-            <input type="file" class="form-control-file" name="signature">
-        </div>
+            <!-- Signature -->
+            <div class="form-group">
+              <label for="signature">Signature:</label>
+              <input type="file" class="form-control" id="signature" name="signature">
+            </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Save</button>
-    </div>
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary btn-block">Submit Case</button>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    // Show/hide appointment table based on "Case Closed" selection
+    const caseClosedYes = document.getElementById("caseClosedYes");
+    const caseClosedNo = document.getElementById("caseClosedNo");
+    const appointmentTable = document.getElementById("appointmentTable");
+  
+    caseClosedYes.addEventListener("change", () => {
+      if (caseClosedYes.checked) {
+        appointmentTable.style.display = "none";
+      }
+    });
+  
+    caseClosedNo.addEventListener("change", () => {
+      if (caseClosedNo.checked) {
+        appointmentTable.style.display = "block";
+      }
+    });
+  </script>
 </body>
 </html>
