@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 from flask_pymongo import MongoClient
 from werkzeug.security import check_password_hash
 from flask_mail import Mail, Message
@@ -8,6 +8,9 @@ from werkzeug.utils import secure_filename
 import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from werkzeug.security import generate_password_hash
+import gridfs
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secretkey'
@@ -27,6 +30,8 @@ login_collection=login_db['log']
 
 login_cust_db=mongo['login_cust']
 login_cust_collection=login_cust_db['logg']
+
+fs = gridfs.GridFS(db)
 
 # Configure email settings
 SMTP_SERVER = "your_smtp_server"
@@ -48,22 +53,30 @@ def customer_form():
     """Form for customers to create new cases."""
     if request.method == "POST":
         # Auto-increment case number
-        case_no = db.case_issue.count_documents({}) + 1
+        case_no = collection.count_documents({}) + 1
 
         # Extract customer form data
         premise_name = request.form.get("premise_name")
         location = request.form.get("location")
-        serial_number = request.form.get("serial_number")
         model = request.form.get("model")
         issues = request.form.getlist("issues")
         remarks = request.form.get("remarks", "")
 
+        # Handle image upload
+        image = request.files.get('image')  # Get the image file from the form
+        image_id = None
+        if image:
+            filename = secure_filename(image.filename)
+            image_data = image.read()  # Read the file data
+            image_id = fs.put(image_data, filename=filename)  # Store the image in GridFS
+
+
         # Insert new case into MongoDB
-        db.case_issue.insert_one({
+        collection.insert_one({
             "case_no": case_no,
             "premise_name": premise_name,
             "location": location,
-            "serial_number": serial_number,
+            "image_id": image_id,
             "model": model,
             "issues": issues,
             "remarks": remarks,
@@ -107,7 +120,7 @@ def staff_form(case_no):
                 signature = os.path.join(app.config["UPLOAD_FOLDER"], filename)
 
         # Update case in MongoDB
-        db.case_issue.update_one(
+        collection.update_one(
             {"case_no": case_no},
             {"$set": {
                 "actions_done": actions_done,
@@ -136,7 +149,7 @@ def staff_form(case_no):
         flash(f"Case #{case_no} updated successfully!", "success")
         return redirect(url_for("staff_form", case_no=case_no))
 
-    case_data = db.case_issue.find_one({"case_no": case_no})
+    case_data = collection.find_one({"case_no": case_no})
     return render_template("staff-complaint-form.html", case_no=case_no, case_data=case_data)
 
 @app.route("/")
@@ -179,6 +192,24 @@ def send_email(to_email, subject, body):
             server.send_message(msg)
     except Exception as e:
         print(f"Failed to send email: {e}")
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Hash the password
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
+
+        # Store the username and hashed password in MongoDB
+        login_cust_collection.insert_one({'username': username, 'password': hashed_password})
+        
+        flash("User registered successfully!", "success")
+        return redirect(url_for('index'))
+    
+    
+    return render_template('register.html')
 
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
@@ -236,6 +267,14 @@ def client_login():
 
     return render_template("client-login.html")
 
+@app.route('/image/<image_id>')
+def get_image(image_id):
+    """Route to retrieve and display an image from GridFS"""
+    image = fs.get(ObjectId(image_id))  # Fetch the image from GridFS
+    return send_file(image, mimetype='image/jpeg')  # Return the image as a response
+
+#Getting the image later on frontend
+#<img src="{{ url_for('get_image', image_id=case['image_id']) }}" alt="Case Image" />
 
 
 if __name__ == "__main__":
