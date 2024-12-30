@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Customer Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .form-section + .form-section {
+            margin-top: 20px;
+        }
+        .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <h3 class="text-center mb-4">New Customer Form</h3>
+
+        <form id="customerForm">
+            <!-- Company Details -->
+            <div class="form-section">
+                <div class="mb-3">
+                    <label for="companyName" class="form-label">Company Name</label>
+                    <input type="text" id="companyName" class="form-control" placeholder="Enter company name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="dateCreated" class="form-label">Date Created</label>
+                    <input type="date" id="dateCreated" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="industry" class="form-label">Industry</label>
+                    <input type="text" id="industry" class="form-control" placeholder="Enter industry type" required>
+                </div>
+            </div>
+
+            <!-- Premise Details -->
+            <div class="form-section" id="premiseDetails">
+                <h5>Premise Details</h5>
+                <div id="premiseContainer">
+                    <!-- Premise Fields -->
+                    <div class="premise-item mb-3" id="premise-1">
+                        <label class="form-label">Premise 1 - Name</label>
+                        <input type="text" class="form-control mb-2" placeholder="Enter premise name" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter premise area" required>
+                        <input type="text" class="form-control" placeholder="Enter premise address" required>
+                        <button type="button" class="remove-btn mt-2">Remove</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary w-100 mt-3" id="addPremiseBtn">+ Add New Premise</button>
+            </div>
+
+            <!-- Contact Details -->
+            <div class="form-section" id="contactDetails">
+                <h5>Contact Details</h5>
+                <div id="contactContainer">
+                    <!-- Contact Fields -->
+                    <div class="contact-item mb-3" id="contact-1">
+                        <label class="form-label">PIC 1 - Name</label>
+                        <input type="text" class="form-control mb-2" placeholder="Enter name" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter designation" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter contact" required>
+                        <input type="email" class="form-control mb-2" placeholder="Enter email" required>
+                        <select class="form-select" required>
+                            <option selected disabled>Tie contact to:</option>
+                            <option>Premise 1</option>
+                        </select>
+                        <button type="button" class="remove-btn mt-2">Remove</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary w-100 mt-3" id="addContactBtn">+ Add New Contact</button>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-4">Submit Form</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let premiseCount = 1;
+        let contactCount = 1;
+
+        // Event delegation for dynamic premise removal
+        document.getElementById('premiseContainer').addEventListener('click', function(event) {
+            if (event.target.classList.contains('remove-btn')) {
+                const premiseItem = event.target.closest('.premise-item');
+                premiseItem.remove();
+                premiseCount--;
+                updatePremiseNumbers();
+                updatePremiseDropdowns();
+            }
+        });
+
+        // Add new premise and update numbering
+        document.getElementById('addPremiseBtn').addEventListener('click', () => {
+            premiseCount++;
+            const premiseContainer = document.getElementById('premiseContainer');
+            const newPremise = `
+                <div class="premise-item mb-3" id="premise-${premiseCount}">
+                    <label class="form-label">Premise ${premiseCount} - Name</label>
+                    <input type="text" class="form-control mb-2" placeholder="Enter premise name" required>
+                    <input type="text" class="form-control mb-2" placeholder="Enter premise area" required>
+                    <input type="text" class="form-control" placeholder="Enter premise address" required>
+                    <button type="button" class="remove-btn mt-2">Remove</button>
+                </div>
+            `;
+            premiseContainer.insertAdjacentHTML('beforeend', newPremise);
+            updatePremiseNumbers();
+            updatePremiseDropdowns();
+        });
+
+        // Update premise numbering after adding/removing premises
+        function updatePremiseNumbers() {
+            const premiseItems = document.querySelectorAll('.premise-item');
+            premiseItems.forEach((premiseItem, index) => {
+                const premiseNumber = index + 1;  // Premise numbering starts from 1
+                premiseItem.querySelector('label').innerText = `Premise ${premiseNumber} - Name`;
+            });
+        }
+
+        // Update premise dropdown options for contacts
+        function updatePremiseDropdowns() {
+            const selectElements = document.querySelectorAll('#contactDetails .form-select');
+            selectElements.forEach(select => {
+                select.innerHTML = `
+                    <option selected disabled>Tie contact to:</option>
+                    ${getPremiseOptions()}
+                `;
+            });
+        }
+
+        // Get all premise options for dropdowns
+        function getPremiseOptions() {
+            let options = '';
+            for (let i = 1; i <= premiseCount; i++) {
+                options += `<option>Premise ${i}</option>`;
+            }
+            return options;
+        }
+
+        // Event delegation for dynamic contact removal
+        document.getElementById('contactContainer').addEventListener('click', function(event) {
+            if (event.target.classList.contains('remove-btn')) {
+                const contactItem = event.target.closest('.contact-item');
+                contactItem.remove();
+                contactCount--;
+                updateContactNumbers();
+            }
+        });
+
+        // Add new contact and update numbering
+        document.getElementById('addContactBtn').addEventListener('click', () => {
+            contactCount++;
+            const contactContainer = document.getElementById('contactContainer');
+            const newContact = `
+                <div class="contact-item mb-3" id="contact-${contactCount}">
+                    <label class="form-label">PIC ${contactCount} - Name</label>
+                    <input type="text" class="form-control mb-2" placeholder="Enter name" required>
+                    <input type="text" class="form-control mb-2" placeholder="Enter designation" required>
+                    <input type="text" class="form-control mb-2" placeholder="Enter contact" required>
+                    <input type="email" class="form-control mb-2" placeholder="Enter email" required>
+                    <select class="form-select" required>
+                        <option selected disabled>Tie contact to:</option>
+                        ${getPremiseOptions()}
+                    </select>
+                    <button type="button" class="remove-btn mt-2">Remove</button>
+                </div>
+            `;
+            contactContainer.insertAdjacentHTML('beforeend', newContact);
+            updateContactNumbers();
+        });
+
+        // Update contact numbering after adding/removing contacts
+        function updateContactNumbers() {
+            const contactItems = document.querySelectorAll('.contact-item');
+            contactItems.forEach((contactItem, index) => {
+                const contactNumber = index + 1;  // Contact numbering starts from 1
+                contactItem.querySelector('label').innerText = `PIC ${contactNumber} - Name`;
+            });
+        }
+
+        // Handle form submission with validation
+        document.getElementById('customerForm').addEventListener('submit', function(event) {
+            const premiseItems = document.querySelectorAll('.premise-item');
+            const contactItems = document.querySelectorAll('.contact-item');
+            
+            // Ensure at least one premise and one contact are present
+            if (premiseItems.length === 0 || contactItems.length === 0) {
+                event.preventDefault();  // Prevent form submission
+                alert('You must add at least one premise and one contact.');
+            }
+        });
+    </script>
+
+    <script>
+        // Set the default date to today
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('dateCreated');
+            const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+            dateInput.value = today;
+        });
+    </script>
+</body>
+</html>

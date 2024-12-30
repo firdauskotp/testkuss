@@ -211,6 +211,10 @@ def register():
     
     return render_template('register.html')
 
+@app.route('/new_customer', methods=['GET'])
+def new_customer():
+    return render_template('new-customer.html') 
+
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
