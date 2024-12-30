@@ -67,6 +67,12 @@ Always pull from main first
 git pull origin main
 ```
 
+Note, you might need to input another command after the pull that is:
+
+```
+git config pull.rebase false 
+```
+
 Once done with your coding, add, commit, pull and push your files
 
 ```
