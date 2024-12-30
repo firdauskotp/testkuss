@@ -1,3 +1,4 @@
+import smtplib
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 from flask_pymongo import MongoClient
 from werkzeug.security import check_password_hash
@@ -10,6 +11,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash
 import gridfs
+from dotenv import load_dotenv
 
 
 app = Flask(__name__)
@@ -33,24 +35,25 @@ login_cust_collection=login_cust_db['logg']
 
 fs = gridfs.GridFS(db)
 
-# Configure email settings
-SMTP_SERVER = "your_smtp_server"
-SMTP_PORT = 587
-SMTP_USERNAME = "firdausbeacon@gmail.com"
-SMTP_PASSWORD = ""
+load_dotenv()
 
-# Flask-Mail Configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'firdausbeacon@gmail.com'
-app.config['MAIL_PASSWORD'] = ''
+app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']
+
 mail = Mail(app)
 
 # Routes
 @app.route("/customer-help", methods=["GET", "POST"])
 def customer_form():
     """Form for customers to create new cases."""
+    if "customer_email" not in session:
+        return redirect(url_for("client_login"))  # Redirect to login if not logged in
+
+    user_email = session["customer_email"] 
     if request.method == "POST":
         # Auto-increment case number
         case_no = collection.count_documents({}) + 1
@@ -80,12 +83,14 @@ def customer_form():
             "model": model,
             "issues": issues,
             "remarks": remarks,
+            "email": user_email,
             "created_at": datetime.now(),
         })
 
         # Send emails to the customer and admin
-        send_email_to_customer(case_no)
+        send_email_to_customer(case_no, user_email)
         send_email_to_admin(case_no)
+        
 
         # Redirect to success page
         return redirect(url_for("case_success", case_no=case_no))
@@ -136,7 +141,7 @@ def staff_form(case_no):
 
 
         # Send Email Notification
-        msg = Message("Case Updated", sender="firdausbeacon@gmail.com", recipients=["team-email@example.com"])
+        msg = Message("Case Updated", sender=app.config['MAIL_USERNAME'], recipients=["team-email@example.com"])
         msg.body = f"""
         Case No: {case_no}
         Actions: {', '.join(actions)}
@@ -156,39 +161,39 @@ def staff_form(case_no):
 def index():
     return render_template("index.html")
 
-@app.route("/case-success/<int:case_no>")
+@app.route("/case-success/<int:case_no>",methods=["GET","POST"])
 def case_success(case_no):
     """Success page after creating a case."""
     return render_template("case-success.html", case_no=case_no)
 
 
-def send_email_to_customer(case_no):
+def send_email_to_customer(case_no, user_email):
     """Send a confirmation email to the customer."""
     subject = f"Case #{case_no} Created Successfully"
     body = f"Thank you for submitting your case. Your case number is #{case_no}. Our staff will get in touch with you shortly."
-    send_email("customer_email@example.com", subject, body)
+    send_email(user_email, subject, body)
 
 
 def send_email_to_admin(case_no):
     """Notify admin about a new case creation."""
     subject = f"New Case #{case_no} Created"
     body = f"A new case with case number #{case_no} has been created. Please check the system for details."
-    send_email("admin_email@example.com", subject, body)
+    send_email(app.config['MAIL_USERNAME'], subject, body)
 
 
 def send_email(to_email, subject, body):
     """Generic function to send an email."""
     try:
         msg = MIMEMultipart()
-        msg["From"] = SMTP_USERNAME
+        msg["From"] = app.config['MAIL_USERNAME']
         msg["To"] = to_email
         msg["Subject"] = subject
 
         msg.attach(MIMEText(body, "plain"))
 
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+        with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
             server.starttls()
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
             server.send_message(msg)
     except Exception as e:
         print(f"Failed to send email: {e}")
@@ -196,20 +201,26 @@ def send_email(to_email, subject, body):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
 
-        # Hash the password
+        if password != confirm_password:
+            flash("Passwords do not match. Please try again.", "danger")
+            return redirect(url_for('register'))
+
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
-        # Store the username and hashed password in MongoDB
-        login_cust_collection.insert_one({'username': username, 'password': hashed_password})
+        login_cust_collection.insert_one({
+            'email': email,
+            'password': hashed_password
+        })
         
         flash("User registered successfully!", "success")
         return redirect(url_for('index'))
-    
-    
+
     return render_template('register.html')
+
 
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
@@ -249,20 +260,20 @@ def logout():
 @app.route("/client-login", methods=["GET", "POST"])
 def client_login():
     if request.method == "POST":
-        username = request.form["username"]
+        email = request.form["email"]
         password = request.form["password"]
 
         # Query MongoDB for the user
-        user = login_cust_collection.find_one({"username": username})
+        user = login_cust_collection.find_one({"email": email})
 
         if user and check_password_hash(user["password"], password):  # Assuming passwords are hashed
             # Set session for the logged-in user
             session["user_id"] = str(user["_id"])
-            session["username"] = user["username"]
+            session["customer_email"] = user["email"]
             flash("Login successful!", "success")
             return redirect(url_for("customer_form"))  # Redirect to the dashboard
         else:
-            flash("Invalid username or password.", "danger")
+            flash("Invalid email or password.", "danger")
             return redirect(url_for("client_login"))
 
     return render_template("client-login.html")

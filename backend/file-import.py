@@ -28,6 +28,6 @@ try:
     collection.insert_many(data)
     print("Data successfully imported into MongoDB!")
 except Exception as e:
-    print(f"Error inserting data: {e}")
+    print(e)
 
 
