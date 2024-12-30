@@ -1,0 +1,4 @@
+If needed, so far seems optional
+
+python3 -m pip install "pymongo[srv]"==3.11
+python -m pip install "pymongo[srv]"

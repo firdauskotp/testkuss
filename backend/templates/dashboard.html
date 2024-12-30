@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .navbar {
+      background-color: #007bff;
+    }
+    .navbar-nav .nav-link {
+      color: #fff !important;
+      cursor: pointer;
+    }
+    .navbar-toggler {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .navbar-toggler-icon {
+      background-color: #fff;
+    }
+    .logout-btn {
+      background-color: #dc3545;
+      color: white !important;
+      border: none;
+    }
+    .content {
+      text-align: center;
+      margin: 20px;
+    }
+    .notifications-navbar {
+      background-color: #f8f9fa;
+      margin-bottom: 15px;
+      justify-content: center;
+    }
+    .second-navbar {
+      padding: 10px;
+    }
+    .second-navbar .row {
+      text-align: center;
+    }
+    .second-navbar .col {
+      padding: 15px 0;
+      border: 1px solid #dee2e6;
+    }
+    .second-navbar .col:nth-child(1) {
+      background-color: #d4edda;
+    }
+    .second-navbar .col:nth-child(2) {
+      background-color: #fff3cd;
+    }
+    .second-navbar .col:nth-child(3) {
+      background-color: #f8d7da;
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome and Date/Time -->
+  <div class="content">
+    <h2>Welcome User</h2>
+    <p>Current Date & Time: <span id="datetime"></span></p>
+  </div>
+
+  <!-- Main Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Add New Customer</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Change Scent</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Client Complaints</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Client Discontinue</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Settings</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Add User</a></li>
+
+        </ul>
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item"><a class="nav-link logout-btn" href="/logout">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Notifications Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light notifications-navbar">
+    <div class="container-fluid justify-content-center">
+      <a class="navbar-brand" href="#">Notifications</a>
+    </div>
+  </nav>
+
+  <!-- Second Navbar -->
+  <div class="second-navbar">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col">
+          <h4>1</h4>
+          <p>Help Request</p>
+        </div>
+        <div class="col">
+          <h4>2</h4>
+          <p>Device(s) Replacement</p>
+        </div>
+        <div class="col">
+          <h4>1</h4>
+          <p>Discontinued Client(s)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    // Autofill Date and Time, Update Every Minute
+    function updateDateTime() {
+      const datetimeElement = document.getElementById('datetime');
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString();
+      const formattedTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      datetimeElement.textContent = `${formattedDate} ${formattedTime}`;
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 60000); // Update every minute
+  </script>
+</body>
+</html>

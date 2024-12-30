@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kuss Essentials</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    header img {
+      max-width: 100%;
+      height: auto;
+      max-height: 200px; /* Limit height for larger screens */
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      color: #343a40;
+    }
+    .buttons a {
+      text-decoration: none;
+    }
+    .buttons button {
+      width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>KUSS ESSENTIALS</h1>
+    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Kuss Essentials Logo" class="img-fluid rounded">
+  </header>
+
+  <div class="buttons text-center">
+    <a href="{{ url_for('admin_login') }}"><button class="btn btn-primary m-2">Admin Login</button></a>
+    <a href="{{ url_for('client_login') }}"><button class="btn btn-success m-2">Client Login</button></a>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
