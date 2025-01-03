@@ -49,6 +49,7 @@
     .second-navbar .col {
       padding: 15px 0;
       border: 1px solid #dee2e6;
+      cursor: pointer;
     }
     .second-navbar .col:nth-child(1) {
       background-color: #d4edda;
@@ -59,12 +60,15 @@
     .second-navbar .col:nth-child(3) {
       background-color: #f8d7da;
     }
+    .modal-content {
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
   <!-- Welcome and Date/Time -->
   <div class="content">
-    <h2>Welcome User</h2>
+    <h2>Welcome {{ username }} </h2>
     <p>Current Date & Time: <span id="datetime"></span></p>
   </div>
 
@@ -82,8 +86,9 @@
           <li class="nav-item"><a class="nav-link" href="#">Client Complaints</a></li>
           <li class="nav-item"><a class="nav-link" href="#">Client Discontinue</a></li>
           <li class="nav-item"><a class="nav-link" href="#">Settings</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Activity Log</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('remark') }}">Remarks</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Add User</a></li>
-
         </ul>
         <ul class="navbar-nav ml-auto">
           <li class="nav-item"><a class="nav-link logout-btn" href="/logout">Logout</a></li>
@@ -103,21 +108,81 @@
   <div class="second-navbar">
     <div class="container-fluid">
       <div class="row">
-        <div class="col">
-          <h4>1</h4>
+        <div class="col" data-toggle="modal" data-target="#modalHelpRequest">
+          <h4>{{ help_request_count }}</h4>
           <p>Help Request</p>
         </div>
-        <div class="col">
-          <h4>2</h4>
+        <div class="col" data-toggle="modal" data-target="#modalDeviceReplacement">
+          <h4>{{ device_replacement_count }}</h4>
           <p>Device(s) Replacement</p>
         </div>
-        <div class="col">
-          <h4>1</h4>
+        <div class="col" data-toggle="modal" data-target="#modalDiscontinuedClients">
+          <h4>{{ discontinued_clients_count }}</h4>
           <p>Discontinued Client(s)</p>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="second-navbar">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col" data-toggle="modal" data-target="#modalDeviceReport">
+          <h4>January</h4>
+          <p>Device Report</p>
+        </div>
+        <div class="col" data-toggle="modal" data-target="#remarkModal">
+          <h4>{{ remarks_count }}</h4>
+          <p>Remark</p>
+        </div>
+        <div class="col" data-toggle="modal" data-target="#urgentRemarkModal">
+          <h4>{{ urgent_remarks_count }}</h4>
+          <p>Urgent Remark</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to view the remarks page?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('view_remarks', remark_type='normal') }}" class="btn btn-primary">Yes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Urgent Remark Modal -->
+  <div class="modal fade" id="urgentRemarkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to view the urgent remarks page?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('view_remarks', remark_type='urgent') }}" class="btn btn-primary">Yes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional modals for other sections -->
+  <!-- Replace the above modal structure with similar structures for Device Replacement, Discontinued Clients, etc. -->
 
   <!-- Bootstrap JS and dependencies -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

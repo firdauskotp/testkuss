@@ -21,8 +21,10 @@ UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+load_dotenv()
+
 # MongoDB Configuration
-MONGO_URI = 'mongodb+srv://firdauskotp:stayhumbleeh@cluster0.msdva.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+MONGO_URI = os.getenv('MONGO_URL')
 mongo = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 db = mongo['customer']
 collection = db['case_issue']
@@ -33,15 +35,19 @@ login_collection=login_db['log']
 login_cust_db=mongo['login_cust']
 login_cust_collection=login_cust_db['logg']
 
+remark_db=mongo['remark']
+remark_collection=remark_db['cases']
+
 fs = gridfs.GridFS(db)
 
-load_dotenv()
 
-app.config['MAIL_SERVER'] = os.getenv('SMTP_SERVER')
+
+app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('SMTP_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('SMTP_PASSWORD')
+# app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.getenv('SMTP_GOOGLE')
+app.config['MAIL_PASSWORD'] = os.getenv('SMTP_APP_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']
 
 mail = Mail(app)
@@ -181,20 +187,29 @@ def send_email_to_admin(case_no):
     send_email(app.config['MAIL_USERNAME'], subject, body)
 
 
+# def send_email(to_email, subject, body):
+#     """Generic function to send an email."""
+#     try:
+#         msg = MIMEMultipart()
+#         msg["From"] = app.config['MAIL_USERNAME']
+#         msg["To"] = to_email
+#         msg["Subject"] = subject
+
+#         msg.attach(MIMEText(body, "plain"))
+
+#         with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
+#             server.starttls()
+#             server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+#             server.send_message(msg)
+#     except Exception as e:
+#         print(f"Failed to send email: {e}")
+
 def send_email(to_email, subject, body):
-    """Generic function to send an email."""
+    """Generic function to send an email using Flask-Mail."""
     try:
-        msg = MIMEMultipart()
-        msg["From"] = app.config['MAIL_USERNAME']
-        msg["To"] = to_email
-        msg["Subject"] = subject
-
-        msg.attach(MIMEText(body, "plain"))
-
-        with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
-            server.starttls()
-            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-            server.send_message(msg)
+        msg = Message(subject, recipients=[to_email])
+        msg.body = body
+        mail.send(msg)
     except Exception as e:
         print(f"Failed to send email: {e}")
 
@@ -222,10 +237,6 @@ def register():
     return render_template('register.html')
 
 
-@app.route('/new_customer', methods=['GET'])
-def new_customer():
-    return render_template('new-customer.html') 
-
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -250,10 +261,21 @@ def admin_login():
 @app.route("/dashboard")
 def dashboard():
     if "user_id" in session:
-        return render_template("dashboard.html", username=session["username"])
+        remarks = list(remark_collection.find({}))  # Fetch all remarks from MongoDB
+        urgent_remarks = [r for r in remarks if r.get('urgent')]
+        non_urgent_remarks = [r for r in remarks if not r.get('urgent')]
+        return render_template("dashboard.html", username=session["username"], remarks_count=len(non_urgent_remarks), urgent_remarks_count=len(urgent_remarks))
     else:
         flash("Please log in to access the dashboard.", "warning")
         return redirect(url_for("login"))
+
+
+
+@app.route('/remarks/<remark_type>')
+def view_remarks(remark_type):
+    is_urgent = True if remark_type == 'urgent' else False
+    remarks = list(remark_collection.find({'urgent': is_urgent}))
+    return render_template('view_remarks.html', remarks=remarks, remark_type=remark_type)
 
 @app.route("/logout")
 def logout():
@@ -291,6 +313,29 @@ def get_image(image_id):
 #Getting the image later on frontend
 #<img src="{{ url_for('get_image', image_id=case['image_id']) }}" alt="Case Image" />
 
+@app.route('/new-client')
+def new_customer():
+    return render_template('new-customer')
+
+@app.route('/remark', methods=['GET', 'POST'])
+def remark():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+
+    username = session['username']  # Get the logged-in user's username
+    if request.method == 'POST':
+        remark_text = request.form['remark']
+        is_urgent = 'urgent' in request.form  # Checkbox value
+        
+        # Push data to MongoDB
+        remark_collection.insert_one({
+            'username': username,
+            'remark': remark_text,
+            'urgent': is_urgent
+        })
+        return redirect(url_for('dashboard'))
+
+    return render_template('remark.html', username=username)
 
 if __name__ == "__main__":
     app.run(debug=True)

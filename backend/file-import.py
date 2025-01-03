@@ -5,7 +5,7 @@ from datetime import datetime, time
 
 # Load Excel file
 file_path = '2024 - 12 - A. Service List.xlsx'  # Path to your Excel file
-df = pd.read_excel(file_path, sheet_name='ALL')  # Adjust sheet name as needed
+df = pd.read_excel(file_path, sheet_name='Pack List')  # Adjust sheet name as needed
 
 # Convert all `datetime` and `time` objects to strings
 def convert_to_string(value):
@@ -21,7 +21,7 @@ data = df.to_dict(orient='records')
 # MongoDB connection
 client = MongoClient('mongodb+srv://firdauskotp:stayhumbleeh@cluster0.msdva.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', tlsCAFile=certifi.where())
 db = client['dashboard_db']
-collection = db['services']
+collection = db['pack']
 
 # Insert data into MongoDB
 try:
