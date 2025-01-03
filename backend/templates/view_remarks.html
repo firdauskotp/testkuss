@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ remark_type | capitalize }} Remarks</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      margin-top: 20px;
+    }
+    .remark-card {
+      margin-bottom: 15px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>{{ remark_type | capitalize }} Remarks</h2>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-4">Back</a>
+    {% for remark in remarks %}
+      <div class="remark-card">
+        <h5>Username: {{ remark.username }}</h5>
+        <p>{{ remark.remark }}</p>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>
