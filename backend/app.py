@@ -1,27 +1,30 @@
 import smtplib
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify, Response
 from flask_pymongo import MongoClient
 from werkzeug.security import check_password_hash
 from flask_mail import Mail, Message
 from datetime import datetime
 import certifi  # Only needed for Mac
 from werkzeug.utils import secure_filename
-import os
+import os, json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash
 import gridfs
 from dotenv import load_dotenv
+from bson import json_util
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secretkey'
+
+load_dotenv()
+
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-load_dotenv()
 
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGO_URL')
@@ -38,13 +41,23 @@ login_cust_collection=login_cust_db['logg']
 remark_db=mongo['remark']
 remark_collection=remark_db['cases']
 
+dashboard_db = mongo['dashboard_db']
+services_collection = dashboard_db['services']
+eo_list_collection = dashboard_db['eo_list']
+eo_pack_collection = dashboard_db['eo_pack']
+model_list_collection = dashboard_db['model_list']
+others_list_collection = dashboard_db['others_devices_pack']
+empty_bottles_list_collection = dashboard_db['others_empty_bottle_pack']
+straw_list_collection = dashboard_db['straw_mist_heads_pack']
+
+
 fs = gridfs.GridFS(db)
 
 
 
 app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
 app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_TLS'] = False
 # app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_GOOGLE')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_APP_PASSWORD')
@@ -167,6 +180,8 @@ def staff_form(case_no):
 def index():
     return render_template("index.html")
 
+
+
 @app.route("/case-success/<int:case_no>",methods=["GET","POST"])
 def case_success(case_no):
     """Success page after creating a case."""
@@ -258,15 +273,562 @@ def admin_login():
 
     return render_template("login.html")
 
+@app.route('/all-list',methods=['GET'])
+def reports():
+    if 'user_id' in session:
+        # Pagination parameters
+        page = int(request.args.get('page', 1))  # Current page (default: 1)
+        limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+
+
+        # Get filter parameters
+        month = request.args.get('month','').strip()
+        year = request.args.get('year','').strip()
+        EO = request.args.get("EO")
+        Volume = request.args.get("Volume")
+        SN = request.args.get("SN")
+        Balance = request.args.get("Balance")
+        Consumption = request.args.get("Consumption")
+        Refilled = request.args.get("Refilled")
+        E1_Work = request.args.get("E1_Work")
+        E1_Pause = request.args.get("E1_Pause")
+        E1_Days = request.args.get("E1_Days")
+        E1_Start = request.args.get("E1_Start")
+        E1_End = request.args.get("E1_End")
+        E2_Work = request.args.get("E2_Work")
+        E2_Pause = request.args.get("E2_Pause")
+        E2_Days = request.args.get("E2_Days")
+        E2_Start = request.args.get("E2_Start")
+        E2_End = request.args.get("E2_End")
+        E3_Work = request.args.get("E3_Work")
+        E3_Pause = request.args.get("E3_Pause")
+        E3_Days = request.args.get("E3_Days")
+        E3_Start = request.args.get("E3_Start")
+        E3_End = request.args.get("E3_End")
+        E4_Work = request.args.get("E4_Work")
+        E4_Pause = request.args.get("E4_Pause")
+        E4_Days = request.args.get("E4_Days")
+        E4_Start = request.args.get("E4_Start")
+        E4_End = request.args.get("E4_End")
+        Model = request.args.get("Model")
+        Colour = request.args.get("Colour")
+        Current_EO = request.args.get("Current_EO")
+        New_EO = request.args.get("New_EO")
+        Scent_Effectiveness = request.args.get("Scent_Effectiveness")
+        Common_Encounters = request.args.get("Common_Encounters")
+        Other_Remarks = request.args.get("Other_Remarks")
+
+
+        query = {}
+        if month and year:
+            query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$month_year'}, int(month)]},
+                    {'$eq': [{'$year': '$month_year'}, int(year)]}
+                ]
+            }
+        
+       
+        
+        # Filter by EO (string partial match)
+
+        if EO:
+            query['EO'] = {'$regex': EO, '$options': 'i'}  # Case-insensitive partial match
+
+
+        # Filter by Volume (integer exact match)
+        if Volume:
+            query['Volume'] = int(Volume)
+        
+        # Filter by SN (string partial match)
+        if SN:
+            query['S/N'] = int(SN)  # Case-insensitive partial match
+
+        # Filter by Balance (integer exact match)
+        if Balance:
+            query['Balance'] = int(Balance)
+
+        # Filter by Consumption (integer exact match)
+        if Consumption:
+            query['Consumption'] = int(Consumption)
+
+        # Filter by Refilled (integer exact match)
+        if Refilled:
+            query['Refilled'] = int(Refilled)
+
+        # Filter for E1 Work (integer exact match)
+        if E1_Work:
+            query['E1 - WORK'] = int(E1_Work)
+
+        # Filter for E1 Pause (integer exact match)
+        if E1_Pause:
+            query['E1 - PAUSE'] = int(E1_Pause)
+
+        # Filter for E1 Days (integer exact match)
+        if E1_Days:
+            query['E1 - DAYS'] = {'$regex': E1_Days, '$options': 'i'}
+
+        # Filter for E1 Start (integer exact match)
+        if E1_Start:
+            query['E1 - START'] = {'$regex': E1_Start, '$options': 'i'}
+
+        # Filter for E1 End (integer exact match)
+        if E1_End:
+            query['E1 - END'] = {'$regex': E1_End, '$options': 'i'}
+
+        # Filter for E2 Work (integer exact match)
+        if E2_Work:
+            query['E2 - WORK'] = int(E2_Work)
+
+        # Filter for E2 Pause (integer exact match)
+        if E2_Pause:
+            query['E2 - PAUSE'] = int(E2_Pause)
+
+        if E2_Days:
+            query['E2 - DAYS'] = {'$regex': E2_Days, '$options': 'i'}
+
+        # Filter for E1 Start (integer exact match)
+        if E2_Start:
+            query['E2 - START'] = {'$regex': E2_Start, '$options': 'i'}
+
+        # Filter for E1 End (integer exact match)
+        if E2_End:
+            query['E2 - END'] = {'$regex': E2_End, '$options': 'i'}
+
+        # Filter for E3 Work (integer exact match)
+        if E3_Work:
+            query['E3 - WORK'] = int(E3_Work)
+
+        # Filter for E3 Pause (integer exact match)
+        if E3_Pause:
+            query['E3 - PAUSE'] = int(E3_Pause)
+
+        # Filter for E3 Days (integer exact match)
+        if E3_Days:
+            query['E3 - DAYS'] = {'$regex': E3_Days, '$options': 'i'}
+
+        # Filter for E1 Start (integer exact match)
+        if E3_Start:
+            query['E3 - START'] = {'$regex': E3_Start, '$options': 'i'}
+
+        # Filter for E1 End (integer exact match)
+        if E3_End:
+            query['E3 - END'] = {'$regex': E3_End, '$options': 'i'}
+
+        # Filter for E4 Work (integer exact match)
+        if E4_Work:
+            query['E4 - WORK'] = int(E4_Work)
+
+        # Filter for E4 Pause (integer exact match)
+        if E4_Pause:
+            query['E4 - PAUSE'] = int(E4_Pause)
+
+        # Filter for E4 Days (integer exact match)
+        if E4_Days:
+            query['E4 - DAYS'] = {'$regex': E4_Days, '$options': 'i'}
+
+        # Filter for E1 Start (integer exact match)
+        if E4_Start:
+            query['E4 - START'] = {'$regex': E4_Start, '$options': 'i'}
+
+        # Filter for E1 End (integer exact match)
+        if E4_End:
+            query['E4 - END'] = {'$regex': E4_End, '$options': 'i'}
+
+        # Filter by Model (string partial match)
+        if Model:
+            query['Model'] = {'$regex': Model, '$options': 'i'}  # Case-insensitive partial match
+
+        # Filter by Colour (string partial match)
+        if Colour:
+            query['Colour'] = {'$regex': Colour, '$options': 'i'}  # Case-insensitive partial match
+
+        # Filter by Current EO (string partial match)
+        if Current_EO:
+            query['Current EO'] = {'$regex': Current_EO, '$options': 'i'}  # Case-insensitive partial match
+
+        # Filter by New EO (string partial match)
+        if New_EO:
+            query['New EO'] = {'$regex': New_EO, '$options': 'i'}  # Case-insensitive partial match
+
+        # Filter by Scent Effectiveness (string partial match)
+        if Scent_Effectiveness:
+            query['#1 Scent Effectiveness'] = {'$regex': Scent_Effectiveness, '$options': 'i'}  # Case-insensitive partial match
+
+        # Filter by Common Encounters (string partial match)
+        if Common_Encounters:
+            query['#1 Common encounters'] = {'$regex': Common_Encounters, '$options': 'i'}  # Case-insensitive partial match
+
+        # Filter by Other Remarks (string partial match)
+        if Other_Remarks:
+            query['#1 Other remarks'] = {'$regex': Other_Remarks, '$options': 'i'}  # Case-insensitive partial match
+
+
+        
+
+        # Get total entries for pagination
+        total_entries = services_collection.count_documents(query)
+        
+
+        # Fetch data with pagination
+        services_collection_list = services_collection.find(query, {'_id': 0}) \
+                        .skip((page - 1) * limit) \
+                        .limit(limit)
+
+        # Add month and year fields to the data
+        processed_data = []
+        for entry in services_collection_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+            processed_data.append(entry)
+
+
+        # Calculate total pages
+        total_pages = (total_entries + limit - 1) // limit
+        
+        return render_template("reports.html", 
+                               username=session["username"], 
+                               data=processed_data, 
+                               page=page, 
+                               total_pages=total_pages,
+                               limit=limit
+                               )
+    else:
+        flash("Please log in to access this page.", "warning")
+        return redirect(url_for("login"))
+
+@app.route('/pack-list',methods=['GET'])
+def pack_list():
+    if 'user_id' in session:
+        # Pagination parameters
+        page = int(request.args.get('page', 1))  # Current page (default: 1)
+        limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+
+        device_page = int(request.args.get('device_page', 1))  # Current page (default: 1)
+        device_limit = int(request.args.get('device_limit', 10))  # Entries per page (default: 10)
+
+        bottle_page = int(request.args.get('bottle_page', 1))  # Current page (default: 1)
+        bottle_limit = int(request.args.get('bottle_limit', 10))  # Entries per page (default: 10)
+
+        straw_page = int(request.args.get('straw_page', 1))  # Current page (default: 1)
+        straw_limit = int(request.args.get('straw_limit', 10))  # Entries per page (default: 10)
+
+        # Get filter parameters
+        month = request.args.get('month','').strip()
+        year = request.args.get('year','').strip()
+        eo = request.args.get('eo_name')
+        ml_required = request.args.get('ml_required')
+        packed = request.args.get('packed')
+        ready_supply = request.args.get('ready_supply')
+        ml_fresh_supply = request.args.get('ml_fresh_supply')
+        ml_balance = request.args.get('ml_balance')
+        perc_balance = request.args.get('perc_balance')
+
+
+        device_month = request.args.get('device_month','').strip()
+        device_year = request.args.get('device_year','').strip()
+        devices = request.args.get('devices')
+        device_quantity = request.args.get('device_quantity')
+
+        bottle_month = request.args.get('bottle_month','').strip()
+        bottle_year = request.args.get('bottle_year','').strip()
+        empty_bottle = request.args.get('empty_bottle')
+        bottle_volume = request.args.get('bottle_volume')
+
+        straw_month = request.args.get('straw_month','').strip()
+        straw_year = request.args.get('straw_year','').strip()
+        model_others = request.args.get('model_others')
+        final_quantity = request.args.get('final_quantity')
+        actual_quantity = request.args.get('actual_quantity')
+        extra = request.args.get('extra')
+
+        device_query = {}
+        query={}
+        bottle_query={}
+        other_query={}
+        if device_month and device_year:
+            device_query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$month_year'}, int(device_month)]},
+                    {'$eq': [{'$year': '$month_year'}, int(device_year)]}
+                ]
+            }
+        if month and year:
+            query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$month_year'}, int(month)]},
+                    {'$eq': [{'$year': '$month_year'}, int(year)]}
+                ]
+            }
+        if bottle_month and bottle_year:
+            bottle_query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$month_year'}, int(bottle_month)]},
+                    {'$eq': [{'$year': '$month_year'}, int(bottle_year)]}
+                ]
+            }
+       
+        if straw_month and straw_year:
+            other_query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$month_year'}, int(straw_month)]},
+                    {'$eq': [{'$year': '$month_year'}, int(straw_year)]}
+                ]
+            }
+        if device_quantity:
+            device_query['quantity'] = int(device_quantity)
+        
+        if empty_bottle:
+            bottle_query['empty_bottles'] = int(empty_bottle)
+
+        if bottle_volume:
+            bottle_query['volume'] = int(bottle_volume)
+
+        if actual_quantity:
+            other_query['actual_quantity'] = int(actual_quantity)
+
+        if final_quantity:
+            other_query['final_quantity'] = int(final_quantity)
+        
+        if ml_required:
+            query['ml_required'] = int(ml_required)
+
+        if packed:
+            query['packed'] = int(packed)
+
+        if ready_supply:
+            query['ready_supply'] = int(ready_supply)
+
+        if ml_fresh_supply:
+            query['ml_fresh_supply'] = int(ml_fresh_supply)
+
+        if ml_balance:
+            query['ml_balance'] = int(ml_balance)
+        
+        if perc_balance:
+            query['perc_balance'] = int(perc_balance)
+
+        if extra:
+            other_query['extra'] = int(extra)
+        
+        if model_others:
+            other_query['model'] = {'$regex': model_others, '$options': 'i'}  # Case-insensitive partial match
+        
+        if eo:
+            query['eo_name'] = {'$regex': eo, '$options': 'i'}  # Case-insensitive partial match
+        
+        if devices:
+            device_query['devices'] = {'$regex': devices, '$options': 'i'}
+
+        
+
+
+        total_page = eo_pack_collection.count_documents(query)
+        total_device_page = others_list_collection.count_documents(device_query)
+        total_bottle_page = empty_bottles_list_collection.count_documents(bottle_query)
+        total_straw_page = straw_list_collection.count_documents(other_query)
+    
+        data_eo_pack_list = eo_pack_collection.find(query, {'_id':0}).skip((page-1)*limit).limit(limit)
+        data_device_pack_list = others_list_collection.find(device_query, {'_id':0}).skip((device_page-1)*device_limit).limit(device_limit)
+        data_bottle_pack_list = empty_bottles_list_collection.find(bottle_query, {'_id':0}).skip((bottle_page-1)*bottle_limit).limit(bottle_limit)
+        data_other_pack_list = straw_list_collection.find(other_query, {'_id':0}).skip((straw_page-1)*straw_limit).limit(straw_limit)
+
+       
+        processed_data_eo_pack_list = []
+        processed_data_device_pack_list = []
+        processed_data_bottle_pack_list = []
+        processed_data_other_pack_list = []
+
+        for entry in data_eo_pack_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+            processed_data_eo_pack_list.append(entry)
+
+        for entry in data_device_pack_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+            processed_data_device_pack_list.append(entry)
+
+        for entry in data_bottle_pack_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+            processed_data_bottle_pack_list.append(entry)
+
+        for entry in data_other_pack_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+            processed_data_other_pack_list.append(entry)
+
+        # Calculate total pages
+        total_pages = (total_page + limit - 1) // limit
+        total_device_pages = (total_device_page + device_limit - 1) // device_limit
+        total_bottle_pages = (total_bottle_page + bottle_limit - 1) // bottle_limit
+        total_straw_pages = (total_straw_page + straw_limit - 1) // straw_limit
+
+        
+        return render_template("pack-list.html", 
+                               username=session["username"], 
+                               data=processed_data_eo_pack_list,
+                               device_data = processed_data_device_pack_list,
+                               bottle_data = processed_data_bottle_pack_list,
+                               straw_data = processed_data_other_pack_list,
+                               device_page=device_page, 
+                               total_device_pages=total_device_pages,
+                               device_limit=device_limit,
+                               bottle_page=bottle_page, 
+                               total_bottle_pages=total_bottle_pages,
+                               bottle_limit=bottle_limit,
+                               straw_page=straw_page, 
+                               total_straw_pages=total_straw_pages,
+                               straw_limit=straw_limit,
+                               page=page, 
+                               total_pages=total_pages,
+                               limit=limit
+                               )
+    else:
+        flash("Please log in to access this page.", "warning")
+        return redirect(url_for("login"))
+    
+@app.route('/eo-list',methods=['GET'])
+def eo_list():
+    if 'user_id' in session:
+        # Pagination parameters
+        page = int(request.args.get('page', 1))  # Current page (default: 1)
+        limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+
+        model_page = int(request.args.get('model_page', 1))  # Current page (default: 1)
+        model_limit = int(request.args.get('model_limit', 10))  # Entries per page (default: 10)
+
+        # Get filter parameters
+        month = request.args.get('month','').strip()
+        year = request.args.get('year','').strip()
+        eo = request.args.get('EO')
+        volume = request.args.get('Volume')
+
+        model_month = request.args.get('model_month','').strip()
+        model_year = request.args.get('model_year','').strip()
+        quantity = request.args.get('Quantity')
+        total_batteries = request.args.get('total_batteries')
+        model_type = request.args.get('model_type')
+        battery_type = request.args.get('battery_type')
+        remark = request.args.get('Remark')
+
+        model_query = {}
+        if model_month and model_year:
+            model_query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$month_year'}, int(model_month)]},
+                    {'$eq': [{'$year': '$month_year'}, int(model_year)]}
+                ]
+            }
+        
+       
+        
+        if quantity:
+            model_query['quantity'] = int(quantity)
+        
+        # Filter by Total Batteries (integer exact match)
+        if total_batteries:
+            model_query['total_batteries'] = int(total_batteries)
+        
+        # Filter by Model Type (string partial match)
+        if model_type:
+            model_query['model2'] = {'$regex': model_type, '$options': 'i'}  # Case-insensitive partial match
+        
+        # Filter by Battery Type (string partial match)
+        if battery_type:
+            model_query['battery_type'] = {'$regex': battery_type, '$options': 'i'}  # Case-insensitive partial match
+        
+        # Filter by Remark (integer exact match)
+        if remark:
+            model_query['remark'] = {'$regex': remark, '$options': 'i'}
+
+        # Build MongoDB query
+        query = {}
+        if month and year:
+            query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$month_year'}, int(month)]},
+                    {'$eq': [{'$year': '$month_year'}, int(year)]}
+                ]
+            }
+        if eo:
+            query['EO2'] = {'$regex': eo, '$options': 'i'} 
+        if volume:
+            query['Volume'] = int(volume)
+
+        # Get total entries for pagination
+        total_entries_eo_list = eo_list_collection.count_documents(query)
+        total_entries_model_list = model_list_collection.count_documents(model_query)
+        
+
+        # Fetch data with pagination
+        data_eo_list = eo_list_collection.find(query, {'_id': 0}) \
+                        .skip((page - 1) * limit) \
+                        .limit(limit)
+        data_model_list = model_list_collection.find(model_query, {'_id':0}).skip((model_page-1)*model_limit).limit(model_limit)
+
+        # Add month and year fields to the data
+        processed_data_eo_list = []
+        processed_data_model_list = []
+        for entry in data_eo_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+            processed_data_eo_list.append(entry)
+
+        for entry in data_model_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+            processed_data_model_list.append(entry)
+
+        # Calculate total pages
+        total_pages = (total_entries_eo_list + limit - 1) // limit
+        total_model_pages = (total_entries_model_list + model_limit -1) // model_limit
+        
+        return render_template("eo-list.html", 
+                               username=session["username"], 
+                               data=processed_data_eo_list, 
+                               model_data=processed_data_model_list,
+                               model_page=model_page,
+                               page=page, 
+                               total_model_pages=total_model_pages,
+                               total_pages=total_pages,
+                               model_limit=model_limit, 
+                               limit=limit
+                               )
+    else:
+        flash("Please log in to access this page.", "warning")
+        return redirect(url_for("login"))
+        
+
 @app.route("/dashboard")
 def dashboard():
     if "user_id" in session:
         remarks = list(remark_collection.find({}))  # Fetch all remarks from MongoDB
         urgent_remarks = [r for r in remarks if r.get('urgent')]
         non_urgent_remarks = [r for r in remarks if not r.get('urgent')]
-        return render_template("dashboard.html", username=session["username"], remarks_count=len(non_urgent_remarks), urgent_remarks_count=len(urgent_remarks))
+        
+        return render_template("dashboard.html", 
+                               username=session["username"], 
+                               remarks_count=len(non_urgent_remarks), 
+                               urgent_remarks_count=len(urgent_remarks)
+                               )
     else:
-        flash("Please log in to access the dashboard.", "warning")
+        flash("Please log in to access this page.", "warning")
         return redirect(url_for("login"))
 
 
@@ -315,7 +877,11 @@ def get_image(image_id):
 
 @app.route('/new-client')
 def new_customer():
-    return render_template('new-customer')
+    return render_template('new-customer.html')
+
+
+
+
 
 @app.route('/remark', methods=['GET', 'POST'])
 def remark():

@@ -127,10 +127,7 @@
   <div class="second-navbar">
     <div class="container-fluid">
       <div class="row">
-        <div class="col" data-toggle="modal" data-target="#modalDeviceReport">
-          <h4>January</h4>
-          <p>Device Report</p>
-        </div>
+        
         <div class="col" data-toggle="modal" data-target="#remarkModal">
           <h4>{{ remarks_count }}</h4>
           <p>Remark</p>
@@ -138,6 +135,22 @@
         <div class="col" data-toggle="modal" data-target="#urgentRemarkModal">
           <h4>{{ urgent_remarks_count }}</h4>
           <p>Urgent Remark</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="second-navbar">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col" data-toggle="modal" data-target="#modalDashboardAll">
+          <p>Dashboard: ALL</p>
+        </div>
+        <div class="col" data-toggle="modal" data-target="#modalDashboardEO">
+          <p>Dashboard: EO / Models</p>
+        </div>
+        <div class="col" data-toggle="modal" data-target="#modalDashboardToPack">
+          <p>Dashboard: To Pack</p>
         </div>
       </div>
     </div>
@@ -181,10 +194,65 @@
     </div>
   </div>
 
-  <!-- Additional modals for other sections -->
-  <!-- Replace the above modal structure with similar structures for Device Replacement, Discontinued Clients, etc. -->
+  <div class="modal fade" id="modalDashboardAll" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to see the dashboard for all data?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('reports') }}" class="btn btn-primary">Yes</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Bootstrap JS and dependencies -->
+  <div class="modal fade" id="modalDashboardEO" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to view the dashboard for Essential Oil and Models?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('eo_list') }}" class="btn btn-primary">Yes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalDashboardToPack" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to view the pack list page?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('pack_list') }}" class="btn btn-primary">Yes</a>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
+
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
