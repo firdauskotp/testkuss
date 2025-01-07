@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pack List</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="container mt-5 position-relative">
+            <!-- Button Positioned Top Right -->
+            <a href="{{ url_for('dashboard') }}" class="btn btn-danger position-absolute top-0 end-0 m-3">Back</a>
+    
+            <h1>EO Pack - Data</h1>
+        </div>
+    
+        <!-- Filter Form -->
+        <form class="mb-4" method="get" action="/pack-list">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="month" class="form-label">Month (Fill in the year too)</label>
+                    <input type="number" id="month" name="month" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="year" class="form-label">Year (Fill in the month too)</label>
+                    <input type="number" id="year" name="year" class="form-control" placeholder="2024">
+                </div>
+                <div class="col-md-3">
+                    <label for="eo_name" class="form-label">Essential Oil</label>
+                    <input type="text" id="eo_name" name="eo_name" class="form-control" placeholder="Black Opium">
+                </div>
+                <div class="col-md-3">
+                    <label for="ml-required" class="form-label">ML required</label>
+                    <input type="number" id="ml-required" name="ml-required" class="form-control" placeholder="10">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="packed" class="form-label">Packed</label>
+                    <input type="number" id="packed" name="packed" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="ready_supply" class="form-label">Ready Supply</label>
+                    <input type="number" id="ready_supply" name="ready_supply" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="ml_fresh_supply" class="form-label">ML Fresh Supply</label>
+                    <input type="number" id="ml_fresh_supply" name="ml_fresh_supply" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="ml_balance" class="form-label">ML Balance</label>
+                    <input type="number" id="ml_balance" name="ml_balance" class="form-control" placeholder="10">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="perc_balance" class="form-label">Percentage Balance</label>
+                    <input type="number" id="perc_balance" name="perc_balance" class="form-control" placeholder="20">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="ml_refill" class="form-label">ML Refill</label>
+                    <input type="number" id="ml_refill" name="ml_refill" class="form-control" placeholder="10">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="perc_refill" class="form-label">Percentage Refill</label>
+                    <input type="number" id="perc_refill" name="perc_refill" class="form-control" placeholder="20">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+        </form>
+    
+        <!-- Data Table -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>EO Name</th>
+                        <th>ML Required</th>
+                        <th>Packed</th>
+                        <th>Ready Supply</th>
+                        <th>ML Fresh Supply</th>
+                        <th>ML Balance</th>
+                        <th>Perc Balance</th>
+                        <th>ML Refill</th>
+                        <th>Perc Refill</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in data %}
+                    <tr>
+                      <td>{{ user['eo_name'] }}</td>
+    
+                        <td>{{ user['ml_required'] }}</td>
+                        <td>{{ user['packed'] }}</td>
+                        <td>{{ user['ready_supply'] }}</td>
+                        <td>{{ user['ml_fresh_supply'] }}</td>
+                        <td>{{ user['ml_balance'] }}</td>
+                        <td>{{ user['perc_balance'] }}</td>
+                        <td>{{ user['ml_refill'] }}</td>
+                        <td>{{ user['perc_refill'] }}</td>
+                        <td>{{ user['month'] }}</td>
+                        <td>{{ user['year'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page - 1 }}&limit={{ limit }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}&limit={{ limit }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page + 1 }}&limit={{ limit }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="container mt-5">
+        <div class="container mt-5 position-relative">
+    
+            <h1>Other Device List - Data</h1>
+        </div>
+    
+        <!-- Filter Form -->
+        <form class="mb-4" method="get" action="/pack-list">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="device_month" class="form-label">Month (Fill in the year too)</label>
+                    <input type="number" id="device_month" name="device_month" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="device_year" class="form-label">Year (Fill in the month too)</label>
+                    <input type="number" id="device_year" name="device_year" class="form-control" placeholder="2024">
+                </div>
+                <div class="col-md-3">
+                    <label for="devices" class="form-label">Devices</label>
+                    <input type="text" id="devices" name="devices" class="form-control" placeholder="REED STICKS (SET)">
+                </div>
+                <div class="col-md-3">
+                    <label for="device_quantity" class="form-label">Quantity</label>
+                    <input type="number" id="device_quantity" name="device_quantity" class="form-control" placeholder="10">
+                </div>
+
+                
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+        </form>
+    
+        <!-- Data Table -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Device</th>
+                        <th>Quantity</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in device_data %}
+                    <tr>
+                        <td>{{ user['devices'] }}</td>
+                        <td>{{ user['quantity'] }}</td>
+                        <td>{{ user['month'] }}</td>
+                        <td>{{ user['year'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item {% if device_page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?device_page={{ device_page - 1 }}&device_limit={{ device_limit }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% for p in range(1, total_device_pages + 1) %}
+                <li class="page-item {% if p == device_page %}active{% endif %}">
+                    <a class="page-link" href="?device_page={{ p }}&device_limit={{ device_limit }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if page == total_device_pages %}disabled{% endif %}">
+                    <a class="page-link" href="?device_page={{ device_page + 1 }}device_limit={{ device_limit }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+
+    <div class="container mt-5">
+        <div class="container mt-5 position-relative">
+    
+            <h1>Empty Bottle Pack List - Data</h1>
+        </div>
+    
+        <!-- Filter Form -->
+        <form class="mb-4" method="get" action="/pack-list">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="bottle_month" class="form-label">Month (Fill in the year too)</label>
+                    <input type="number" id="bottle_month" name="bottle_month" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="bottle_year" class="form-label">Year (Fill in the month too)</label>
+                    <input type="number" id="bottle_year" name="bottle_year" class="form-control" placeholder="2024">
+                </div>
+                <div class="col-md-3">
+                    <label for="empty_bottle" class="form-label">Empty Bottles</label>
+                    <input type="number" id="empty_bottle" name="empty_bottle" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="bottle_volume" class="form-label">Volume</label>
+                    <input type="number" id="bottle_volume" name="bottle_volume" class="form-control" placeholder="10">
+                </div>
+
+                
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+        </form>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Empty Bottles</th>
+                    <th>Volume</th>
+                    <th>Month</th>
+                    <th>Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in bottle_data %}
+                <tr>
+                  <td>{{ user['empty_bottles'] }}</td>
+
+                    <td>{{ user['volume'] }}</td>
+                    <td>{{ user['month'] }}</td>
+                    <td>{{ user['year'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item {% if bottle_page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="?bottle_page={{ bottle_page - 1 }}&bottle_limit={{ bottle_limit }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% for p in range(1, total_bottle_pages + 1) %}
+            <li class="page-item {% if p == bottle_page %}active{% endif %}">
+                <a class="page-link" href="?bottle_page={{ p }}&bottle_limit={{ bottle_limit }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if bottle_page == total_bottle_pages %}disabled{% endif %}">
+                <a class="page-link" href="?bottle_page={{ bottle_page + 1 }}&bottle_limit={{ bottle_limit }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<div class="container mt-5">
+    <div class="container mt-5 position-relative">
+
+        <h1>Straw / Mist Heads Pack List - Data</h1>
+    </div>
+
+    <!-- Filter Form -->
+    <form class="mb-4" method="get" action="/pack-list">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="straw_month" class="form-label">Month (Fill in the year too)</label>
+                <input type="number" id="straw_month" name="straw_month" class="form-control" placeholder="10">
+            </div>
+            <div class="col-md-3">
+                <label for="straw_year" class="form-label">Year (Fill in the month too)</label>
+                <input type="number" id="straw_year" name="straw_year" class="form-control" placeholder="2024">
+            </div>
+            <div class="col-md-3">
+                <label for="model_others" class="form-label">Model</label>
+                <input type="text" id="model_others" name="model_others" class="form-control" placeholder="ASH">
+            </div>
+            <div class="col-md-3">
+                <label for="volume" class="form-label">Volume</label>
+                <input type="number" id="volume" name="volume" class="form-control" placeholder="10">
+            </div>
+
+            <div class="col-md-3">
+                <label for="volume" class="form-label">Volume</label>
+                <input type="number" id="volume" name="volume" class="form-control" placeholder="10">
+            </div>
+            <div class="col-md-3">
+                <label for="final_quantity" class="form-label">Final Quantity</label>
+                <input type="number" id="final_quantity" name="final_quantity" class="form-control" placeholder="10">
+            </div>
+            <div class="col-md-3">
+                <label for="actual_quantity" class="form-label">Actual Quantity</label>
+                <input type="number" id="actual_quantity" name="actual_quantity" class="form-control" placeholder="10">
+            </div>
+
+            <div class="col-md-3">
+                <label for="extra" class="form-label">Extra</label>
+                <input type="number" id="extra" name="extra" class="form-control" placeholder="10">
+            </div>
+
+            
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Filter</button>
+    </form>
+
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th></th>
+                <th>Model</th>
+                <th>Final Quantity</th>
+                <th>Actual Quantity</th>
+                <th>Extra</th>
+                <th>Month</th>
+                <th>Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in straw_data %}
+            <tr>
+              <td>{{ user['model'] }}</td>
+
+                <td>{{ user['final_quantity'] }}</td>
+                <td>{{ user['actual_quantity'] }}</td>
+                <td>{{ user['extra'] }}</td>
+                <td>{{ user['month'] }}</td>
+                <td>{{ user['year'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination Controls -->
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center mt-4">
+        <li class="page-item {% if straw_page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="?straw_page={{ straw_page - 1 }}&straw_limit={{ straw_limit }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% for p in range(1, total_straw_pages + 1) %}
+        <li class="page-item {% if p == straw_page %}active{% endif %}">
+            <a class="page-link" href="?straw_page={{ p }}&straw_limit={{ straw_limit }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if straw_page == total_straw_pages %}disabled{% endif %}">
+            <a class="page-link" href="?straw_page={{ straw_page + 1 }}&straw_limit={{ straw_limit }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+</div>
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

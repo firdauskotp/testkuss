@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EO / Model List</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="container mt-5 position-relative">
+            <!-- Button Positioned Top Right -->
+            <a href="{{ url_for('dashboard') }}" class="btn btn-danger position-absolute top-0 end-0 m-3">Back</a>
+    
+            <h1>EO List - Data</h1>
+        </div>
+    
+        <!-- Filter Form -->
+        <form class="mb-4" method="get" action="/eo-list">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="month" class="form-label">Month (Fill in the year too)</label>
+                    <input type="number" id="month" name="month" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="year" class="form-label">Year (Fill in the month too)</label>
+                    <input type="number" id="year" name="year" class="form-control" placeholder="2024">
+                </div>
+                <div class="col-md-3">
+                    <label for="EO" class="form-label">EO</label>
+                    <input type="text" id="EO" name="EO" class="form-control" placeholder="Black Opium">
+                </div>
+                <div class="col-md-3">
+                    <label for="Volume" class="form-label">Volume</label>
+                    <input type="number" id="Volume" name="Volume" class="form-control" placeholder="10">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+        </form>
+    
+        <!-- Data Table -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th></th>
+                        <th>EO</th>
+                        <th>Volume</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in data %}
+                    <tr>
+                      <td>{{ user['EO1'] }}</td>
+    
+                        <td>{{ user['EO2'] }}</td>
+                        <td>{{ user['Volume'] }}</td>
+                        <td>{{ user['month'] }}</td>
+                        <td>{{ user['year'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page - 1 }}&limit={{ limit }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}&limit={{ limit }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page + 1 }}&limit={{ limit }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="container mt-5">
+        <div class="container mt-5 position-relative">
+    
+            <h1>Model List - Data</h1>
+        </div>
+    
+        <!-- Filter Form -->
+        <form class="mb-4" method="get" action="/eo-list">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="model_month" class="form-label">Month (Fill in the year too)</label>
+                    <input type="number" id="model_month" name="model_month" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="model_year" class="form-label">Year (Fill in the month too)</label>
+                    <input type="number" id="model_year" name="model_year" class="form-control" placeholder="2024">
+                </div>
+                <div class="col-md-3">
+                    <label for="Quantity" class="form-label">Quantity</label>
+                    <input type="number" id="Quantity" name="Quantity" class="form-control" placeholder="10">
+                </div>
+                <div class="col-md-3">
+                    <label for="total_batteries" class="form-label">Total Batteries</label>
+                    <input type="number" id="total_batteries" name="total_batteries" class="form-control" placeholder="10">
+                </div>
+                
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="model_type" class="form-label">Model</label>
+                    <input type="text" id="model_type" name="model_type" class="form-control" placeholder="ASH">
+                </div>
+                <div class="col-md-3">
+                    <label for="battery_type" class="form-label">Battery Type</label>
+                    <input type="text" id="battery_type" name="battery_type" class="form-control" placeholder="Panasonic">
+                </div>
+                <div class="col-md-3">
+                    <label for="Remark" class="form-label">Remark</label>
+                    <input type="text" id="Remark" name="Remark" class="form-control" placeholder="10">
+                </div>
+                
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+        </form>
+    
+        <!-- Data Table -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th></th>
+                        <th>Model</th>
+                        <th>Quantity</th>
+                        <th>Total Batteries</th>
+                        <th>Battery Type</th>
+                        <th>Remark</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in model_data %}
+                    <tr>
+                      <td>{{ user['model1'] }}</td>
+    
+                        <td>{{ user['model2'] }}</td>
+                        <td>{{ user['quantity'] }}</td>
+                        <td>{{ user['total_batteries'] }}</td>
+                        <td>{{ user['battery_type'] }}</td>
+                        <td>{{ user['remark'] }}</td>
+                        <td>{{ user['month'] }}</td>
+                        <td>{{ user['year'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item {% if model_page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?model_page={{ model_page - 1 }}&model_limit={{ model_limit }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% for p in range(1, total_model_pages + 1) %}
+                <li class="page-item {% if p == model_page %}active{% endif %}">
+                    <a class="page-link" href="?model_page={{ p }}&model_limit={{ model_limit }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                <li class="page-item {% if model_page == total_model_pages %}disabled{% endif %}">
+                    <a class="page-link" href="?model_page={{ model_page + 1 }}&model_limit={{ model_limit }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
