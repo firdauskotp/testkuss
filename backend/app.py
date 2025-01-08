@@ -841,9 +841,10 @@ def view_remarks(remark_type):
 
 @app.route("/logout")
 def logout():
-    session.clear()
-    flash("You have been logged out.", "success")
-    return redirect(url_for("index"))
+    if "user_id" in session:
+        session.clear()
+        flash("You have been logged out.", "success")
+        return redirect(url_for("index"))
 
 @app.route("/client-login", methods=["GET", "POST"])
 def client_login():
@@ -877,7 +878,8 @@ def get_image(image_id):
 
 @app.route('/new-client')
 def new_customer():
-    return render_template('new-customer.html')
+    if "user_id" in session:
+        return render_template('new-customer.html')
 
 
 
