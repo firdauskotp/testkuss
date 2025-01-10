@@ -821,11 +821,13 @@ def dashboard():
         remarks = list(remark_collection.find({}))  # Fetch all remarks from MongoDB
         urgent_remarks = [r for r in remarks if r.get('urgent')]
         non_urgent_remarks = [r for r in remarks if not r.get('urgent')]
+        help_request = list(collection.find({}))
         
         return render_template("dashboard.html", 
                                username=session["username"], 
                                remarks_count=len(non_urgent_remarks), 
-                               urgent_remarks_count=len(urgent_remarks)
+                               urgent_remarks_count=len(urgent_remarks),
+                               help_request_count=len(help_request)
                                )
     else:
         flash("Please log in to access this page.", "warning")
@@ -835,6 +837,8 @@ def dashboard():
 
 @app.route('/remarks/<remark_type>')
 def view_remarks(remark_type):
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
     is_urgent = True if remark_type == 'urgent' else False
     remarks = list(remark_collection.find({'urgent': is_urgent}))
     return render_template('view_remarks.html', remarks=remarks, remark_type=remark_type)
@@ -877,6 +881,8 @@ def get_image(image_id):
 
 @app.route('/new-client')
 def new_customer():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
     return render_template('new-customer.html')
 
 
