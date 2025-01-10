@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Form</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .back-btn {
+            margin-bottom: 20px;
+        }
+        .disabled-checkbox ~ .form-check-input {
+            pointer-events: none;
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+        <h3 class="text-center mb-4">CHANGE FORM</h3>
+
+        <form id="changeForm">
+            <!-- User and Company -->
+            <div class="form-section">
+                <div class="mb-3">
+                    <label for="user" class="form-label">User</label>
+                    <input type="text" id="user" class="form-control" value="{{ username }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label for="companyName" class="form-label">Company Name</label>
+                    <select id="companyName" class="form-select" required>
+                        <option value="" disabled selected>Select Company</option>
+                        {% for company in companies %}
+                            <option value="{{ company }}">{{ company }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" id="date" class="form-control" value="{{ current_date }}" readonly>
+                </div>
+            </div>
+
+            <!-- Checkboxes -->
+            <div class="form-section">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="changeScent">
+                    <label class="form-check-label" for="changeScent">Change scent to</label>
+                    <input type="text" id="changeScentText" class="form-control mt-2" placeholder="Enter new scent" disabled>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="redoSettings">
+                    <label class="form-check-label" for="redoSettings">Redo settings</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="reduceIntensity">
+                    <label class="form-check-label" for="reduceIntensity">Reduce scent intensity</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="increaseIntensity">
+                    <label class="form-check-label" for="increaseIntensity">Increase scent intensity</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="moveDevice">
+                    <label class="form-check-label" for="moveDevice">Move device to</label>
+                    <input type="text" id="moveDeviceText" class="form-control mt-2" placeholder="Enter location" disabled>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="relocateDevice">
+                    <label class="form-check-label" for="relocateDevice">Relocate device to</label>
+                    <select id="relocateDeviceDropdown" class="form-select mt-2" disabled>
+                        <option value="" disabled selected>Select Premise</option>
+                        {% for premise in premises %}
+                            <option value="{{ premise }}">{{ premise }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="collectBack" class="disabled-checkbox">
+                    <label class="form-check-label" for="collectBack">Collect back machine</label>
+                </div>
+            </div>
+
+            <!-- Month and Year -->
+            <div class="form-section">
+                <div class="mb-3">
+                    <label for="month" class="form-label">Month</label>
+                    <select id="month" class="form-select">
+                        <option value="JAN">JAN</option>
+                        <option value="FEB">FEB</option>
+                        <option value="MAR">MAR</option>
+                        <option value="APR">APR</option>
+                        <option value="MAY">MAY</option>
+                        <option value="JUN">JUN</option>
+                        <option value="JUL">JUL</option>
+                        <option value="AUG">AUG</option>
+                        <option value="SEP">SEP</option>
+                        <option value="OCT">OCT</option>
+                        <option value="NOV">NOV</option>
+                        <option value="DEC">DEC</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="year" class="form-label">Year</label>
+                    <select id="year" class="form-select">
+                        {% for year in range(2025, 2031) %}
+                            <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Premise and Device -->
+            <div class="form-section">
+                <div class="mb-3">
+                    <label for="premises" class="form-label">Select Premise Name(s)</label>
+                    <select id="premises" class="form-select" multiple>
+                        {% for premise in premises %}
+                            <option value="{{ premise }}">{{ premise }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="devices" class="form-label">Select Device Name(s)</label>
+                    <select id="devices" class="form-select" multiple>
+                        {% for device in devices %}
+                            <option value="{{ device }}">{{ device }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-4">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const changeScentCheckbox = document.getElementById('changeScent');
+            const changeScentText = document.getElementById('changeScentText');
+
+            const moveDeviceCheckbox = document.getElementById('moveDevice');
+            const moveDeviceText = document.getElementById('moveDeviceText');
+
+            const relocateDeviceCheckbox = document.getElementById('relocateDevice');
+            const relocateDeviceDropdown = document.getElementById('relocateDeviceDropdown');
+
+            const collectBackCheckbox = document.getElementById('collectBack');
+
+            changeScentCheckbox.addEventListener('change', () => {
+                changeScentText.disabled = !changeScentCheckbox.checked;
+            });
+
+            moveDeviceCheckbox.addEventListener('change', () => {
+                moveDeviceText.disabled = !moveDeviceCheckbox.checked;
+            });
+
+            relocateDeviceCheckbox.addEventListener('change', () => {
+                relocateDeviceDropdown.disabled = !relocateDeviceCheckbox.checked;
+            });
+
+            collectBackCheckbox.addEventListener('change', () => {
+                const checkboxes = document.querySelectorAll('.form-check-input:not(#collectBack)');
+                checkboxes.forEach(cb => cb.disabled = collectBackCheckbox.checked);
+            });
+        });
+    </script>
+</body>
+</html>

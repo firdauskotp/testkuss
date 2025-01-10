@@ -834,6 +834,30 @@ def dashboard():
         return redirect(url_for("login"))
 
 
+@app.route('/change-form', methods=['GET', 'POST'])
+def change_form():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    if request.method == 'POST':
+        data = request.json
+        collection = "discontinue" if data.get("collectBack") else "update"
+        
+        db[collection].insert_one(data)
+        return jsonify({"message": "Form submitted successfully!"}), 200
+
+    companies = services_collection.distinct('Premise Name')
+    premises = services_collection.distinct('Premise Name')
+    devices = services_collection.distinct('Model')
+
+    return render_template(
+        'change-form.html',
+        username=session.get('username'),
+        companies=companies,
+        premises=premises,
+        devices=devices,
+        current_date=datetime.now().strftime('%Y-%m-%d')
+    )
 
 @app.route('/remarks/<remark_type>')
 def view_remarks(remark_type):

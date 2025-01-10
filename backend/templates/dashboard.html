@@ -82,10 +82,7 @@
         <ul class="navbar-nav">
           <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('new_customer') }}">Add New Customer</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Change Scent</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Client Complaints</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Client Discontinue</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Settings</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('change_form') }}">Change Form (Settings)</a></li>
           <li class="nav-item"><a class="nav-link" href="#">Activity Log</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('remark') }}">Remarks</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Add User</a></li>
