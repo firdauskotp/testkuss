@@ -13,6 +13,7 @@ from werkzeug.security import generate_password_hash
 import gridfs
 from dotenv import load_dotenv
 from bson import json_util
+from utils import log_activity
 
 
 app = Flask(__name__)
@@ -321,9 +322,12 @@ def reports():
 
         query = {}
         if month and year:
+            months = [int(m) for m in month.split(',')]
+            month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
+    
             query['$expr'] = {
                 '$and': [
-                    {'$eq': [{'$month': '$month_year'}, int(month)]},
+                    {'$in': [{'$month': '$month_year'}, month_list]},
                     {'$eq': [{'$year': '$month_year'}, int(year)]}
                 ]
             }
@@ -549,31 +553,44 @@ def pack_list():
         bottle_query={}
         other_query={}
         if device_month and device_year:
+            device_months = [int(m) for m in device_month.split(',')]
+            device_month_list = [int(m.strip()) for m in device_month.split(',') if m.strip().isdigit()]
+
             device_query['$expr'] = {
                 '$and': [
-                    {'$eq': [{'$month': '$month_year'}, int(device_month)]},
+                    {'$in': [{'$month': '$month_year'}, device_month_list]},
                     {'$eq': [{'$year': '$month_year'}, int(device_year)]}
                 ]
             }
         if month and year:
+            months = [int(m) for m in month.split(',')]
+            month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
+
             query['$expr'] = {
+                
                 '$and': [
-                    {'$eq': [{'$month': '$month_year'}, int(month)]},
+                    {'$in': [{'$month': '$month_year'}, month_list]},
                     {'$eq': [{'$year': '$month_year'}, int(year)]}
                 ]
             }
         if bottle_month and bottle_year:
+            bottle_months = [int(m) for m in bottle_month.split(',')]
+            bottle_month_list = [int(m.strip()) for m in bottle_month.split(',') if m.strip().isdigit()]
+
             bottle_query['$expr'] = {
                 '$and': [
-                    {'$eq': [{'$month': '$month_year'}, int(bottle_month)]},
+                    {'$in': [{'$month': '$month_year'}, bottle_month_list]},
                     {'$eq': [{'$year': '$month_year'}, int(bottle_year)]}
                 ]
             }
        
         if straw_month and straw_year:
+            straw_months = [int(m) for m in straw_month.split(',')]
+            straw_month_list = [int(m.strip()) for m in straw_month.split(',') if m.strip().isdigit()]
+
             other_query['$expr'] = {
                 '$and': [
-                    {'$eq': [{'$month': '$month_year'}, int(straw_month)]},
+                    {'$in': [{'$month': '$month_year'}, straw_month_list]},
                     {'$eq': [{'$year': '$month_year'}, int(straw_year)]}
                 ]
             }
@@ -725,9 +742,12 @@ def eo_list():
 
         model_query = {}
         if model_month and model_year:
+            model_months = [int(m) for m in model_month.split(',')]
+            model_month_list = [int(m.strip()) for m in model_month.split(',') if m.strip().isdigit()]
+
             model_query['$expr'] = {
                 '$and': [
-                    {'$eq': [{'$month': '$month_year'}, int(model_month)]},
+                    {'$in': [{'$month': '$month_year'}, model_month_list]},
                     {'$eq': [{'$year': '$month_year'}, int(model_year)]}
                 ]
             }
@@ -756,9 +776,12 @@ def eo_list():
         # Build MongoDB query
         query = {}
         if month and year:
+            months = [int(m) for m in month.split(',')]
+            month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
+
             query['$expr'] = {
                 '$and': [
-                    {'$eq': [{'$month': '$month_year'}, int(month)]},
+                    {'$in': [{'$month': '$month_year'}, month_list]},
                     {'$eq': [{'$year': '$month_year'}, int(year)]}
                 ]
             }
