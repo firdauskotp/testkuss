@@ -86,10 +86,17 @@
                         {% endfor %}
                     </select>
                 </div>
+
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="collectBack" class="disabled-checkbox">
                     <label class="form-check-label" for="collectBack">Collect back machine</label>
                 </div>
+
+                <div class="form-check">
+                    <label for="remark" class="form-label">Remark</label>
+                    <textarea class="form-control" id="remark" name="remark" rows="5" required></textarea>
+                  </div>
+                
             </div>
 
             <!-- Month and Year -->
@@ -125,20 +132,38 @@
             <div class="form-section">
                 <div class="mb-3">
                     <label for="premises" class="form-label">Select Premise Name(s)</label>
-                    <select id="premises" class="form-select" multiple>
+                    <div id="premises">
                         {% for premise in premises %}
-                            <option value="{{ premise }}">{{ premise }}</option>
+                        <div class="form-check">
+                            <input 
+                                class="form-check-input premise-checkbox" 
+                                type="checkbox" 
+                                id="premise_{{ loop.index }}" 
+                                name="premises" 
+                                value="{{ premise }}">
+                            <label class="form-check-label" for="premise_{{ loop.index }}">{{ premise }}</label>
+                        </div>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
+                
                 <div class="mb-3">
                     <label for="devices" class="form-label">Select Device Name(s)</label>
-                    <select id="devices" class="form-select" multiple>
+                    <div id="devices">
                         {% for device in devices %}
-                            <option value="{{ device }}">{{ device }}</option>
+                        <div class="form-check">
+                            <input 
+                                class="form-check-input device-checkbox" 
+                                type="checkbox" 
+                                id="device_{{ loop.index }}" 
+                                name="devices" 
+                                value="{{ device }}">
+                            <label class="form-check-label" for="device_{{ loop.index }}">{{ device }}</label>
+                        </div>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
+                
             </div>
 
             <button type="submit" class="btn btn-primary w-100 mt-4">Submit</button>
@@ -147,34 +172,44 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const changeScentCheckbox = document.getElementById('changeScent');
-            const changeScentText = document.getElementById('changeScentText');
-
-            const moveDeviceCheckbox = document.getElementById('moveDevice');
-            const moveDeviceText = document.getElementById('moveDeviceText');
-
-            const relocateDeviceCheckbox = document.getElementById('relocateDevice');
-            const relocateDeviceDropdown = document.getElementById('relocateDeviceDropdown');
-
-            const collectBackCheckbox = document.getElementById('collectBack');
-
-            changeScentCheckbox.addEventListener('change', () => {
-                changeScentText.disabled = !changeScentCheckbox.checked;
-            });
-
-            moveDeviceCheckbox.addEventListener('change', () => {
-                moveDeviceText.disabled = !moveDeviceCheckbox.checked;
-            });
-
-            relocateDeviceCheckbox.addEventListener('change', () => {
-                relocateDeviceDropdown.disabled = !relocateDeviceCheckbox.checked;
-            });
-
-            collectBackCheckbox.addEventListener('change', () => {
-                const checkboxes = document.querySelectorAll('.form-check-input:not(#collectBack)');
-                checkboxes.forEach(cb => cb.disabled = collectBackCheckbox.checked);
+            const companyNameSelect = document.getElementById('companyName');
+            const devicesContainer = document.getElementById('devices');
+    
+            companyNameSelect.addEventListener('change', () => {
+                const selectedCompany = companyNameSelect.value;
+    
+                if (selectedCompany) {
+                    fetch(`/get-devices?companyName=${encodeURIComponent(selectedCompany)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            devicesContainer.innerHTML = ''; // Clear current checkboxes
+    
+                            data.devices.forEach((device, index) => {
+                                const checkboxDiv = document.createElement('div');
+                                checkboxDiv.className = 'form-check';
+    
+                                const checkbox = document.createElement('input');
+                                checkbox.type = 'checkbox';
+                                checkbox.className = 'form-check-input device-checkbox';
+                                checkbox.id = `device_${index}`;
+                                checkbox.name = 'devices';
+                                checkbox.value = device;
+    
+                                const label = document.createElement('label');
+                                label.className = 'form-check-label';
+                                label.htmlFor = `device_${index}`;
+                                label.textContent = device;
+    
+                                checkboxDiv.appendChild(checkbox);
+                                checkboxDiv.appendChild(label);
+                                devicesContainer.appendChild(checkboxDiv);
+                            });
+                        })
+                        .catch(error => console.error('Error fetching devices:', error));
+                }
             });
         });
     </script>
+    
 </body>
 </html>

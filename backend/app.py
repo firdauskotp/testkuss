@@ -51,6 +51,8 @@ others_list_collection = dashboard_db['others_devices_pack']
 empty_bottles_list_collection = dashboard_db['others_empty_bottle_pack']
 straw_list_collection = dashboard_db['straw_mist_heads_pack']
 
+test_db=mongo['test']
+test_collection=test_db['test']
 
 fs = gridfs.GridFS(db)
 
@@ -337,7 +339,7 @@ def reports():
         # Filter by EO (string partial match)
 
         if EO:
-            query['EO'] = {'$regex': EO, '$options': 'i'}  # Case-insensitive partial match
+            query['Current EO'] = {'$regex': EO, '$options': 'i'}  # Case-insensitive partial match
 
 
         # Filter by Volume (integer exact match)
@@ -955,6 +957,53 @@ def remark():
         return redirect(url_for('dashboard'))
 
     return render_template('remark.html', username=username)
+
+@app.route('/get-devices', methods=['GET'])
+def get_devices():
+    company_name = request.args.get('companyName')
+    if not company_name:
+        return jsonify({"devices": []}), 400
+
+    # Find devices associated with the company
+    devices = services_collection.find({"Premise Name": company_name}, {"Model": 1})
+    devices = [device["Model"] for device in devices if "Model" in device]
+
+    return jsonify({"devices": devices}), 200
+
+@app.route('/new-customer-submit', methods=['POST','GET'])
+def new_customer_submit():
+    # Extract company information
+    company_name = request.form.get("company_name")
+    contact_info = request.form.get("contact_info")
+
+    # Extract premises data (assuming multiple premises can be submitted as comma-separated values)
+    premises = request.form.getlist("premises[]")  # Using getlist for multiple premises
+
+    # Extract devices data (assuming devices are tied to premises)
+    devices = request.form.getlist("devices[]")  # Using getlist for multiple devices
+
+    # if not company_name or not premises:
+    #     return jsonify({"error": "Company name and premises are required!"}), 400
+
+    # Push premises to MongoDB
+    for premise in premises:
+        premise_record = {
+            "company_name": company_name,
+            "contact_info": contact_info,
+            "premise": premise,
+        }
+        test_db["premises"].insert_one(premise_record)
+
+    # Push devices to MongoDB
+    for device in devices:
+        # Here, you can split the device details to tie them to the respective premise if needed
+        device_record = {
+            "company_name": company_name,
+            "device_name": device,
+        }
+        test_db["devices"].insert_one(device_record)
+
+    return jsonify({"message": "Data successfully submitted!"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

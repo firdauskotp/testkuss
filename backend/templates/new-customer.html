@@ -35,7 +35,7 @@
 
         <h3 class="text-center mb-4">New Customer Form</h3>
 
-        <form id="customerForm">
+        <form id="customerForm" action="/new-customer-submit">
             <!-- Company Details -->
             <div class="form-section">
                 <div class="mb-3">
@@ -237,7 +237,8 @@
         // Update premise dropdown options for contacts
         // Update premise dropdown options for contacts and devices
 function updatePremiseDropdowns() {
-    const selectElements = document.querySelectorAll('#contactDetails .form-select, #deviceDetails .form-select');
+    const selectElements = document.querySelectorAll('#contactDetails .form-select');
+    const deviceElements = document.querySelectorAll('#deviceDetails .form-select');
 
     const premiseOptions = getPremiseOptions(); // Get updated premise names
     selectElements.forEach(select => {
@@ -246,7 +247,15 @@ function updatePremiseDropdowns() {
             ${premiseOptions}
         `;
     });
+
+    deviceElements.forEach(select => {
+        select.innerHTML = `
+            <option selected disabled>Tie contact to:</option>
+            ${premiseOptions}
+        `;
+    });
 }
+
 
 // Get all premise options with names for dropdowns
 function getPremiseOptions() {
@@ -394,7 +403,7 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                     <label class="form-label">Tie Device to Premise:</label>
                     <select class="form-select mb-2" required>
                         <option selected disabled>Select a premise</option>
-                        <option>Premise 1</option>
+                        ${getPremiseOptions()}
                     </select>
 
                     <!-- Events for Device -->

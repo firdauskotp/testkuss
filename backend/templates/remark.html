@@ -29,6 +29,8 @@
 </head>
 <body>
   <div class="container">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+
     <h2 class="text-center mb-4">Add Remark</h2>
     <form method="POST">
       <!-- Disabled Username Field -->
@@ -53,7 +55,6 @@
 
       <!-- Buttons -->
       <div class="d-flex justify-content-between">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back</a>
         <button type="submit" class="btn btn-primary">Submit</button>
       </div>
     </form>
