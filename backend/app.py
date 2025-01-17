@@ -1,4 +1,5 @@
 import smtplib
+from urllib.parse import urlencode
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify, Response
 from flask_pymongo import MongoClient
 from werkzeug.security import check_password_hash
@@ -67,6 +68,24 @@ app.config['MAIL_PASSWORD'] = os.getenv('SMTP_APP_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']
 
 mail = Mail(app)
+
+@app.context_processor
+def inject_builtin_functions():
+    # Inject Python built-in functions into the Jinja2 environment
+    return dict(max=max, min=min)
+
+@app.template_filter('to_querystring')
+def to_querystring(query_params):
+    """Converts a dictionary into a query string."""
+    return urlencode(query_params)
+
+@app.template_filter('update_querystring')
+def update_querystring(querystring, key, value):
+    """Updates or adds a key-value pair in the query string."""
+    query_dict = dict([kv.split('=') for kv in querystring.split('&') if '=' in kv])
+    query_dict[key] = value
+    return urlencode(query_dict)
+
 
 # Routes
 @app.route("/customer-help", methods=["GET", "POST"])
@@ -288,6 +307,8 @@ def reports():
         month = request.args.get('month','').strip()
         year = request.args.get('year','').strip()
         EO = request.args.get("EO")
+        Company = request.args.get("Company")
+        Model = request.args.get("Model")
         Volume = request.args.get("Volume")
         SN = request.args.get("SN")
         Balance = request.args.get("Balance")
@@ -340,6 +361,12 @@ def reports():
 
         if EO:
             query['Current EO'] = {'$regex': EO, '$options': 'i'}  # Case-insensitive partial match
+
+        if Model:
+            query['Model'] = {'$regex': Model, '$options': 'i'}  # Case-insensitive partial match
+
+        if Company:
+            query['company'] = {'$regex': Company, '$options': 'i'}  # Case-insensitive partial match
 
 
         # Filter by Volume (integer exact match)
@@ -447,7 +474,7 @@ def reports():
 
         # Filter by Colour (string partial match)
         if Colour:
-            query['Colour'] = {'$regex': Colour, '$options': 'i'}  # Case-insensitive partial match
+            query['Color'] = {'$regex': Colour, '$options': 'i'}  # Case-insensitive partial match
 
         # Filter by Current EO (string partial match)
         if Current_EO:
@@ -471,7 +498,13 @@ def reports():
 
 
         
+        query_params = request.args.to_dict()
+        query_params['page'] = page
+        query_params['limit'] = limit
 
+        # Construct base URL for pagination links
+        base_url = request.path
+        pagination_base_url = f"{base_url}?"
         # Get total entries for pagination
         total_entries = services_collection.count_documents(query)
         
@@ -488,6 +521,10 @@ def reports():
             if isinstance(month_year_date, datetime):
                 entry['month'] = month_year_date.month
                 entry['year'] = month_year_date.year
+            try:
+                entry["S/N"] = int(entry["S/N"])
+            except Exception as e:
+                entry["S/N"] = 0
             processed_data.append(entry)
 
 
@@ -499,7 +536,9 @@ def reports():
                                data=processed_data, 
                                page=page, 
                                total_pages=total_pages,
-                               limit=limit
+                               limit=limit,
+                               pagination_base_url=pagination_base_url,
+                               query_params=query_params
                                )
     else:
         flash("Please log in to access this page.", "warning")
@@ -641,7 +680,29 @@ def pack_list():
         if devices:
             device_query['devices'] = {'$regex': devices, '$options': 'i'}
 
-        
+        query_params = request.args.to_dict()
+        query_params['page'] = page
+        query_params['limit'] = limit
+        base_url = request.path
+        pagination_base_url = f"{base_url}?"
+
+        query_params_device = request.args.to_dict()
+        query_params_device['device_page'] = device_page
+        query_params_device['device_limit'] = device_limit
+        base_url_device = request.path
+        pagination_base_url_device = f"{base_url_device}?"
+
+        query_params_bottle = request.args.to_dict()
+        query_params_bottle['bottle_page'] = bottle_page
+        query_params_bottle['bottle_limit'] = bottle_limit
+        base_url_bottle = request.path
+        pagination_base_url_bottle = f"{base_url_bottle}?"
+
+        query_params_straw = request.args.to_dict()
+        query_params_straw['straw_page'] = straw_page
+        query_params_straw['straw_limit'] = straw_limit
+        base_url_straw = request.path
+        pagination_base_url_straw = f"{base_url_straw}?"
 
 
         total_page = eo_pack_collection.count_documents(query)
@@ -712,7 +773,15 @@ def pack_list():
                                straw_limit=straw_limit,
                                page=page, 
                                total_pages=total_pages,
-                               limit=limit
+                               limit=limit,
+                               pagination_base_url=pagination_base_url,
+                               query_params=query_params,
+                               pagination_base_url_device=pagination_base_url_device,
+                               query_params_device=query_params_device,
+                               pagination_base_url_bottle=pagination_base_url_bottle,
+                               query_params_bottle=query_params_bottle,
+                               pagination_base_url_straw=pagination_base_url_straw,
+                               query_params_straw=query_params_straw
                                )
     else:
         flash("Please log in to access this page.", "warning")
@@ -792,6 +861,18 @@ def eo_list():
         if volume:
             query['Volume'] = int(volume)
 
+        query_params = request.args.to_dict()
+        query_params['page'] = page
+        query_params['limit'] = limit
+        base_url = request.path
+        pagination_base_url = f"{base_url}?"
+
+        query_params_model = request.args.to_dict()
+        query_params_model['model_page'] = model_page
+        query_params_model['model_limit'] = model_limit
+        base_url_model = request.path
+        pagination_base_url_model = f"{base_url_model}?"
+
         # Get total entries for pagination
         total_entries_eo_list = eo_list_collection.count_documents(query)
         total_entries_model_list = model_list_collection.count_documents(model_query)
@@ -833,7 +914,11 @@ def eo_list():
                                total_model_pages=total_model_pages,
                                total_pages=total_pages,
                                model_limit=model_limit, 
-                               limit=limit
+                               limit=limit,
+                               pagination_base_url=pagination_base_url,
+                               query_params=query_params,
+                               pagination_base_url_model=pagination_base_url_model,
+                               query_params_model=query_params_model,
                                )
     else:
         flash("Please log in to access this page.", "warning")
@@ -973,8 +1058,8 @@ def get_devices():
 @app.route('/new-customer-submit', methods=['POST','GET'])
 def new_customer_submit():
     # Extract company information
-    company_name = request.form.get("company_name")
-    contact_info = request.form.get("contact_info")
+    company_name = request.form.get("companyName")
+    # contact_info = request.form.get("contact_info")
 
     # Extract premises data (assuming multiple premises can be submitted as comma-separated values)
     premises = request.form.getlist("premises[]")  # Using getlist for multiple premises
@@ -982,16 +1067,19 @@ def new_customer_submit():
     # Extract devices data (assuming devices are tied to premises)
     devices = request.form.getlist("devices[]")  # Using getlist for multiple devices
 
+    contact_info = request.form.getlist("contacts[]")
+
     # if not company_name or not premises:
     #     return jsonify({"error": "Company name and premises are required!"}), 400
 
     # Push premises to MongoDB
     for premise in premises:
-        premise_record = {
-            "company_name": company_name,
-            "contact_info": contact_info,
-            "premise": premise,
-        }
+        for i in contact_info:
+            premise_record = {
+                "company_name": company_name,
+                "contact_info": i,
+                "premise": premise,
+            }
         test_db["premises"].insert_one(premise_record)
 
     # Push devices to MongoDB
