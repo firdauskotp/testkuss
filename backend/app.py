@@ -881,8 +881,15 @@ def new_customer():
     if "user_id" in session:
         return render_template('new-customer.html')
 
-
-
+@app.route('/pre-service')
+def pre_service():
+    if "user_id" in session:
+        return render_template('pre-service.html')
+    
+@app.route('/service')
+def service():
+    if "user_id" in session:
+        return render_template('service.html')
 
 
 @app.route('/remark', methods=['GET', 'POST'])
