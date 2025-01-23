@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash
 import gridfs
 from dotenv import load_dotenv
-from bson import json_util
+from bson import ObjectId, json_util
 from utils import log_activity
 
 
@@ -51,6 +51,12 @@ model_list_collection = dashboard_db['model_list']
 others_list_collection = dashboard_db['others_devices_pack']
 empty_bottles_list_collection = dashboard_db['others_empty_bottle_pack']
 straw_list_collection = dashboard_db['straw_mist_heads_pack']
+profile_list_collection = dashboard_db['profile']
+device_list_collection = dashboard_db['device']
+
+change_collection = dashboard_db['change']
+refund_collection = dashboard_db['refund']
+
 
 test_db=mongo['test']
 test_collection=test_db['test']
@@ -68,6 +74,18 @@ app.config['MAIL_PASSWORD'] = os.getenv('SMTP_APP_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']
 
 mail = Mail(app)
+
+@app.route('/update-data', methods=['POST'])
+def update_data():
+    data = request.get_json()
+    record_id = data.pop('sn')
+    print("Record:", record_id)
+    print("Object ID :", ObjectId)
+    result = services_collection.update_one({'S/N': record_id}, {'$set': data})
+    if result.modified_count > 0:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False})
 
 @app.context_processor
 def inject_builtin_functions():
@@ -951,14 +969,17 @@ def change_form():
     
     if request.method == 'POST':
         data = request.json
-        collection = "discontinue" if data.get("collectBack") else "update"
+        collection = "refund" if data.get("collectBack") else "change"
         
-        db[collection].insert_one(data)
+        dashboard_db[collection].insert_one(data)
         return jsonify({"message": "Form submitted successfully!"}), 200
 
-    companies = services_collection.distinct('Premise Name')
+    companies = services_collection.distinct('company')
     premises = services_collection.distinct('Premise Name')
     devices = services_collection.distinct('Model')
+
+    # premises = services_collection.distinct('Premise Name', {'company': company_name})
+
 
     return render_template(
         'change-form.html',
@@ -1017,7 +1038,126 @@ def get_image(image_id):
 def new_customer():
     if 'username' not in session:
         return redirect(url_for('admin_login'))
-    return render_template('new-customer.html')
+    if request.method == "POST":
+        # Auto-increment case number
+
+        premise_name_list=[]
+        premise_area_list=[]
+        premise_address_list=[]
+
+        pic_name_list=[]
+        pic_designation_list=[]
+        pic_contact_list=[]
+        pic_email_list=[]
+        pic_premise=[]
+
+        device_list=[]
+
+        # Extract customer form data
+        companyName = request.form.get("companyName")
+        dateCreated = request.form.get("dateCreated")
+        industry = request.form.get("industry")
+
+        premiseName = request.form.get("premiseName")
+        premiseArea = request.form.get("premiseArea")
+        premiseAddress = request.form.get("premiseAddress")
+
+        picName = request.form.get("picName")
+        picDesignation = request.form.get("picDesignation")
+        picContact = request.form.get("picContact")
+        picEmail = request.form.get("picEmail")
+
+        deviceLocation = request.form.get("deviceLocation")
+        deviceSN = request.form.get("deviceSN")
+        deviceModel = request.form.get("deviceModel")
+        deviceVolume = request.form.get("deviceVolume")
+        deviceScent = request.form.get("deviceScent")
+
+        contactPremise = request.form.get("contactPremise")
+        devicePremise = request.form.get("devicePremise")
+
+        E1Days = request.form.get("E1Days")
+        E1StartTime = request.form.get("E1StartTime")
+        E1EndTime = request.form.get("E1EndTime")
+        E1Pause = request.form.get("E1Pause")
+        E1Work = request.form.get("E1Work")
+
+        E2Days = request.form.get("E1Days")
+        E2StartTime = request.form.get("E1StartTime")
+        E2EndTime = request.form.get("E1EndTime")
+        E2Pause = request.form.get("E1Pause")
+        E2Work = request.form.get("E1Work")
+
+        E3Days = request.form.get("E1Days")
+        E3StartTime = request.form.get("E1StartTime")
+        E3EndTime = request.form.get("E1EndTime")
+        E3Pause = request.form.get("E1Pause")
+        E3Work = request.form.get("E1Work")
+
+        E4Days = request.form.get("E1Days")
+        E4StartTime = request.form.get("E1StartTime")
+        E4EndTime = request.form.get("E1EndTime")
+        E4Pause = request.form.get("E1Pause")
+        E4Work = request.form.get("E1Work")
+
+        i = 1
+
+        while True:
+            premise_name = request.form.get(f'premiseName{i}')
+            premise_area = request.form.get(f'premiseArea{i}')
+            premise_address = request.form.get(f'premiseAddress{i}')
+            
+            # Break the loop if no more premises are found
+            if not premise_name or not premise_area or not premise_address:
+                break
+            
+            # Create a dictionary for the current premise
+            
+            premise_name_list.append(premise_name)
+            premise_area_list.append(premise_area)
+            premise_address_list.append(premise_address)
+            i += 1
+
+
+        while True:
+            premise_name = request.form.get(f'premiseName{i}')
+            premise_area = request.form.get(f'premiseArea{i}')
+            premise_address = request.form.get(f'premiseAddress{i}')
+            contactPremise = request.form.get("contactPremise")
+
+            
+            # Break the loop if no more premises are found
+            if not premise_name or not premise_area or not premise_address:
+                break
+            
+            # Create a dictionary for the current premise
+            
+            premise_name_list.append(premise_name)
+            premise_area_list.append(premise_area)
+            premise_address_list.append(premise_address)
+            pic_contact_list.append(contactPremise)
+            i += 1
+
+        
+
+
+
+        # Insert new case into MongoDB
+        test_collection.insert_one({
+            "case_no": case_no,
+            "premise_name": premise_name,
+            "location": location,
+            "image_id": image_id,
+            "model": model,
+            "issues": issues,
+            "remarks": remarks,
+            "email": user_email,
+            "created_at": datetime.now(),
+        })
+
+        return redirect(url_for("new-customer.html"))
+
+    # return render_template('new-customer.html')
 
 
 
@@ -1054,6 +1194,42 @@ def get_devices():
     devices = [device["Model"] for device in devices if "Model" in device]
 
     return jsonify({"devices": devices}), 200
+
+@app.route("/get_companies", methods=["GET"])
+def get_companies():
+    companies = services_collection.find({}, {"company": 1, "_id": 0})
+    return jsonify([company["company"] for company in companies])
+
+@app.route("/get_essential_oils", methods=["GET"])
+def get_essential_oils():
+    essential_oils = eo_pack_collection.find({}, {"eo_name": 1, "_id": 0})
+    return jsonify([eo["name"] for eo in essential_oils])
+
+@app.route("/post-service", methods=["POST","GET"])
+def post_service():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+
+    username = session['username']  # Get the logged-in user's username
+    
+    
+    if request.method == "POST":
+        data = {
+            "company_name": request.form.get("company_name"),
+            "premise": request.form.get("premise"),
+            "device": request.form.get("device"),
+            "essential_oil": request.form.get("essential_oil"),
+            "oil_balance": int(request.form.get("oil_balance")),
+            "balance_brought_back": int(request.form.get("balance_brought_back")),
+            "balance_brought_back_percent": request.form.get("balance_brought_back_percent"),
+            "refill_amount": int(request.form.get("refill_amount")),
+            "refill_amount_percent": request.form.get("refill_amount_percent"),
+        }
+        eo_pack_collection.insert_one(data)
+        flash(f"Balance updated successfully!", "success")
+        return redirect(url_for("dashboard"))
+    return render_template('post-service.html', username=username)
+
 
 @app.route('/new-customer-submit', methods=['POST','GET'])
 def new_customer_submit():

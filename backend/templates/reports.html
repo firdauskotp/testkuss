@@ -226,11 +226,28 @@
                         <th>Other Remarks</th>
                         <th>Month</th>
                         <th>Year</th>
+                        <!-- <th>Edit</th> -->
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in data %}
-                    <tr>
+                    <tr data-id="{{ user['_id'] }}"
+                    data-company="{{ user['company'] }}"
+                    data-premise-name="{{ user['Premise Name'] }}"
+                    data-model="{{ user['Model'] }}"
+                    data-color="{{ user['Color'] }}"
+                    data-sn="{{ user['S/N'] }}"
+                    data-volume="{{ user['Volume'] }}"
+                    data-current-eo="{{ user['Current EO'] }}"
+                    data-balance="{{ user['Balance'] }}"
+                    data-consumption="{{ user['Consumption'] }}"
+                    data-new-eo="{{ user['New EO'] }}"
+                    data-refilled="{{ user['Refilled'] }}"
+                    data-scent-effectiveness="{{ user['#1 Scent Effectiveness'] }}"
+                    data-common-encounters="{{ user['#1 Common encounters'] }}"
+                    data-other-remarks="{{ user['#1 Other remarks'] }}"
+                    data-month="{{ user['month'] }}"
+                    data-year="{{ user['year'] }}">
                         <td>{{ user['company'] }}</td>
 
                       <td>{{ user['Premise Name'] }}</td>
@@ -268,6 +285,9 @@
                         <td>{{ user['#1 Other remarks'] }}</td>
                         <td>{{ user['month'] }}</td>
                         <td>{{ user['year'] }}</td>
+                        <!-- <td>
+                            <button class="btn btn-primary btn-sm edit-btn" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>
+                        </td> -->
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -287,18 +307,17 @@
                 </li>
         
                 <!-- First Page and Ellipsis -->
-                {% if page > 5 %}
+                {% if page > 4 %}
                 <li class="page-item">
                     <a class="page-link" 
                     href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}">1</a>
                 </li>
                 <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
+<span class="page-link">...</span>                </li>
                 {% endif %}
 
                 <!-- Dynamic Page Numbers -->
-                {% for p in range(max(1, page - 2), min(total_pages + 1, page + 5)) %}
+                {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
                 <li class="page-item {% if p == page %}active{% endif %} d-none d-sm-inline">
                     <a class="page-link" 
                     href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}">
@@ -308,7 +327,7 @@
                 {% endfor %}
 
                 <!-- Ellipsis and Last Page -->
-                {% if page < total_pages - 2 %}
+                {% if page < total_pages - 3 %}
                 <li class="page-item disabled d-none d-sm-inline">
                     <span class="page-link">...</span>
                 </li>
@@ -333,8 +352,336 @@
         
     </div>
 
-      
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="recordId">
+                
+                        <!-- Company and Premise Name -->
+                        <div class="mb-3">
+                            <label for="company" class="form-label">Company</label>
+                            <input type="text" class="form-control" id="company">
+                        </div>
+                        <div class="mb-3">
+                            <label for="premiseName" class="form-label">Premise Name</label>
+                            <input type="text" class="form-control" id="premiseName">
+                        </div>
+                
+                        <!-- E1 to E4 Fields -->
+                        <div class="mb-3">
+                            <label for="e1Days" class="form-label">E1-Days</label>
+                            <input type="number" class="form-control" id="e1Days">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e1Start" class="form-label">E1-Start</label>
+                            <input type="datetime-local" class="form-control" id="e1Start">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e1End" class="form-label">E1-End</label>
+                            <input type="datetime-local" class="form-control" id="e1End">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e1Work" class="form-label">E1-Work</label>
+                            <input type="number" class="form-control" id="e1Work">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e1Pause" class="form-label">E1-Pause</label>
+                            <input type="number" class="form-control" id="e1Pause">
+                        </div>
+                
+                        <div class="mb-3">
+                            <label for="e2Days" class="form-label">E2-Days</label>
+                            <input type="number" class="form-control" id="e2Days">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e2Start" class="form-label">E2-Start</label>
+                            <input type="datetime-local" class="form-control" id="e2Start">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e2End" class="form-label">E2-End</label>
+                            <input type="datetime-local" class="form-control" id="e2End">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e2Work" class="form-label">E2-Work</label>
+                            <input type="number" class="form-control" id="e2Work">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e2Pause" class="form-label">E2-Pause</label>
+                            <input type="number" class="form-control" id="e2Pause">
+                        </div>
+                
+                        <div class="mb-3">
+                            <label for="e3Days" class="form-label">E3-Days</label>
+                            <input type="number" class="form-control" id="e3Days">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e3Start" class="form-label">E3-Start</label>
+                            <input type="datetime-local" class="form-control" id="e3Start">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e3End" class="form-label">E3-End</label>
+                            <input type="datetime-local" class="form-control" id="e3End">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e3Work" class="form-label">E3-Work</label>
+                            <input type="number" class="form-control" id="e3Work">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e3Pause" class="form-label">E3-Pause</label>
+                            <input type="number" class="form-control" id="e3Pause">
+                        </div>
+                
+                        <div class="mb-3">
+                            <label for="e4Days" class="form-label">E4-Days</label>
+                            <input type="number" class="form-control" id="e4Days">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e4Start" class="form-label">E4-Start</label>
+                            <input type="datetime-local" class="form-control" id="e4Start">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e4End" class="form-label">E4-End</label>
+                            <input type="datetime-local" class="form-control" id="e4End">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e4Work" class="form-label">E4-Work</label>
+                            <input type="number" class="form-control" id="e4Work">
+                        </div>
+                        <div class="mb-3">
+                            <label for="e4Pause" class="form-label">E4-Pause</label>
+                            <input type="number" class="form-control" id="e4Pause">
+                        </div>
+                
+                        <!-- Month and Year -->
+                        <div class="mb-3">
+                            <label for="monthYear" class="form-label">Month-Year</label>
+                            <input type="datetime-local" class="form-control" id="monthYear">
+                        </div>
+                
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
     
+
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Changes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to save these changes?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmSave">Yes, Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const editButtons = document.querySelectorAll('.edit-btn');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const row = this.closest('tr');
+
+            // Populate modal fields with data-* attributes
+            document.getElementById('recordId').value = row.dataset.id;
+            document.getElementById('company').value = row.dataset.company;
+            document.getElementById('premiseName').value = row.dataset.premiseName;
+
+            // Populate E1 to E4 fields
+            document.getElementById('e1Days').value = row.dataset.e1Days;
+            document.getElementById('e1Start').value = row.dataset.e1Start;
+            document.getElementById('e1End').value = row.dataset.e1End;
+            document.getElementById('e1Work').value = row.dataset.e1Work;
+            document.getElementById('e1Pause').value = row.dataset.e1Pause;
+
+            document.getElementById('e2Days').value = row.dataset.e2Days;
+            document.getElementById('e2Start').value = row.dataset.e2Start;
+            document.getElementById('e2End').value = row.dataset.e2End;
+            document.getElementById('e2Work').value = row.dataset.e2Work;
+            document.getElementById('e2Pause').value = row.dataset.e2Pause;
+
+            document.getElementById('e3Days').value = row.dataset.e3Days;
+            document.getElementById('e3Start').value = row.dataset.e3Start;
+            document.getElementById('e3End').value = row.dataset.e3End;
+            document.getElementById('e3Work').value = row.dataset.e3Work;
+            document.getElementById('e3Pause').value = row.dataset.e3Pause;
+
+            document.getElementById('e4Days').value = row.dataset.e4Days;
+            document.getElementById('e4Start').value = row.dataset.e4Start;
+            document.getElementById('e4End').value = row.dataset.e4End;
+            document.getElementById('e4Work').value = row.dataset.e4Work;
+            document.getElementById('e4Pause').value = row.dataset.e4Pause;
+
+            // Populate Month and Year (in required format)
+            let monthYear = row.dataset.monthYear; // Format: YYYY-MM-DD
+            document.getElementById('monthYear').value = new Date(monthYear).toISOString().slice(0, 19); // Convert to ISO format
+        });
+    });
+
+    document.getElementById('editForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const updatedData = {
+            id: document.getElementById('recordId').value,
+            company: document.getElementById('company').value,
+            premiseName: document.getElementById('premiseName').value,
+            e1Days: document.getElementById('e1Days').value,
+            e1Start: document.getElementById('e1Start').value,
+            e1End: document.getElementById('e1End').value,
+            e1Work: document.getElementById('e1Work').value,
+            e1Pause: document.getElementById('e1Pause').value,
+            e2Days: document.getElementById('e2Days').value,
+            e2Start: document.getElementById('e2Start').value,
+            e2End: document.getElementById('e2End').value,
+            e2Work: document.getElementById('e2Work').value,
+            e2Pause: document.getElementById('e2Pause').value,
+            e3Days: document.getElementById('e3Days').value,
+            e3Start: document.getElementById('e3Start').value,
+            e3End: document.getElementById('e3End').value,
+            e3Work: document.getElementById('e3Work').value,
+            e3Pause: document.getElementById('e3Pause').value,
+            e4Days: document.getElementById('e4Days').value,
+            e4Start: document.getElementById('e4Start').value,
+            e4End: document.getElementById('e4End').value,
+            e4Work: document.getElementById('e4Work').value,
+            e4Pause: document.getElementById('e4Pause').value,
+            monthYear: document.getElementById('monthYear').value // Date in ISO format
+        };
+
+        fetch('/update-record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Record updated successfully!');
+                location.reload(); // Refresh to reflect changes
+            } else {
+                alert('Error updating record.');
+            }
+        })
+        .catch(err => console.error(err));
+    });
+});
+
+</script>
+      <!-- <script>
+        document.addEventListener('DOMContentLoaded', function () {
+    const editButtons = document.querySelectorAll('.edit-btn');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const row = this.closest('tr');
+
+            // Populate modal fields with data-* attributes
+            const fields = [
+                'id', 'company', 'premiseName', 'model', 'color', 'sn', 'volume',
+                'currentEo', 'balance', 'consumption', 'newEo', 'refilled',
+                'scentEffectiveness', 'commonEncounters', 'otherRemarks', 'month', 'year'
+            ];
+
+            // Populate static fields
+            fields.forEach(field => {
+                const element = document.getElementById(field);
+                if (element) {
+                    element.value = row.dataset[field] || '';
+                }
+            });
+
+            // Populate dynamic E1 to E4 fields
+            for (let i = 1; i <= 4; i++) {
+                const dynamicFields = ['Days', 'Start', 'End', 'Work', 'Pause'];
+                dynamicFields.forEach(dynamicField => {
+                    const fieldId = `e${i}${dynamicField}`;
+                    const element = document.getElementById(fieldId);
+                    if (element) {
+                        element.value = row.dataset[fieldId] || '';
+                    }
+                });
+            }
+        });
+    });
+
+    document.getElementById('editForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        // Extract updated values
+        const updatedData = {
+            id: document.getElementById('recordId').value,
+        };
+
+        // Extract static fields
+        const fields = [
+            'company', 'premiseName', 'model', 'color', 'sn', 'volume',
+            'currentEo', 'balance', 'consumption', 'newEo', 'refilled',
+            'scentEffectiveness', 'commonEncounters', 'otherRemarks', 'month', 'year'
+        ];
+
+        fields.forEach(field => {
+            const element = document.getElementById(field);
+            if (element) {
+                updatedData[field] = element.value;
+            }
+        });
+
+        // Extract dynamic E1 to E4 fields
+        for (let i = 1; i <= 4; i++) {
+            const dynamicFields = ['Days', 'Start', 'End', 'Work', 'Pause'];
+            dynamicFields.forEach(dynamicField => {
+                const fieldId = `e${i}${dynamicField}`;
+                const element = document.getElementById(fieldId);
+                if (element) {
+                    updatedData[fieldId] = element.value;
+                }
+            });
+        }
+
+        // Confirm update with another modal (or an alert)
+        if (confirm('Are you sure you want to save the changes?')) {
+            // Send data to the server (using Fetch API or AJAX)
+            fetch('/update-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Record updated successfully!');
+                        location.reload(); // Refresh to reflect changes
+                    } else {
+                        alert('Error updating record.');
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+    });
+});
+
+      </script>
+     -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

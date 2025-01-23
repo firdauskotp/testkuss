@@ -35,7 +35,7 @@
             <div class="form-section">
                 <div class="mb-3">
                     <label for="user" class="form-label">User</label>
-                    <input type="text" id="user" class="form-control" value="{{ username }}" readonly>
+                    <input disabled type="text" id="user" class="form-control" value="{{ username }}" readonly>
                 </div>
                 <div class="mb-3">
                     <label for="companyName" class="form-label">Company Name</label>
@@ -48,7 +48,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="date" class="form-label">Date</label>
-                    <input type="date" id="date" class="form-control" value="{{ current_date }}" readonly>
+                    <input disabled type="date" id="date" class="form-control" value="{{ current_date }}" readonly>
                 </div>
             </div>
 
@@ -171,6 +171,31 @@
     </div>
 
     <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+        // Enable/disable "Change Scent" textbox
+        const changeScentCheckbox = document.getElementById('changeScent');
+        const changeScentTextbox = document.getElementById('changeScentText');
+        changeScentCheckbox.addEventListener('change', () => {
+            changeScentTextbox.disabled = !changeScentCheckbox.checked;
+        });
+
+        // Enable/disable "Move Device" textbox
+        const moveDeviceCheckbox = document.getElementById('moveDevice');
+        const moveDeviceTextbox = document.getElementById('moveDeviceText');
+        moveDeviceCheckbox.addEventListener('change', () => {
+            moveDeviceTextbox.disabled = !moveDeviceCheckbox.checked;
+        });
+
+        // Enable/disable "Relocate Device" dropdown
+        const relocateDeviceCheckbox = document.getElementById('relocateDevice');
+        const relocateDeviceDropdown = document.getElementById('relocateDeviceDropdown');
+        relocateDeviceCheckbox.addEventListener('change', () => {
+            relocateDeviceDropdown.disabled = !relocateDeviceCheckbox.checked;
+        });
+    });
+
+
         document.addEventListener('DOMContentLoaded', () => {
             const companyNameSelect = document.getElementById('companyName');
             const devicesContainer = document.getElementById('devices');
@@ -209,6 +234,84 @@
                 }
             });
         });
+
+        document.addEventListener('DOMContentLoaded', () => {
+        const companyNameSelect = document.getElementById('companyName');
+        const premisesContainer = document.getElementById('premises'); // Target the premises container
+    
+        companyNameSelect.addEventListener('change', () => {
+            const selectedCompany = companyNameSelect.value; // Get the selected company
+    
+            if (selectedCompany) {
+                fetch(`/get-premises?companyName=${encodeURIComponent(selectedCompany)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        premisesContainer.innerHTML = ''; // Clear existing options
+
+                        // Populate premises dropdown
+                        data.premises.forEach((premise, index) => {
+                            const checkboxDiv = document.createElement('div');
+                            checkboxDiv.className = 'form-check';
+
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.className = 'form-check-input premise-checkbox';
+                            checkbox.id = `premise_${index}`;
+                            checkbox.name = 'premises';
+                            checkbox.value = premise;
+
+                            const label = document.createElement('label');
+                            label.className = 'form-check-label';
+                            label.htmlFor = `premise_${index}`;
+                            label.textContent = premise;
+
+                            checkboxDiv.appendChild(checkbox);
+                            checkboxDiv.appendChild(label);
+                            premisesContainer.appendChild(checkboxDiv);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching premises:', error));
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+    // Enable/disable "Change Scent" textbox
+    const changeScentCheckbox = document.getElementById('changeScent');
+    const changeScentTextbox = document.getElementById('changeScentText');
+    changeScentCheckbox.addEventListener('change', () => {
+        changeScentTextbox.disabled = !changeScentCheckbox.checked;
+    });
+
+    // Enable/disable "Move Device" textbox
+    const moveDeviceCheckbox = document.getElementById('moveDevice');
+    const moveDeviceTextbox = document.getElementById('moveDeviceText');
+    moveDeviceCheckbox.addEventListener('change', () => {
+        moveDeviceTextbox.disabled = !moveDeviceCheckbox.checked;
+    });
+
+    // Enable/disable "Relocate Device" dropdown
+    const relocateDeviceCheckbox = document.getElementById('relocateDevice');
+    const relocateDeviceDropdown = document.getElementById('relocateDeviceDropdown');
+    relocateDeviceCheckbox.addEventListener('change', () => {
+        relocateDeviceDropdown.disabled = !relocateDeviceCheckbox.checked;
+    });
+
+    // Disable other checkboxes if "Collect Back Machine" is checked
+    const collectBackCheckbox = document.getElementById('collectBack');
+    const allCheckboxes = document.querySelectorAll('.form-check-input');
+    const premiseCheckboxes = document.querySelectorAll('.premise-checkbox');
+
+    collectBackCheckbox.addEventListener('change', () => {
+        allCheckboxes.forEach(checkbox => {
+            // Skip the "Collect Back Machine" and premise checkboxes
+            if (checkbox !== collectBackCheckbox && !checkbox.classList.contains('premise-checkbox')) {
+                checkbox.disabled = collectBackCheckbox.checked;
+            }
+        });
+    });
+});
+
     </script>
     
 </body>

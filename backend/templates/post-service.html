@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Service</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+
+        <h1 class="text-center">POST-SERVICE</h1>
+        <form id="post-service-form" action="/post-service" method="POST">
+            <div class="mb-3">
+                <label for="company_name" class="form-label">Company Name</label>
+                <select class="form-select" id="company_name" name="company_name" required></select>
+            </div>
+            <div class="mb-3">
+                <label for="premise" class="form-label">Premise</label>
+                <select class="form-select" id="premise" name="premise" required></select>
+            </div>
+            <div class="mb-3">
+                <label for="device" class="form-label">Device</label>
+                <select class="form-select" id="device" name="device" required></select>
+            </div>
+            <div class="mb-3">
+                <label for="essential_oil" class="form-label">Essential Oil</label>
+                <select class="form-select" id="essential_oil" name="essential_oil" required></select>
+            </div>
+            <div class="mb-3">
+                <label for="oil_balance" class="form-label">Oil Balance</label>
+                <input type="number" class="form-control" id="oil_balance" name="oil_balance" required>
+            </div>
+            <div class="mb-3">
+                <label for="balance_brought_back" class="form-label">Balance Brought Back</label>
+                <input type="number" class="form-control" id="balance_brought_back" name="balance_brought_back" required>
+            </div>
+            <div class="mb-3">
+                <label for="balance_brought_back_percent" class="form-label">Balance Brought Back (%)</label>
+                <input type="text" class="form-control" id="balance_brought_back_percent" name="balance_brought_back_percent" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="refill_amount" class="form-label">Refill Amount</label>
+                <input type="number" class="form-control" id="refill_amount" name="refill_amount" required>
+            </div>
+            <div class="mb-3">
+                <label for="refill_amount_percent" class="form-label">Refill Amount (%)</label>
+                <input type="text" class="form-control" id="refill_amount_percent" name="refill_amount_percent" disabled>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-4">Submit Form</button>
+
+        </form>
+    </div>
+    <script>
+        // Populate company dropdown
+        axios.get("/get_companies").then(response => {
+            const companies = response.data;
+            const companySelect = document.getElementById("company_name");
+            companySelect.innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join("");
+        });
+
+        // Populate essential oil dropdown
+        axios.get("/get_essential_oils").then(response => {
+            const essentialOils = response.data;
+            const essentialOilSelect = document.getElementById("essential_oil");
+            essentialOilSelect.innerHTML = essentialOils.map(eo => `<option value="${eo}">${eo}</option>`).join("");
+        });
+
+        // Update premises based on company
+        document.getElementById("company_name").addEventListener("change", function() {
+            const companyName = this.value;
+            axios.post("/get_premises", { company_name: companyName })
+                .then(response => {
+                    const premises = response.data;
+                    const premiseSelect = document.getElementById("premise");
+                    premiseSelect.innerHTML = premises.map(p => `<option value="${p.name}">${p.name}</option>`).join("");
+                });
+        });
+
+        // Update devices based on premise
+        document.getElementById("premise").addEventListener("change", function() {
+            const premise = this.value;
+            const companyName = document.getElementById("company_name").value;
+            axios.post("/get_devices", { company_name: companyName, premise: premise })
+                .then(response => {
+                    const devices = response.data;
+                    const deviceSelect = document.getElementById("device");
+                    deviceSelect.innerHTML = devices.map(d => `<option value="${d}">${d}</option>`).join("");
+                });
+        });
+
+        // Realtime percentage calculation
+        document.getElementById("post-service-form").addEventListener("input", function() {
+            const oilBalance = parseFloat(document.getElementById("oil_balance").value) || 0;
+            const balanceBroughtBack = parseFloat(document.getElementById("balance_brought_back").value) || 0;
+            const refillAmount = parseFloat(document.getElementById("refill_amount").value) || 0;
+
+            const balancePercent = oilBalance ? (balanceBroughtBack / oilBalance) * 100 : 0;
+            const refillPercent = oilBalance ? (refillAmount / oilBalance) * 100 : 0;
+
+            document.getElementById("balance_brought_back_percent").value = `${balancePercent.toFixed(2)}%`;
+            document.getElementById("refill_amount_percent").value = `${refillPercent.toFixed(2)}%`;
+        });
+    </script>
+</body>

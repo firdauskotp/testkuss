@@ -124,6 +124,7 @@
         </div>
     
         <!-- Pagination Controls -->
+        <!-- Pagination Controls -->
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center mt-4">
                 <!-- Previous Button -->
@@ -136,18 +137,17 @@
                 </li>
         
                 <!-- First Page and Ellipsis -->
-                {% if page > 5 %}
+                {% if page > 3 %}
                 <li class="page-item">
                     <a class="page-link" 
                     href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}">1</a>
                 </li>
                 <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
+<span class="page-link">...</span>                </li>
                 {% endif %}
 
                 <!-- Dynamic Page Numbers -->
-                {% for p in range(max(1, page - 2), min(total_pages + 1, page + 5)) %}
+                {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
                 <li class="page-item {% if p == page %}active{% endif %} d-none d-sm-inline">
                     <a class="page-link" 
                     href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}">
@@ -262,18 +262,17 @@
                 </li>
         
                 <!-- First Page and Ellipsis -->
-                {% if device_page > 5 %}
+                {% if device_page > 3 %}
                 <li class="page-item">
                     <a class="page-link" 
                     href="{{ pagination_base_url_device }}{{ query_params_device | to_querystring | update_querystring('device_page', 1) }}">1</a>
                 </li>
                 <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
+<span class="page-link">...</span>                </li>
                 {% endif %}
 
                 <!-- Dynamic Page Numbers -->
-                {% for p in range(max(1, device_page - 2), min(total_device_pages + 1, device_page + 5)) %}
+                {% for p in range(max(1, device_page - 2), min(total_device_pages + 1, device_page + 3)) %}
                 <li class="page-item {% if p == device_page %}active{% endif %} d-none d-sm-inline">
                     <a class="page-link" 
                     href="{{ pagination_base_url_device }}{{ query_params_device | to_querystring | update_querystring('device_page', p) }}">
@@ -388,18 +387,19 @@
             </li>
     
             <!-- First Page and Ellipsis -->
-            {% if bottle_page > 5 %}
+            {% if bottle_page > 3 %}
             <li class="page-item">
                 <a class="page-link" 
                 href="{{ pagination_base_url_bottle }}{{ query_params_bottle | to_querystring | update_querystring('bottle_page', 1) }}">1</a>
             </li>
             <li class="page-item disabled d-none d-sm-inline">
+                
                 <span class="page-link">...</span>
             </li>
             {% endif %}
 
             <!-- Dynamic Page Numbers -->
-            {% for p in range(max(1, bottle_page - 2), min(total_bottle_pages + 1, bottle_page + 5)) %}
+            {% for p in range(max(1, bottle_page - 2), min(total_bottle_pages + 1, bottle_page + 3)) %}
             <li class="page-item {% if p == bottle_page %}active{% endif %} d-none d-sm-inline">
                 <a class="page-link" 
                 href="{{ pagination_base_url_bottle }}{{ query_params_bottle | to_querystring | update_querystring('bottle_page', p) }}">
@@ -409,7 +409,7 @@
             {% endfor %}
 
             <!-- Ellipsis and Last Page -->
-            {% if bottle_page < total_bottle_pages - 2 %}
+            {% if bottle_page < total_bottle_pages - 3 %}
             <li class="page-item disabled d-none d-sm-inline">
                 <span class="page-link">...</span>
             </li>
@@ -527,7 +527,7 @@
         </li>
 
         <!-- First Page and Ellipsis -->
-        {% if straw_page > 5 %}
+        {% if straw_page > 3 %}
         <li class="page-item">
             <a class="page-link" 
             href="{{ pagination_base_url_straw }}{{ query_params_straw | to_querystring | update_querystring('straw_page', 1) }}">1</a>
@@ -538,7 +538,7 @@
         {% endif %}
 
         <!-- Dynamic Page Numbers -->
-        {% for p in range(max(1, straw_page - 2), min(total_straw_pages + 1, straw_page + 5)) %}
+        {% for p in range(max(1, straw_page - 2), min(total_straw_pages + 1, straw_page + 3)) %}
         <li class="page-item {% if p == straw_page %}active{% endif %} d-none d-sm-inline">
             <a class="page-link" 
             href="{{ pagination_base_url_straw }}{{ query_params_straw | to_querystring | update_querystring('straw_page', p) }}">
@@ -548,7 +548,7 @@
         {% endfor %}
 
         <!-- Ellipsis and Last Page -->
-        {% if straw_page < total_straw_pages - 2 %}
+        {% if straw_page < total_straw_pages - 3 %}
         <li class="page-item disabled d-none d-sm-inline">
             <span class="page-link">...</span>
         </li>

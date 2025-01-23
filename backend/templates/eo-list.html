@@ -92,18 +92,17 @@
                 </li>
         
                 <!-- First Page and Ellipsis -->
-                {% if page > 5 %}
+                {% if page > 3 %}
                 <li class="page-item">
                     <a class="page-link" 
                     href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}">1</a>
                 </li>
                 <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
+<span class="page-link">...</span>                </li>
                 {% endif %}
 
                 <!-- Dynamic Page Numbers -->
-                {% for p in range(max(1, page - 2), min(total_pages + 1, page + 5)) %}
+                {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
                 <li class="page-item {% if p == page %}active{% endif %} d-none d-sm-inline">
                     <a class="page-link" 
                     href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}">
@@ -113,7 +112,7 @@
                 {% endfor %}
 
                 <!-- Ellipsis and Last Page -->
-                {% if page < total_pages - 2 %}
+                {% if page < total_pages - 3 %}
                 <li class="page-item disabled d-none d-sm-inline">
                     <span class="page-link">...</span>
                 </li>
@@ -243,18 +242,17 @@
                 </li>
         
                 <!-- First Page and Ellipsis -->
-                {% if page > 5 %}
+                {% if model_page > 3 %}
                 <li class="page-item">
                     <a class="page-link" 
                     href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', 1) }}">1</a>
                 </li>
                 <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
+<span class="page-link">...</span>                </li>
                 {% endif %}
 
                 <!-- Dynamic Page Numbers -->
-                {% for p in range(max(1, model_page - 2), min(total_model_pages + 1, model_page + 5)) %}
+                {% for p in range(max(1, model_page - 2), min(total_model_pages + 1, model_page + 3)) %}
                 <li class="page-item {% if p == model_page %}active{% endif %} d-none d-sm-inline">
                     <a class="page-link" 
                     href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', p) }}">
@@ -264,7 +262,7 @@
                 {% endfor %}
 
                 <!-- Ellipsis and Last Page -->
-                {% if model_page < total_model_pages - 2 %}
+                {% if model_page < total_model_pages - 3 %}
                 <li class="page-item disabled d-none d-sm-inline">
                     <span class="page-link">...</span>
                 </li>

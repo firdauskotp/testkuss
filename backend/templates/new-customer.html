@@ -40,15 +40,15 @@
             <div class="form-section">
                 <div class="mb-3">
                     <label for="companyName" class="form-label">Company Name</label>
-                    <input type="text" id="companyName" class="form-control" placeholder="Enter company name" required>
+                    <input type="text" id="companyName" name="companyName" class="form-control" placeholder="Enter company name" required>
                 </div>
                 <div class="mb-3">
                     <label for="dateCreated" class="form-label">Date Created</label>
-                    <input type="date" id="dateCreated" class="form-control" required>
+                    <input type="date" id="dateCreated" name="dateCreated" class="form-control" required>
                 </div>
                 <div class="mb-3">
                     <label for="industry" class="form-label">Industry</label>
-                    <input type="text" id="industry" class="form-control" placeholder="Enter industry type" required>
+                    <input type="text" id="industry" name="industry" class="form-control" placeholder="Enter industry type" required>
                 </div>
             </div>
 
@@ -59,9 +59,9 @@
                     <!-- Premise Fields -->
                     <div class="premise-item mb-3" id="premise-1">
                         <label class="form-label">Premise 1 - Name</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter premise name" required>
-                        <input type="text" class="form-control mb-2" placeholder="Enter premise area" required>
-                        <input type="text" class="form-control" placeholder="Enter premise address" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter premise name" name="premiseName" id="premiseName" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter premise area" name="premiseArea" id="premiseArea" required>
+                        <input type="text" class="form-control" placeholder="Enter premise address" name="premiseAddress" id="premiseAddress" required>
                         <!-- <button type="button" class="remove-btn mt-2">Remove</button> -->
                     </div>
                 </div>
@@ -69,24 +69,25 @@
             </div>
 
             <!-- Contact Details -->
+
             <div class="form-section" id="contactDetails">
                 <h5>Contact Details</h5>
                 <div id="contactContainer">
                     <!-- Contact Fields -->
                     <div class="contact-item mb-3" id="contact-1">
                         <label class="form-label">PIC 1 - Name</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter name" required>
-                        <input type="text" class="form-control mb-2" placeholder="Enter designation" required>
-                        <input type="text" class="form-control mb-2" placeholder="Enter contact" required>
-                        <input type="email" class="form-control mb-2" placeholder="Enter email" required>
-                        <select class="form-select" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter name" name="picName" id="picName" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter designation" name="picDesignation" id="picDesignation" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter contact" name="picContact" id="picContact" required>
+                        <input type="email" class="form-control mb-2" placeholder="Enter email" name="picEmail" id="picEmail" required>
+                        <select class="form-select"  id="contactPremise" name="contactPremise"  required>
                             <option selected disabled>Tie contact to:</option>
                             <option>Premise 1</option>
                         </select>
                         <!-- <button type="button" class="remove-btn mt-2">Remove</button> -->
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary w-100 mt-3" id="addContactBtn">+ Add New Contact</button>
+                <button type="button" class="btn btn-secondary w-100 mt-3" id="addContactBtn">+ Add New Contact and Device</button>
             </div>
 
             <div class="form-section" id="deviceDetails">
@@ -95,22 +96,22 @@
                     <!-- Device Fields -->
                     <div class="device-item mb-3" id="device-1">
                         <label class="form-label">#1 Location</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter location" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter location" name="deviceLocation" id="deviceLocation"  required>
 
                         <label class="form-label">#1 S/N</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter serial number" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter serial number"  name="deviceSN" id="deviceSN" required>
 
                         <label class="form-label">#1 Model</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter model" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter model" name="deviceModel" id="deviceModel"  required>
 
                         <label class="form-label">#1 Volume Required</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter volume required" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter volume required" name="deviceVolume" id="deviceVolume"  required>
 
                         <label class="form-label">#1 Scent</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter scent" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter scent" name="deviceScent" id="deviceScent"  required>
 
                         <label class="form-label">Tie Device to Premise:</label>
-                        <select class="form-select mb-2" required>
+                        <select class="form-select mb-2" id="devicePremise" name="devicePremise" required>
                             <option selected disabled>Select a premise</option>
                             <option>Premise 1</option>
                         </select>
@@ -118,73 +119,72 @@
                         <!-- Events for Device -->
                         <h6 class="section-heading">Event 1</h6>
                         <label class="form-label">#1 - E1 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E1Days" id="E1Days"  required>
 
                         <label class="form-label">#1 - E1 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E1StartTime" id="E1StartTime" required>
 
                         <label class="form-label">#1 - E1 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E1EndTime" id="E1EndTime" required>
 
                         <label class="form-label">#1 - E1 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E1Pause" id="E1Pause" required>
 
                         <label class="form-label">#1 - E1 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E1Work" id="E1Work" required>
 
                         <h6 class="section-heading">Event 2</h6>
                         <label class="form-label">#1 - E2 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E2Days" id="E2Days" required>
 
                         <label class="form-label">#1 - E2 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E2StartTime" id="E2StartTime" required>
 
                         <label class="form-label">#1 - E2 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E2EndTime" id="E2EndTime" required>
 
                         <label class="form-label">#1 - E2 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E2Pause" id="E2Pause" required>
 
                         <label class="form-label">#1 - E2 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E2Work" id="E2Work" required>
 
                         <h6 class="section-heading">Event 3</h6>
                         <label class="form-label">#1 - E3 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E3Days" id="E3Days" required>
 
                         <label class="form-label">#1 - E3 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E3StartTime" id="E3StartTime" required>
 
                         <label class="form-label">#1 - E3 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E3EndTime" id="E3EndTime" required>
 
                         <label class="form-label">#1 - E3 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E3Pause" id="E3Pause" required>
 
                         <label class="form-label">#1 - E3 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E3Work" id="E3Work" required>
 
                         <h6 class="section-heading">Event 4</h6>
                         <label class="form-label">#1 - E4 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E4Days" id="E4Days" required>
 
                         <label class="form-label">#1 - E4 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E4StartTime" id="E4StartTime" required>
 
                         <label class="form-label">#1 - E4 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E4EndTime" id="E4EndTime" required>
 
                         <label class="form-label">#1 - E4 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E4Pause" id="E4Pause" required>
 
                         <label class="form-label">#1 - E4 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E4Work" id="E4Work" required>
 
-                        <!-- Repeat Event Sections for E2, E3, E4 -->
-                        <!-- Add similar sections for Event 2, Event 3, and Event 4 -->
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary w-100 mt-3" id="addDeviceBtn">+ Add New Device</button>
+                
+                <button type="button" class="btn btn-secondary w-100 mt-3" id="addDeviceBtn">+ Add New Device and Contact</button>
             </div>
 
             <button type="submit" class="btn btn-primary w-100 mt-4">Submit Form</button>
@@ -195,6 +195,7 @@
     <script>
         let premiseCount = 1;
         let contactCount = 1;
+        let deviceCount = 1;
 
         // Event delegation for dynamic premise removal
         document.getElementById('premiseContainer').addEventListener('click', function(event) {
@@ -214,10 +215,10 @@
             const newPremise = `
                 <div class="premise-item mb-3" id="premise-${premiseCount}">
                     <label class="form-label">Premise ${premiseCount} - Name</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter premise name" required>
-                    <input type="text" class="form-control mb-2" placeholder="Enter premise area" required>
-                    <input type="text" class="form-control" placeholder="Enter premise address" required>
-                    <button type="button" class="remove-btn mt-2">Remove</button>
+                    <input type="text" class="form-control mb-2" placeholder="Enter premise name" name="premiseName${premiseCount}" id="premiseName${premiseCount}" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter premise area" name="premiseArea${premiseCount}" id="premiseArea${premiseCount}" required>
+                        <input type="text" class="form-control" placeholder="Enter premise address" name="premiseAddress${premiseCount}" id="premiseAddress${premiseCount}" required>
+                    <button type="button" class="remove-btn mt-2">Remove Premise</button>
                 </div>
             `;
             premiseContainer.insertAdjacentHTML('beforeend', newPremise);
@@ -285,30 +286,19 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                 contactItem.remove();
                 contactCount--;
                 updateContactNumbers();
+                
             }
         });
 
-        // Add new contact and update numbering
-        document.getElementById('addContactBtn').addEventListener('click', () => {
-            contactCount++;
-            const contactContainer = document.getElementById('contactContainer');
-            const newContact = `
-                <div class="contact-item mb-3" id="contact-${contactCount}">
-                    <label class="form-label">PIC ${contactCount} - Name</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter name" required>
-                    <input type="text" class="form-control mb-2" placeholder="Enter designation" required>
-                    <input type="text" class="form-control mb-2" placeholder="Enter contact" required>
-                    <input type="email" class="form-control mb-2" placeholder="Enter email" required>
-                    <select class="form-select" required>
-                        <option selected disabled>Tie contact to:</option>
-                        ${getPremiseOptions()}
-                    </select>
-                    <button type="button" class="remove-btn mt-2">Remove</button>
-                </div>
-            `;
-            contactContainer.insertAdjacentHTML('beforeend', newContact);
-            updateContactNumbers();
+        // Event delegation for dynamic device removal
+        document.getElementById('deviceContainer').addEventListener('click', function(event) {
+            if (event.target.classList.contains('remove-btn')) {
+                const deviceItem = event.target.closest('.device-item');
+                deviceItem.remove();
+                deviceCount--;
+            }
         });
+
 
         // Update contact numbering after adding/removing contacts
         function updateContactNumbers() {
@@ -330,56 +320,37 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                 alert('You must add at least one premise and one contact.');
             }
         });
+        // Handle form submission
+        document.getElementById('customerForm').addEventListener('submit', function(event) {
+            const deviceItems = document.querySelectorAll('.device-item');
+            if (deviceItems.length === 0) {
+                event.preventDefault();
+                alert('You must add at least one device.');
+            }
+        });
 
-        // let deviceCount = 1;
+        document.getElementById('addContactBtn').addEventListener('click', () => {
+            contactCount++;
+            const contactContainer = document.getElementById('contactContainer');
+            const newContact = `
+                <div class="contact-item mb-3" id="contact-${contactCount}">
+                    <label class="form-label">PIC ${contactCount} - Name</label>
+                    <input type="text" class="form-control mb-2" placeholder="Enter name" name="picName" id="picName${contactCount}" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter designation" name="picDesignation" id="picDesignation${contactCount}" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter contact" name="picContact" id="picContact${contactCount}" required>
+                        <input type="email" class="form-control mb-2" placeholder="Enter email" name="picEmail" id="picEmail${contactCount}" required>
+                    <select class="form-select" required>
+                        <option selected disabled>Tie contact to:</option>
+                        ${getPremiseOptions()}
+                    </select>
+                    <button type="button" class="remove-btn mt-2">Remove</button>
+                </div>
+            `;
+            contactContainer.insertAdjacentHTML('beforeend', newContact);
+            updateContactNumbers();
+        });
 
-        // // Event delegation for dynamic device removal
-        // document.getElementById('deviceContainer').addEventListener('click', function(event) {
-        //     if (event.target.classList.contains('remove-btn')) {
-        //         const deviceItem = event.target.closest('.device-item');
-        //         deviceItem.remove();
-        //         deviceCount--;
-        //         updateDeviceNumbers();
-        //     }
-        // });
-
-        // // Add new device and update numbering
-
-        
-        // document.getElementById('addDeviceBtn').addEventListener('click', () => {
-        //     deviceCount++;
-        //     const deviceContainer = document.getElementById('deviceContainer');
-        //     const newDevice = `
-        //         <div class="device-item mb-3" id="device-${deviceCount}">
-        //             <h5 class="text-center">Device ${deviceCount}</h5>
-        //             <label class="form-label">#${deviceCount} Location</label>
-        //             <input type="text" class="form-control mb-2" placeholder="Enter location" required>
-        //             <label class="form-label">#${deviceCount} S/N</label>
-        //             <input type="text" class="form-control mb-2" placeholder="Enter serial number" required>
-        //             <label class="form-label">#${deviceCount} Model</label>
-        //             <input type="text" class="form-control mb-2" placeholder="Enter model" required>
-        //             <label class="form-label">#${deviceCount} Volume Required</label>
-        //             <input type="number" class="form-control mb-2" placeholder="Enter volume required" required>
-        //             <label class="form-label">#${deviceCount} Scent</label>
-        //             <input type="text" class="form-control mb-2" placeholder="Enter scent" required>
-        //             <label class="form-label">Tie Device to Premise</label>
-        //             <select class="form-select mb-3" required>
-        //                 <option selected disabled>Tie device to:</option>
-        //                 ${getPremiseOptions()}
-        //             </select>
-
-        //             <!-- Events (repeat structure for Event 1-4) -->
-
-        //             <button type="button" class="remove-btn mt-2">Remove Device</button>
-        //         </div>
-        //     `;
-        //     deviceContainer.insertAdjacentHTML('beforeend', newDevice);
-        // });
-
-        let deviceCount = 1;
-
-        // Add new device dynamically
-        document.getElementById('addDeviceBtn').addEventListener('click', () => {
+     document.getElementById('addDeviceBtn').addEventListener('click', () => {
             deviceCount++;
             const deviceContainer = document.getElementById('deviceContainer');
             const newDevice = `
@@ -476,34 +447,7 @@ document.getElementById('premiseContainer').addEventListener('input', function (
             deviceContainer.insertAdjacentHTML('beforeend', newDevice);
         });
 
-        // Event delegation for dynamic device removal
-        document.getElementById('deviceContainer').addEventListener('click', function(event) {
-            if (event.target.classList.contains('remove-btn')) {
-                const deviceItem = event.target.closest('.device-item');
-                deviceItem.remove();
-                deviceCount--;
-            }
-        });
-
-        // // Update premise dropdown options for devices
-        // function getPremiseOptions() {
-        //     const premises = document.querySelectorAll('.premise-item');
-        //     let options = '';
-        //     premises.forEach((premise, index) => {
-        //         const premiseNumber = index + 1;
-        //         options += `<option>Premise ${premiseNumber}</option>`;
-        //     });
-        //     return options;
-        // }
-
-        // Handle form submission
-        document.getElementById('customerForm').addEventListener('submit', function(event) {
-            const deviceItems = document.querySelectorAll('.device-item');
-            if (deviceItems.length === 0) {
-                event.preventDefault();
-                alert('You must add at least one device.');
-            }
-        });
+       
     </script>
 
     <script>
