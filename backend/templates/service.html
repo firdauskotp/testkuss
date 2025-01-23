@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Form</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        <!-- Main Form Section -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="text-center mb-0">Service Form</h4>
+            </div>
+            <div class="card-body">
+                <form>
+                    <!-- Date -->
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="date" name="date">
+                    </div>
+
+                    <!-- Premise Name -->
+                    <div class="mb-3">
+                        <label for="premiseName" class="form-label">Premise Name</label>
+                        <select class="form-select" id="premiseName" name="premiseName">
+                            <option value="" selected disabled>Select a premise</option>
+                            <option value="Premise 1">Premise 1</option>
+                            <option value="Premise 2">Premise 2</option>
+                        </select>
+                    </div>
+
+                    <!-- Model, Color, EO -->
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="model" class="form-label">Model</label>
+                            <select class="form-select" id="model" name="model">
+                                <option value="" selected disabled>Select a model</option>
+                                <option value="Model 1">Model 1</option>
+                                <option value="Model 2">Model 2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="color" class="form-label">Color</label>
+                            <select class="form-select" id="color" name="color">
+                                <option value="" selected disabled>Select a color</option>
+                                <option value="Red">Red</option>
+                                <option value="Blue">Blue</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="eo" class="form-label">EO</label>
+                            <select class="form-select" id="eo" name="eo">
+                                <option value="" selected disabled>Select an EO</option>
+                                <option value="EO 1">EO 1</option>
+                                <option value="EO 2">EO 2</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Other EO and Volume -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="otherEo" class="form-label">Other EO</label>
+                            <input type="text" class="form-control" id="otherEo" name="otherEo">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="volume" class="form-label">Volume</label>
+                            <input type="number" class="form-control" id="volume" name="volume">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Acknowledgment Section -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="text-center mb-0">Acknowledgement</h4>
+            </div>
+            <div class="card-body">
+                <form>
+                    <!-- Actions Done -->
+                    <div class="mb-3">
+                        <label class="form-label">Actions Done</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action1">
+                                    <label class="form-check-label" for="action1">Alcohol cleaning</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action2">
+                                    <label class="form-check-label" for="action2">Checked Timer Settings</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action3">
+                                    <label class="form-check-label" for="action3">Replaced Faulty Machine (Same Model)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action4">
+                                    <label class="form-check-label" for="action4">Changed Machine (Diff Model)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action5">
+                                    <label class="form-check-label" for="action5">Oil Refill</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action6">
+                                    <label class="form-check-label" for="action6">Replaced Straw / Mist Head</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action7">
+                                    <label class="form-check-label" for="action7">Replaced Batteries</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="action8">
+                                    <label class="form-check-label" for="action8">Replaced Faulty Power Adapter</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks (If any)</label>
+                        <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
+                    </div>
+
+                    <!-- Staff Name and Signature -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="staffName" class="form-label">Staff Name</label>
+                            <input type="text" class="form-control" id="staffName" name="staffName">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="signature" class="form-label">Signature</label>
+                            <input type="text" class="form-control" id="signature" name="signature">
+                        </div>
+                    </div>
+
+                    <!-- Clear Button -->
+                    <div class="text-center">
+                        <button type="reset" class="btn btn-secondary">Clear</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
