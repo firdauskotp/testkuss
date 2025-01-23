@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Service Form</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <div class="container my-5">
+    <div class="container mt-5">
         <!-- Main Form Section -->
-        <div class="card shadow mb-4">
-            <div class="card-header bg-primary text-white">
+        <!-- <div class="card shadow mb-4"> -->
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+    <h1 class="text-center">SERVICE</h1>
+
+            <!-- <div class="card-header bg-primary text-white">
                 <h4 class="text-center mb-0">Service Form</h4>
-            </div>
+            </div> -->
             <div class="card-body">
                 <form>
                     <!-- Date -->
@@ -73,13 +79,13 @@
                     </div>
                 </form>
             </div>
-        </div>
+        <!-- </div> -->
 
         <!-- Acknowledgment Section -->
-        <div class="card shadow">
-            <div class="card-header bg-secondary text-white">
+        <!-- <div class="card shadow"> -->
+            <!-- <div class="card-header bg-secondary text-white"> -->
                 <h4 class="text-center mb-0">Acknowledgement</h4>
-            </div>
+            <!-- </div> -->
             <div class="card-body">
                 <form>
                     <!-- Actions Done -->
@@ -151,7 +157,7 @@
                 </form>
             </div>
         </div>
-    </div>
+    <!-- </div> -->
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
