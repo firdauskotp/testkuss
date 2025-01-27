@@ -57,6 +57,8 @@ device_list_collection = dashboard_db['device']
 change_collection = dashboard_db['change']
 refund_collection = dashboard_db['refund']
 
+logs_db=mongo['logs']
+logs_collection=logs_db['logs']
 
 test_db=mongo['test']
 test_collection=test_db['test']
@@ -270,6 +272,8 @@ def send_email(to_email, subject, body):
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -287,7 +291,8 @@ def register():
         })
         
         flash("User registered successfully!", "success")
-        return redirect(url_for('index'))
+        log_activity(session["username"],"added user : " +str(email),logs_collection)
+        return redirect(url_for('dashboard'))
 
     return render_template('register.html')
 
@@ -306,6 +311,8 @@ def admin_login():
             session["user_id"] = str(user["_id"])
             session["username"] = user["username"]
             flash("Login successful!", "success")
+            log_activity(session["username"],"login",logs_collection)
+
             return redirect(url_for("dashboard"))  # Redirect to the dashboard
         else:
             flash("Invalid username or password.", "danger")
@@ -315,7 +322,7 @@ def admin_login():
 
 @app.route('/all-list',methods=['GET'])
 def reports():
-    if 'user_id' in session:
+    if 'username' in session:
         # Pagination parameters
         page = int(request.args.get('page', 1))  # Current page (default: 1)
         limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
@@ -560,11 +567,11 @@ def reports():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_login"))
 
 @app.route('/pack-list',methods=['GET'])
 def pack_list():
-    if 'user_id' in session:
+    if 'username' in session:
         # Pagination parameters
         page = int(request.args.get('page', 1))  # Current page (default: 1)
         limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
@@ -803,11 +810,11 @@ def pack_list():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_login"))
     
 @app.route('/eo-list',methods=['GET'])
 def eo_list():
-    if 'user_id' in session:
+    if 'username' in session:
         # Pagination parameters
         page = int(request.args.get('page', 1))  # Current page (default: 1)
         limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
@@ -940,12 +947,12 @@ def eo_list():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_login"))
         
 
 @app.route("/dashboard")
 def dashboard():
-    if "user_id" in session:
+    if "username" in session:
         remarks = list(remark_collection.find({}))  # Fetch all remarks from MongoDB
         urgent_remarks = [r for r in remarks if r.get('urgent')]
         non_urgent_remarks = [r for r in remarks if not r.get('urgent')]
@@ -959,7 +966,7 @@ def dashboard():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
+        return redirect(url_for("admin_login"))
 
 
 @app.route('/change-form', methods=['GET', 'POST'])
@@ -972,6 +979,9 @@ def change_form():
         collection = "refund" if data.get("collectBack") else "change"
         
         dashboard_db[collection].insert_one(data)
+
+        # log_activity(session["username"],"added user : " +str(email),logs_collection)
+
         return jsonify({"message": "Form submitted successfully!"}), 200
 
     companies = services_collection.distinct('company')
@@ -996,11 +1006,14 @@ def view_remarks(remark_type):
         return redirect(url_for('admin_login'))
     is_urgent = True if remark_type == 'urgent' else False
     remarks = list(remark_collection.find({'urgent': is_urgent}))
+    log_activity(session["username"],"added remarks : " +str(remarks),logs_collection)
+
     return render_template('view_remarks.html', remarks=remarks, remark_type=remark_type)
 
 @app.route("/logout")
 def logout():
-    if "user_id" in session:
+    if "user_id" in session or "username" in session:
+        log_activity(session["username"],"logout" ,logs_collection)
         session.clear()
         flash("You have been logged out.", "success")
         return redirect(url_for("index"))
@@ -1142,6 +1155,7 @@ def new_customer():
         
 
 
+        log_activity(session["username"],"added company : " +str(companyName),logs_collection)
 
         # Insert new case into MongoDB
         test_collection.insert_one({
@@ -1164,13 +1178,23 @@ def new_customer():
 
 @app.route('/pre-service')
 def pre_service():
-    if "user_id" in session:
+    if "username" in session:
+
+        # log_activity(session["username"],"pre-service : " +str(remarks),logs_collection)
+
         return render_template('pre-service.html')
+    else:
+        return redirect(url_for('admin_login'))
+
     
 @app.route('/service')
 def service():
-    if "user_id" in session:
+    if "username" in session:
+        # log_activity(session["username"],"service : " +str(remarks),logs_collection)
+
         return render_template('service.html')
+    else:
+        return redirect(url_for('admin_login'))
 
 
 @app.route('/remark', methods=['GET', 'POST'])
@@ -1184,6 +1208,8 @@ def remark():
         is_urgent = 'urgent' in request.form  # Checkbox value
         
         # Push data to MongoDB
+        log_activity(session["username"],"added remarks : " +str(remark_text),logs_collection)
+
         remark_collection.insert_one({
             'username': username,
             'remark': remark_text,
@@ -1236,9 +1262,108 @@ def post_service():
             "refill_amount_percent": request.form.get("refill_amount_percent"),
         }
         eo_pack_collection.insert_one(data)
+        log_activity(session["username"],"added post service : " +str(request.form.get("company_name")),logs_collection)
+
         flash(f"Balance updated successfully!", "success")
         return redirect(url_for("dashboard"))
     return render_template('post-service.html', username=username)
+
+@app.route('/logs', methods=['GET','POST'])
+def get_logs():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+
+    logs = list(logs_collection.find({}).sort("timestamp", -1)) 
+    
+    formatted_logs = []
+    for log in logs:
+        timestamp = log.get("timestamp")
+        if isinstance(timestamp, str):  # If timestamp is already a string
+            dt_object = datetime.fromisoformat(timestamp)
+        elif isinstance(timestamp, datetime):  # If timestamp is a datetime object
+            dt_object = timestamp
+        else:
+            continue  # Skip log if timestamp is invalid
+        
+        formatted_logs.append({
+            "user": log.get("user"),
+            "action": log.get("action"),
+            "date": dt_object.strftime("%Y-%m-%d"),
+            "time": dt_object.strftime("%H:%M:%S")
+        })
+
+    page = int(request.args.get('page', 1))  # Current page (default: 1)
+    limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+
+    date = request.args.get('date','').strip()
+    time = request.args.get('time','').strip()
+    user = request.args.get('user')
+    action = request.args.get('action')
+
+    query = {}
+
+    # Filter by date and time
+    if date and time:
+        try:
+            datetime_start = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+            datetime_end = datetime_start.replace(second=59)  # Include the entire minute
+            query["timestamp"] = {"$gte": datetime_start, "$lte": datetime_end}
+        except ValueError:
+            pass  # Ignore invalid date/time inputs
+
+    elif date:
+        try:
+            date_start = datetime.strptime(date, "%Y-%m-%d")
+            date_end = date_start.replace(hour=23, minute=59, second=59)  # End of day
+            query["timestamp"] = {"$gte": date_start, "$lte": date_end}
+        except ValueError:
+            pass  # Ignore invalid date inputs
+
+    # Filter by user
+    if user:
+        query["user"] = {"$regex": user, "$options": "i"}  # Case-insensitive search
+
+    # Filter by action
+    if action:
+        query["action"] = {"$regex": action, "$options": "i"}  # Case-insensitive search
+
+    # Pagination logic
+    total_list = logs_collection.count_documents(query)
+
+    data_logs_list = logs_collection.find(query).sort("timestamp", -1) \
+                        .skip((page - 1) * limit) \
+                        .limit(limit)
+
+    # Format logs for frontend
+    processed_data_logs_list = []
+    for log in data_logs_list:
+        timestamp = log.get("timestamp")
+        if isinstance(timestamp, datetime):
+            log["date"] = timestamp.strftime("%Y-%m-%d")
+            log["time"] = timestamp.strftime("%H:%M:%S")
+        processed_data_logs_list.append(log)
+
+    # Pagination details
+    total_pages = (total_list + limit - 1) // limit
+    base_url = request.path
+    query_params = request.args.to_dict()
+    query_params['page'] = page
+    query_params['limit'] = limit
+    pagination_base_url = f"{base_url}?"
+    
+    
+    return render_template('activity-log.html', 
+                            username=session["username"],
+                            logs=formatted_logs,
+                            data=processed_data_logs_list,
+                            page=page, 
+                            total_pages=total_pages,
+                            limit=limit,
+                            pagination_base_url=pagination_base_url,
+                            query_params=query_params,
+                           )
+
+
 
 
 @app.route('/new-customer-submit', methods=['POST','GET'])
