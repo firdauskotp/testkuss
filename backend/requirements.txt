@@ -7,3 +7,4 @@ openpyxl
 certifi
 python-dotenv
 gunicorn
+Flask-CORS

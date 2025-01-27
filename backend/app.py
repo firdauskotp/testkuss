@@ -15,9 +15,12 @@ import gridfs
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
 from utils import log_activity
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+
+CORS(app)
 
 load_dotenv()
 
@@ -1012,7 +1015,7 @@ def view_remarks(remark_type):
 
 @app.route("/logout")
 def logout():
-    if "user_id" in session or "username" in session:
+    if "user_id" in session:
         log_activity(session["username"],"logout" ,logs_collection)
         session.clear()
         flash("You have been logged out.", "success")
