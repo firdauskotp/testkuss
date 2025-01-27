@@ -1016,7 +1016,10 @@ def view_remarks(remark_type):
 @app.route("/logout")
 def logout():
     if "user_id" in session:
-        log_activity(session["username"],"logout" ,logs_collection)
+        try:
+            log_activity(session["username"],"logout" ,logs_collection)
+        except Exception as e:
+            pass
         session.clear()
         flash("You have been logged out.", "success")
         return redirect(url_for("index"))
@@ -1038,9 +1041,9 @@ def client_login():
             return redirect(url_for("customer_form"))  # Redirect to the dashboard
         else:
             flash("Invalid email or password.", "danger")
-            return redirect(url_for("client_login"))
+            return redirect(url_for("index"))
 
-    return render_template("client-login.html")
+    return render_template("index.html")
 
 @app.route('/image/<image_id>')
 def get_image(image_id):
