@@ -72,11 +72,10 @@ fs = gridfs.GridFS(db)
 
 app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
 app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = False
-# app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = os.getenv('SMTP_GOOGLE')
-app.config['MAIL_PASSWORD'] = os.getenv('SMTP_APP_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME']
+# app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.getenv('SMTP_TEST_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
 
 mail = Mail(app)
 
@@ -113,16 +112,17 @@ def update_querystring(querystring, key, value):
 # Routes
 @app.route("/customer-help", methods=["GET", "POST"])
 def customer_form():
-    """Form for customers to create new cases."""
-    if "customer_email" not in session:
-        return redirect(url_for("client_login"))  # Redirect to login if not logged in
+    # """Form for customers to create new cases."""
+    # if "customer_email" not in session:
+    #     return redirect(url_for("client_login"))  # Redirect to login if not logged in
 
-    user_email = session["customer_email"] 
+    # user_email = session["customer_email"] 
     if request.method == "POST":
         # Auto-increment case number
         case_no = collection.count_documents({}) + 1
 
         # Extract customer form data
+        user_email = request.form.get("email")
         premise_name = request.form.get("premise_name")
         location = request.form.get("location")
         model = request.form.get("model")
@@ -237,14 +237,14 @@ def send_email_to_customer(case_no, user_email):
     """Send a confirmation email to the customer."""
     subject = f"Case #{case_no} Created Successfully"
     body = f"Thank you for submitting your case. Your case number is #{case_no}. Our staff will get in touch with you shortly."
-    send_email(user_email, subject, body)
+    send_email(user_email, app.config['MAIL_USERNAME'], subject, body)
 
 
 def send_email_to_admin(case_no):
     """Notify admin about a new case creation."""
     subject = f"New Case #{case_no} Created"
     body = f"A new case with case number #{case_no} has been created. Please check the system for details."
-    send_email(app.config['MAIL_USERNAME'], subject, body)
+    send_email('medoroyalrma@gmail.com', app.config['MAIL_USERNAME'], subject, body)
 
 
 # def send_email(to_email, subject, body):
@@ -264,11 +264,15 @@ def send_email_to_admin(case_no):
 #     except Exception as e:
 #         print(f"Failed to send email: {e}")
 
-def send_email(to_email, subject, body):
+def send_email(to_email, from_email, subject, body):
     """Generic function to send an email using Flask-Mail."""
     try:
-        msg = Message(subject, recipients=[to_email])
+        msg = Message(subject, sender= from_email, recipients=[to_email])
         msg.body = body
+        print(body)
+        print(to_email)
+        print(from_email)
+        print(subject)
         mail.send(msg)
     except Exception as e:
         print(f"Failed to send email: {e}")
@@ -297,8 +301,65 @@ def register():
         log_activity(session["username"],"added user : " +str(email),logs_collection)
         return redirect(url_for('dashboard'))
 
+
     return render_template('register.html')
 
+@app.route('/register-admin', methods=['GET', 'POST'])
+def register_admin():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        if password != confirm_password:
+            flash("Passwords do not match. Please try again.", "danger")
+            return redirect(url_for('register'))
+
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
+
+        login_collection.insert_one({
+            'username': username,
+            'password': hashed_password
+        })
+        
+        flash("User registered successfully!", "success")
+        log_activity(session["username"],"added user : " +str(username),logs_collection)
+        return redirect(url_for('dashboard'))
+
+    return render_template('register-admin.html')
+
+
+
+@app.route('/delete_user', methods=['POST'])
+def delete_user():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    user_id = request.form['user_id']
+    user = login_cust_collection.find_one({'_id': ObjectId(user_id)})
+    email = user.get('email', 'Unknown')  # Get the username or default to 'Unknown'
+
+    login_cust_collection.delete_one({'_id': ObjectId(user_id)})
+        
+    flash("User deleted successfully!", "success")
+    log_activity(session["username"], f"deleted user with email: {email}", logs_collection)
+    return redirect(url_for('view_users'))
+
+@app.route('/delete_admin', methods=['POST'])
+def delete_admin():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    user_id = request.form['user_id']
+
+    user = login_cust_collection.find_one({'_id': ObjectId(user_id)})
+    username = user.get('username', 'Unknown')  # Get the username or default to 'Unknown'
+    login_cust_collection.delete_one({'_id': ObjectId(user_id)})
+    flash("User deleted successfully!", "success")
+    log_activity(session["username"], f"deleted user with username: {username}", logs_collection)
+    return redirect(url_for('view_admins'))
 
 @app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
@@ -1240,39 +1301,183 @@ def get_devices():
 @app.route("/get_companies", methods=["GET"])
 def get_companies():
     companies = services_collection.find({}, {"company": 1, "_id": 0})
-    return jsonify([company["company"] for company in companies])
+    unique_companies = sorted({company.get("company") for company in companies if "company" in company})
+    return jsonify(unique_companies)
+
+
 
 @app.route("/get_essential_oils", methods=["GET"])
 def get_essential_oils():
     essential_oils = eo_pack_collection.find({}, {"eo_name": 1, "_id": 0})
-    return jsonify([eo["name"] for eo in essential_oils])
+    return jsonify([eo["eo_name"] for eo in essential_oils])
 
-@app.route("/post-service", methods=["POST","GET"])
+# @app.route("/get_premises", methods=["POST"])
+# def get_premises():
+#     company_name = request.json.get("company_name")
+#     company = services_collection.find_one({"name": company_name})
+#     return jsonify(company.get("Premise Name", [])) if company else jsonify([])
+
+@app.route("/get_premises", methods=["GET"])
+def get_premises():
+    company_name = request.args.get("company_name")
+    if not company_name:
+        return jsonify([])  # Return an empty list if no company is selected
+    
+    # Find premises for the selected company
+    premises = services_collection.find(
+        {"company": company_name},  # Filter by the selected company
+        {"premise": 1, "_id": 0}   # Fetch only the premise field
+    )
+    
+    # Extract unique premises
+    unique_premises = sorted({premise.get("Premise Name") for premise in premises if "Premise Name" in premise})
+    return jsonify(unique_premises)
+
+
+@app.route("/get_devices_post", methods=["POST"])
+def get_devices_post():
+    premise = request.json.get("premise")
+    company_name = request.json.get("company_name")
+    company = services_collection.find_one({"name": company_name})
+    premises = company.get("Premise Name", []) if company else []
+    for p in premises:
+        if p["name"] == premise:
+            return jsonify(p.get("Model", []))
+    return jsonify([])
+
+@app.route("/post-service", methods=["POST", "GET"])
 def post_service():
     if 'username' not in session:
         return redirect(url_for('admin_login'))
 
     username = session['username']  # Get the logged-in user's username
     
-    
     if request.method == "POST":
-        data = {
-            "company_name": request.form.get("company_name"),
-            "premise": request.form.get("premise"),
-            "device": request.form.get("device"),
-            "essential_oil": request.form.get("essential_oil"),
-            "oil_balance": int(request.form.get("oil_balance")),
-            "balance_brought_back": int(request.form.get("balance_brought_back")),
-            "balance_brought_back_percent": request.form.get("balance_brought_back_percent"),
-            "refill_amount": int(request.form.get("refill_amount")),
-            "refill_amount_percent": request.form.get("refill_amount_percent"),
-        }
-        eo_pack_collection.insert_one(data)
-        log_activity(session["username"],"added post service : " +str(request.form.get("company_name")),logs_collection)
+        # Collect data from the form
+        essential_oil = request.form.get("essential_oil")
+        oil_balance = int(request.form.get("oil_balance"))
+        balance_brought_back = int(request.form.get("balance_brought_back"))
+        balance_brought_back_percent = request.form.get("balance_brought_back_percent")
+        refill_amount = int(request.form.get("refill_amount"))
+        refill_amount_percent = request.form.get("refill_amount_percent")
+        month_year = datetime.now()
 
-        flash(f"Balance updated successfully!", "success")
+        # Define the query and the update
+        query = {"essential_oil": essential_oil}  # Match based on the essential oil
+        update = {
+            "$set": {
+                "oil_balance": oil_balance,
+                "balance_brought_back": balance_brought_back,
+                "balance_brought_back_percent": balance_brought_back_percent,
+                "refill_amount": refill_amount,
+                "refill_amount_percent": refill_amount_percent,
+                "month_year": month_year
+            }
+        }
+
+        # Perform the upsert (update or insert if not found)
+        eo_pack_collection.update_one(query, update, upsert=True)
+
+        # Log the activity
+        log_activity(username, f"Updated/added post-service record for essential oil: {essential_oil}", logs_collection)
+
+        flash(f"Record for {essential_oil} updated successfully!", "success")
         return redirect(url_for("dashboard"))
+
     return render_template('post-service.html', username=username)
+
+@app.route('/view-users', methods=['GET'])
+def view_users():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    users = list(login_cust_collection.find({}, {'username': 1,'email':1}))
+
+    page = int(request.args.get('page', 1))  # Current page (default: 1)
+    limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+
+    username = request.args.get('username')
+    email = request.args.get('email')
+
+    query = {}
+
+    # Filter by user
+    if username:
+        query["username"] = {"$regex": username, "$options": "i"}  # Case-insensitive search
+
+    # Filter by action
+    if email:
+        query["email"] = {"$regex": email, "$options": "i"}  # Case-insensitive search
+
+    # Pagination logic
+    total_list = login_cust_collection.count_documents(query)
+
+    users = list(
+        login_cust_collection.find(query, {'username': 1, 'email': 1, '_id': 0})
+        .skip((page - 1) * limit)
+        .limit(limit)
+    )
+
+    total_pages = (total_list + limit - 1) // limit
+    base_url = request.path
+    query_params = request.args.to_dict()
+    query_params['page'] = page
+    query_params['limit'] = limit
+    pagination_base_url = f"{base_url}?"
+
+
+    return render_template('view-users.html',users=users,
+                           page=page, 
+                           total_pages=total_pages,
+                           limit=limit,
+                           pagination_base_url=pagination_base_url,
+                           query_params=query_params,
+                           )
+
+@app.route('/view-admins', methods=['GET'])
+def view_admins():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    admins = list(login_collection.find({}, {'username': 1}))
+
+    page = int(request.args.get('page', 1))  # Current page (default: 1)
+    limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+
+    username = request.args.get('username')
+
+    query = {}
+
+    # Filter by user
+    if username:
+        query["username"] = {"$regex": username, "$options": "i"}  # Case-insensitive search
+    
+    total_list = login_collection.count_documents(query)
+
+    admins = list(
+        login_collection.find(query, {'username': 1,  '_id': 0})
+        .skip((page - 1) * limit)
+        .limit(limit)
+    )
+
+    total_pages = (total_list + limit - 1) // limit
+    base_url = request.path
+    query_params = request.args.to_dict()
+    query_params['page'] = page
+    query_params['limit'] = limit
+    pagination_base_url = f"{base_url}?"
+
+
+
+
+    return render_template('view-admins.html',admins=admins,
+                           page=page, 
+                           total_pages=total_pages,
+                           limit=limit,
+                           pagination_base_url=pagination_base_url,
+                           query_params=query_params,
+                           )
+
 
 @app.route('/logs', methods=['GET','POST'])
 def get_logs():

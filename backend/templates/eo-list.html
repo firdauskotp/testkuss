@@ -11,7 +11,9 @@
     <div class="container mt-5">
         <div class="container mt-5 position-relative">
             <!-- Button Positioned Top Right -->
-            <a href="{{ url_for('dashboard') }}" class="btn btn-danger position-absolute top-0 end-0 m-3">Back</a>
+            <p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+            </p>
     
             <h1>EO List - Data</h1>
         </div>
@@ -21,11 +23,12 @@
             <div class="accordion" id="responsiveAccordion">
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="formHeader">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#formContent" aria-expanded="true" aria-controls="formContent">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#formContent" aria-expanded="false" aria-controls="formContent">
+
                             Filter
                         </button>
                     </h2>
-                    <div id="formContent" class="accordion-collapse collapse show" aria-labelledby="formHeader" data-bs-parent="#responsiveAccordion">
+                    <div id="formContent" class="accordion-collapse collapse " aria-labelledby="formHeader" data-bs-parent="#responsiveAccordion">
                         <div class="accordion-body">
             <div class="row">
                 <div class="col-md-3">
@@ -144,14 +147,15 @@
     
         <!-- Filter Form -->
         <form class="mb-4" method="get" action="/eo-list">
-            <div class="accordion" id="responsiveAccordion">
+            <div class="accordion" id="responsiveAccordion2">
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="formHeader">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#formContent" aria-expanded="true" aria-controls="formContent">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#formContent2" aria-expanded="false" aria-controls="formContent2">
+
                             Filter
                         </button>
                     </h2>
-                    <div id="formContent" class="accordion-collapse collapse show" aria-labelledby="formHeader" data-bs-parent="#responsiveAccordion">
+                    <div id="formContent2" class="accordion-collapse collapse " aria-labelledby="formHeader" data-bs-parent="#responsiveAccordion2">
                         <div class="accordion-body">
             <div class="row">
                 <div class="col-md-3">

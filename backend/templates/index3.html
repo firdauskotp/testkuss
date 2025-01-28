@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Case Form</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .logout-btn {
+      background-color: #dc3545;
+      color: white !important;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    
+    <h2 class="text-center mb-4">Create a New Case</h2>
+    
+    <form id="caseForm" method="POST" action="/customer-help" enctype="multipart/form-data">
+      <!-- Premise Name -->
+
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="premise_name">Premise Name:</label>
+        <input type="text" class="form-control" id="premise_name" name="premise_name" required>
+      </div>
+
+      <!-- Location -->
+      <div class="form-group">
+        <label for="location">Device Location (1st Floor, Toilet, etc):</label>
+        <input type="text" class="form-control" id="location" name="location" required>
+      </div>
+
+      <div class="form-group">
+      <div id="imageError" class="error-message d-none" style="color:red;">Please upload an image of your device.</div>
+
+        <label for="image">Upload Device Image:</label>
+        <input type="file" class="form-control-file" id="image" name="image" accept="image/*">
+      </div>
+
+
+      <!-- Model -->
+      <div class="form-group">
+        <label for="model">Model:</label>
+        <input type="text" class="form-control" id="model" name="model" required>
+      </div>
+
+      <!-- Issues -->
+      <div class="form-group">
+      <div id="checkboxError" class="error-message d-none" style="color:red;">Please select at least one issue.</div>
+
+        <label for="issues">Issues:</label>
+        <div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="weak_scent" name="issues" value="Weak Scent">
+            <label class="form-check-label" for="weak_scent">Weak Scent</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="no_oil" name="issues" value="No Oil">
+            <label class="form-check-label" for="no_oil">No Oil</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="no_mist" name="issues" value="No Mist">
+            <label class="form-check-label" for="no_mist">No Mist</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="weak_batteries" name="issues" value="Weak Batteries">
+            <label class="form-check-label" for="weak_batteries">Weak Batteries</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="faulty_power_adapter" name="issues" value="Faulty Power Adapter">
+            <label class="form-check-label" for="faulty_power_adapter">Faulty Power Adapter</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="form-group">
+        <label for="remarks">Remarks (if any):</label>
+        <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary btn-block">Submit Case</button>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    document.getElementById('caseForm').addEventListener('submit', function(event) {
+      const checkboxes = document.querySelectorAll('input[name="issues"]:checked');
+      const errorMessage = document.getElementById('checkboxError');
+
+      if (checkboxes.length === 0) {
+        errorMessage.classList.remove('d-none'); // Show error message
+        event.preventDefault(); // Prevent form submission
+      } else {
+        errorMessage.classList.add('d-none'); // Hide error message
+      }
+
+      const imageInput = document.getElementById('image');
+      const imageError = document.getElementById('imageError');
+
+      if (!imageInput.files.length) {
+        imageError.classList.remove('d-none'); // Show error message
+        event.preventDefault(); // Prevent form submission
+      } else {
+        imageError.classList.add('d-none'); // Hide error message
+      }
+
+    });
+  </script>
+</body>
+</html>
