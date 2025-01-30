@@ -31,11 +31,19 @@
 </head>
 <body>
     <div class="container my-5">
+         <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert alert-danger mt-3">
+        {{ messages[0][1] }}
+    </div>
+    {% endif %}
+    {% endwith %}
     <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
 
         <h3 class="text-center mb-4">New Customer Form</h3>
 
-        <form id="customerForm" action="/new-customer-submit">
+        <form id="customerForm" action="/new-customer" method="POST">
             <!-- Company Details -->
             <div class="form-section">
                 <div class="mb-3">
@@ -44,7 +52,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="dateCreated" class="form-label">Date Created</label>
-                    <input type="date" id="dateCreated" name="dateCreated" class="form-control" required>
+                    <input type="date" id="dateCreated" name="dateCreated" class="form-control" disabled required>
                 </div>
                 <div class="mb-3">
                     <label for="industry" class="form-label">Industry</label>
@@ -103,6 +111,9 @@
 
                         <label class="form-label">#1 Model</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter model" name="deviceModel" id="deviceModel"  required>
+
+                        <label class="form-label">#1 Colour</label>
+                        <input type="text" class="form-control mb-2" placeholder="Enter colour" name="deviceColour" id="deviceColour"  required>
 
                         <label class="form-label">#1 Volume Required</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter volume required" name="deviceVolume" id="deviceVolume"  required>
@@ -357,22 +368,25 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                 <div class="device-item mb-3" id="device-${deviceCount}">
                     <h5 class="section-heading">Device ${deviceCount}</h5>
                     <label class="form-label">#${deviceCount} Location</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter location" required>
+                    <input type="text" class="form-control mb-2" name="deviceLocation" id="deviceLocation" placeholder="Enter location" required>
 
                     <label class="form-label">#${deviceCount} S/N</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter serial number" required>
+                    <input type="text" class="form-control mb-2" name="deviceSN" id="deviceSN" placeholder="Enter serial number" required>
 
                     <label class="form-label">#${deviceCount} Model</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter model" required>
+                    <input type="text" class="form-control mb-2" name="deviceModel" id="deviceModel" placeholder="Enter model" required>
+
+                    <label class="form-label">#${deviceCount} Colour</label>
+                    <input type="text" class="form-control mb-2" placeholder="Enter colour" name="deviceColour" id="deviceColour" required>
 
                     <label class="form-label">#${deviceCount} Volume Required</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter volume required" required>
+                    <input type="number" class="form-control mb-2" placeholder="Enter volume required"  name="deviceVolume" id="deviceVolume" required>
 
                     <label class="form-label">#${deviceCount} Scent</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter scent" required>
+                    <input type="text" class="form-control mb-2" placeholder="Enter scent" name="deviceScent" id="deviceScent"  required>
 
                     <label class="form-label">Tie Device to Premise:</label>
-                    <select class="form-select mb-2" required>
+                    <select class="form-select mb-2" id="devicePremise" name="devicePremise" required>
                         <option selected disabled>Select a premise</option>
                         ${getPremiseOptions()}
                     </select>
@@ -380,67 +394,67 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                     <!-- Events for Device -->
                     <h6 class="section-heading">Event 1</h6>
                     <label class="form-label">#${deviceCount} - E1 - Days</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                    <input type="text" class="form-control mb-2" name="E1Days" id="E1Days" placeholder="Enter days" required>
 
                     <label class="form-label">#${deviceCount} - E1 - Start Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                    <input type="text" class="form-control mb-2" name="E1StartTime" id="E1StartTime" placeholder="Enter start time" required>
 
                     <label class="form-label">#${deviceCount} - E1 - End Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                    <input type="text" class="form-control mb-2" name="E1EndTime" id="E1EndTime" placeholder="Enter end time" required>
 
                     <label class="form-label">#${deviceCount} - E1 - Pause</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                    <input type="number" class="form-control mb-2"  name="E1Pause" id="E1Pause" placeholder="Enter pause duration" required>
 
                     <label class="form-label">#${deviceCount} - E1 - Work</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                    <input type="number" class="form-control mb-2" name="E1Work" id="E1Work"  placeholder="Enter work duration" required>
 
                     <h6 class="section-heading">Event 2</h6>
                     <label class="form-label">#${deviceCount} - E2 - Days</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                    <input type="text" class="form-control mb-2" name="E2Days" id="E2Days" placeholder="Enter days" required>
 
                     <label class="form-label">#${deviceCount} - E2 - Start Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                    <input type="text" class="form-control mb-2" name="E2StartTime" id="E2StartTime" placeholder="Enter start time" required>
 
                     <label class="form-label">#${deviceCount} - E2 - End Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                    <input type="text" class="form-control mb-2" name="E2EndTime" id="E2EndTime" placeholder="Enter end time" required>
 
                     <label class="form-label">#${deviceCount} - E2 - Pause</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                    <input type="number" class="form-control mb-2" name="E2Pause" id="E2Pause" placeholder="Enter pause duration" required>
 
                     <label class="form-label">#${deviceCount} - E2 - Work</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                    <input type="number" class="form-control mb-2" name="E2Work" id="E2Work"  placeholder="Enter work duration" required>
 
                     <h6 class="section-heading">Event 3</h6>
                     <label class="form-label">#${deviceCount} - E3 - Days</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                    <input type="text" class="form-control mb-2" name="E3Days" id="E3Days" placeholder="Enter days" required>
 
                     <label class="form-label">#${deviceCount} - E3 - Start Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                    <input type="text" class="form-control mb-2" name="E3StartTime" id="E3StartTime" placeholder="Enter start time" required>
 
                     <label class="form-label">#${deviceCount} - E3 - End Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                    <input type="text" class="form-control mb-2" name="E3EndTime" id="E3EndTime" placeholder="Enter end time" required>
 
                     <label class="form-label">#${deviceCount} - E3 - Pause</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                    <input type="number" class="form-control mb-2" name="E3Pause" id="E3Pause" placeholder="Enter pause duration" required>
 
                     <label class="form-label">#${deviceCount} - E3 - Work</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                    <input type="number" class="form-control mb-2" name="E3Work" id="E3Work"  placeholder="Enter work duration" required>
 
                     <h6 class="section-heading">Event 4</h6>
                     <label class="form-label">#${deviceCount} - E4 - Days</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter days" required>
+                    <input type="text" class="form-control mb-2" name="E4Days" id="E4Days" placeholder="Enter days" required>
 
                     <label class="form-label">#${deviceCount} - E4 - Start Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter start time" required>
+                    <input type="text" class="form-control mb-2" name="E4StartTime" id="E4StartTime" placeholder="Enter start time" required>
 
                     <label class="form-label">#${deviceCount} - E4 - End Time</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter end time" required>
+                    <input type="text" class="form-control mb-2" name="E4EndTime" id="E4EndTime" placeholder="Enter end time" required>
 
                     <label class="form-label">#${deviceCount} - E4 - Pause</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter pause duration" required>
+                    <input type="number" class="form-control mb-2" name="E4Pause" id="E4Pause" placeholder="Enter pause duration" required>
 
                     <label class="form-label">#${deviceCount} - E4 - Work</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter work duration" required>
+                    <input type="number" class="form-control mb-2" name="E4Work" id="E4Work"  placeholder="Enter work duration" required>
 
                     <button type="button" class="remove-btn mt-2">Remove Device</button>
                 </div>`;

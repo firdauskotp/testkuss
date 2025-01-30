@@ -57,6 +57,8 @@ straw_list_collection = dashboard_db['straw_mist_heads_pack']
 profile_list_collection = dashboard_db['profile']
 device_list_collection = dashboard_db['device']
 
+# customer_collection = dashboard_db['customer']
+# device_collection = dashboard_db['device']
 change_collection = dashboard_db['change']
 refund_collection = dashboard_db['refund']
 
@@ -1021,12 +1023,17 @@ def dashboard():
         urgent_remarks = [r for r in remarks if r.get('urgent')]
         non_urgent_remarks = [r for r in remarks if not r.get('urgent')]
         help_request = list(collection.find({}))
+        change = list(change_collection.find({}))
+        refund = list(refund_collection.find({}))
+
         
         return render_template("dashboard.html", 
                                username=session["username"], 
                                remarks_count=len(non_urgent_remarks), 
                                urgent_remarks_count=len(urgent_remarks),
-                               help_request_count=len(help_request)
+                               help_request_count=len(help_request),
+                               change_count = len(change),
+                               refund_count=len(refund)
                                )
     else:
         flash("Please log in to access this page.", "warning")
@@ -1039,14 +1046,50 @@ def change_form():
         return redirect(url_for('admin_login'))
     
     if request.method == 'POST':
-        data = request.json
-        collection = "refund" if data.get("collectBack") else "change"
+        # data = request.json
+        # collection = "refund" if data.get("collectBack") else "change"
         
-        dashboard_db[collection].insert_one(data)
+        # dashboard_db[collection].insert_one(data)
 
-        # log_activity(session["username"],"added user : " +str(email),logs_collection)
+        # print(data)
+        # print(dashboard_db[collection])
 
-        return jsonify({"message": "Form submitted successfully!"}), 200
+        data = {
+        "user": request.form.get("user"),
+        "company": request.form.get("companyName"),
+        "date": request.form.get("date"),
+        "month": request.form.get("month"),
+        "year": request.form.get("year"),
+        "premises": request.form.getlist("premises"),
+        "devices": request.form.getlist("devices"),
+        "change_scent": request.form.get("changeScent") == "on",
+        "change_scent_to": request.form.get("changeScentText"),
+        "redo_settings": request.form.get("redoSettings") == "on",
+        "reduce_intensity": request.form.get("reduceIntensity") == "on",
+        "increase_intensity": request.form.get("increaseIntensity") == "on",
+        "move_device": request.form.get("moveDevice") == "on",
+        "move_device_to": request.form.get("moveDeviceText"),
+        "relocate_device": request.form.get("relocateDevice") == "on",
+        "relocate_device_to": request.form.get("relocateDeviceDropdown"),
+        "collect_back": request.form.get("collectBack") == "on",
+        "remark": request.form.get("remark"),
+        "submitted_at": datetime.now()
+        }
+
+        print(data)
+
+        if data["collect_back"]:
+            refund_collection.insert_one(data)
+            log_activity(session["username"],"collected back : " +str(data['premises']) + str(data['devices']),logs_collection)
+        else:
+            change_collection.insert_one(data)
+            log_activity(session["username"],"updated settings : " +str(data['premises']) + str(data['devices']),logs_collection)
+
+
+        # return jsonify({"message": "Form submitted successfully!"}), 200
+        flash("Data updated", "success")
+
+        return redirect(url_for("dashboard"))
 
     companies = services_collection.distinct('company')
     premises = services_collection.distinct('Premise Name')
@@ -1115,131 +1158,141 @@ def get_image(image_id):
 #Getting the image later on frontend
 #<img src="{{ url_for('get_image', image_id=case['image_id']) }}" alt="Case Image" />
 
-@app.route('/new-client')
+@app.route('/new-customer',methods=['GET', 'POST'])
 def new_customer():
     if 'username' not in session:
         return redirect(url_for('admin_login'))
     if request.method == "POST":
-        # Auto-increment case number
+        # Extract and format date
+        date_str = request.form.get("dateCreated")
+        dateCreated = datetime.strptime(date_str, "%Y-%m-%d") if date_str else None  
 
-        premise_name_list=[]
-        premise_area_list=[]
-        premise_address_list=[]
-
-        pic_name_list=[]
-        pic_designation_list=[]
-        pic_contact_list=[]
-        pic_email_list=[]
-        pic_premise=[]
-
-        device_list=[]
-
-        # Extract customer form data
         companyName = request.form.get("companyName")
-        dateCreated = request.form.get("dateCreated")
         industry = request.form.get("industry")
 
-        premiseName = request.form.get("premiseName")
-        premiseArea = request.form.get("premiseArea")
-        premiseAddress = request.form.get("premiseAddress")
+        # Initialize lists
+        premises = []
+        pic_records = []
+        device_records = []
+        master_list = []
 
-        picName = request.form.get("picName")
-        picDesignation = request.form.get("picDesignation")
-        picContact = request.form.get("picContact")
-        picEmail = request.form.get("picEmail")
+        # Extract premise details
+        premise_name = request.form.get('premiseName')
+        premise_area = request.form.get('premiseArea')
+        premise_address = request.form.get('premiseAddress')
+        contact_premise = request.form.get('contactPremise')
 
-        deviceLocation = request.form.get("deviceLocation")
-        deviceSN = request.form.get("deviceSN")
-        deviceModel = request.form.get("deviceModel")
-        deviceVolume = request.form.get("deviceVolume")
-        deviceScent = request.form.get("deviceScent")
+        if premise_name and premise_area and premise_address:
+            premise_record = {
+                "company": companyName,
+                "month_year": dateCreated,
+                "industry": industry,
+                "premise_name": premise_name,
+                "premise_area": premise_area,
+                "premise_address": premise_address,
+                "contact_premise": contact_premise,
+                "created_at": datetime.now(),
+            }
+            premises.append(premise_record)
+            master_list.append(premise_record)
 
-        contactPremise = request.form.get("contactPremise")
-        devicePremise = request.form.get("devicePremise")
+            # Extract and store each PIC as a separate record
+            i = 1
+            while True:
+                pic_name = request.form.get(f'picName{i}')
+                pic_designation = request.form.get(f'picDesignation{i}')
+                pic_contact = request.form.get(f'picContact{i}')
+                pic_email = request.form.get(f'picEmail{i}')
 
-        E1Days = request.form.get("E1Days")
-        E1StartTime = request.form.get("E1StartTime")
-        E1EndTime = request.form.get("E1EndTime")
-        E1Pause = request.form.get("E1Pause")
-        E1Work = request.form.get("E1Work")
+                if not pic_name:
+                    break
 
-        E2Days = request.form.get("E1Days")
-        E2StartTime = request.form.get("E1StartTime")
-        E2EndTime = request.form.get("E1EndTime")
-        E2Pause = request.form.get("E1Pause")
-        E2Work = request.form.get("E1Work")
+                pic_records.append({
+                    "company": companyName,
+                    "premise_name": premise_name,
+                    "name": pic_name,
+                    "designation": pic_designation,
+                    "contact": pic_contact,
+                    "email": pic_email,
+                    "created_at": datetime.now(),
+                })
+                i += 1  # Move to the next PIC
 
-        E3Days = request.form.get("E1Days")
-        E3StartTime = request.form.get("E1StartTime")
-        E3EndTime = request.form.get("E1EndTime")
-        E3Pause = request.form.get("E1Pause")
-        E3Work = request.form.get("E1Work")
+            # Extract and store each device with ALL schedules inside
+            j = 1
+            while True:
+                device_location = request.form.get(f'deviceLocation{j}')
+                device_sn = request.form.get(f'deviceSN{j}')
+                device_model = request.form.get(f'deviceModel{j}')
+                device_colour = request.form.get(f'deviceColour{j}')
+                device_volume = request.form.get(f'deviceVolume{j}')
+                device_scent = request.form.get(f'deviceScent{j}')
 
-        E4Days = request.form.get("E1Days")
-        E4StartTime = request.form.get("E1StartTime")
-        E4EndTime = request.form.get("E1EndTime")
-        E4Pause = request.form.get("E1Pause")
-        E4Work = request.form.get("E1Work")
+                if not device_sn:
+                    break
 
-        i = 1
+                device_record = {
+                    "company": companyName,
+                    "premise_name": premise_name,
+                    "location": device_location,
+                    "S/N": device_sn,
+                    "Model": device_model,
+                    "Color": device_colour,
+                    "Volume": device_volume,
+                    "Current EO": device_scent,
+                    "E1 - DAYS": request.form.get("E1Days"),
+                    "E1 - START": request.form.get("E1StartTime"),
+                    "E1 - END": request.form.get("E1EndTime"),
+                    "E1 - PAUSE": request.form.get("E1Pause"),
+                    "E1 - WORK": request.form.get("E1Work"),
+                    "E2 - DAYS": request.form.get("E2Days"),
+                    "E2 - START": request.form.get("E2StartTime"),
+                    "E2 - END": request.form.get("E2EndTime"),
+                    "E2 - PAUSE": request.form.get("E2Pause"),
+                    "E2 - WORK": request.form.get("E2Work"),
+                    "E3 - DAYS": request.form.get("E3Days"),
+                    "E3 - START": request.form.get("E3StartTime"),
+                    "E3 - END": request.form.get("E3EndTime"),
+                    "E3 - PAUSE": request.form.get("E3Pause"),
+                    "E3 - WORK": request.form.get("E3Work"),
+                    "E4 - DAYS": request.form.get("E4Days"),
+                    "E4 - START": request.form.get("E4StartTime"),
+                    "E4 - END": request.form.get("E4EndTime"),
+                    "E4 - PAUSE": request.form.get("E4Pause"),
+                    "E4 - WORK": request.form.get("E4Work"),
+                    "created_at": datetime.now(),
+                }
+                device_records.append(device_record)
+                master_list.append(device_record)
 
-        while True:
-            premise_name = request.form.get(f'premiseName{i}')
-            premise_area = request.form.get(f'premiseArea{i}')
-            premise_address = request.form.get(f'premiseAddress{i}')
-            
-            # Break the loop if no more premises are found
-            if not premise_name or not premise_area or not premise_address:
-                break
-            
-            # Create a dictionary for the current premise
-            
-            premise_name_list.append(premise_name)
-            premise_area_list.append(premise_area)
-            premise_address_list.append(premise_address)
-            i += 1
 
+                j += 1  # Move to the next device
 
-        while True:
-            premise_name = request.form.get(f'premiseName{i}')
-            premise_area = request.form.get(f'premiseArea{i}')
-            premise_address = request.form.get(f'premiseAddress{i}')
-            contactPremise = request.form.get("contactPremise")
+        # Debugging
+        print("Premises:", premises)
+        print("PIC Records:", pic_records)
+        print("Device Records:", device_records)
+        print("Master:",master_list)
 
-            
-            # Break the loop if no more premises are found
-            if not premise_name or not premise_area or not premise_address:
-                break
-            
-            # Create a dictionary for the current premise
-            
-            premise_name_list.append(premise_name)
-            premise_area_list.append(premise_area)
-            premise_address_list.append(premise_address)
-            pic_contact_list.append(contactPremise)
-            i += 1
+        # Insert into MongoDB
+        if premises:
+            profile_list_collection.insert_many(premises)
 
+        if pic_records:
+            profile_list_collection.insert_many(pic_records)  # Store PICs separately
+
+        if device_records:
+            device_list_collection.insert_many(device_records)  # Store devices with schedules in the same document
+        if master_list:
+            test_collection.insert_many(device_records)  # Store devices with schedules in the same document
         
+        log_activity(session["username"],"added new customer : " +str(companyName),logs_collection)
 
+        flash(f"Company {companyName} added successfully!", "success")
 
-        log_activity(session["username"],"added company : " +str(companyName),logs_collection)
+        return redirect(url_for("dashboard"))
 
-        # Insert new case into MongoDB
-        test_collection.insert_one({
-            "case_no": case_no,
-            "premise_name": premise_name,
-            "location": location,
-            "image_id": image_id,
-            "model": model,
-            "issues": issues,
-            "remarks": remarks,
-            "email": user_email,
-            "created_at": datetime.now(),
-        })
-
-        return redirect(url_for("new-customer.html"))
-
-    # return render_template('new-customer.html')
+    return render_template('new-customer.html')
 
 
 
@@ -1286,17 +1339,24 @@ def remark():
 
     return render_template('remark.html', username=username)
 
-@app.route('/get-devices', methods=['GET'])
+# @app.route('/get-devices', methods=['GET'])
+# def get_devices():
+#     company_name = request.args.get('companyName')
+#     if not company_name:
+#         return jsonify({"devices": []}), 400
+
+#     # Find devices associated with the company
+#     devices = services_collection.find({"Premise Name": company_name}, {"Model": 1})
+#     devices = [device["Model"] for device in devices if "Model" in device]
+
+#     return jsonify({"devices": devices}), 200
+
+@app.route("/get-devices")
 def get_devices():
-    company_name = request.args.get('companyName')
-    if not company_name:
-        return jsonify({"devices": []}), 400
-
-    # Find devices associated with the company
-    devices = services_collection.find({"Premise Name": company_name}, {"Model": 1})
-    devices = [device["Model"] for device in devices if "Model" in device]
-
-    return jsonify({"devices": devices}), 200
+    premise_name = request.args.get("premiseName")
+    devices = services_collection.find({"Premise Name": premise_name})
+    devices_list = [device["Model"] for device in devices]
+    return jsonify({"devices": devices_list})
 
 @app.route("/get_companies", methods=["GET"])
 def get_companies():
@@ -1317,22 +1377,28 @@ def get_essential_oils():
 #     company = services_collection.find_one({"name": company_name})
 #     return jsonify(company.get("Premise Name", [])) if company else jsonify([])
 
-@app.route("/get_premises", methods=["GET"])
-def get_premises():
-    company_name = request.args.get("company_name")
-    if not company_name:
-        return jsonify([])  # Return an empty list if no company is selected
+# @app.route("/get_premises", methods=["GET"])
+# def get_premises():
+#     company_name = request.args.get("company_name")
+#     if not company_name:
+#         return jsonify([])  # Return an empty list if no company is selected
     
-    # Find premises for the selected company
-    premises = services_collection.find(
-        {"company": company_name},  # Filter by the selected company
-        {"premise": 1, "_id": 0}   # Fetch only the premise field
-    )
+#     # Find premises for the selected company
+#     premises = services_collection.find(
+#         {"company": company_name},  # Filter by the selected company
+#         {"premise": 1, "_id": 0}   # Fetch only the premise field
+#     )
     
-    # Extract unique premises
-    unique_premises = sorted({premise.get("Premise Name") for premise in premises if "Premise Name" in premise})
-    return jsonify(unique_premises)
+#     # Extract unique premises
+#     unique_premises = sorted({premise.get("Premise Name") for premise in premises if "Premise Name" in premise})
+#     return jsonify(unique_premises)
 
+@app.route("/get-premises")
+def get_premises():
+    company_name = request.args.get("companyName")
+    premises = services_collection.find({"company": company_name})
+    premises_list = [premise["Premise Name"] for premise in premises]
+    return jsonify({"premises": premises_list})
 
 @app.route("/get_devices_post", methods=["POST"])
 def get_devices_post():

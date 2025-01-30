@@ -30,7 +30,7 @@
         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
         <h3 class="text-center mb-4">CHANGE FORM</h3>
 
-        <form id="changeForm">
+        <form id="changeForm" action="/change-form" method="POST">
             <!-- User and Company -->
             <div class="form-section">
                 <div class="mb-3">
@@ -196,84 +196,159 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const companyNameSelect = document.getElementById('companyName');
-            const devicesContainer = document.getElementById('devices');
+    //     document.addEventListener('DOMContentLoaded', () => {
+    //         const companyNameSelect = document.getElementById('companyName');
+    //         const devicesContainer = document.getElementById('devices');
     
-            companyNameSelect.addEventListener('change', () => {
-                const selectedCompany = companyNameSelect.value;
+    //         companyNameSelect.addEventListener('change', () => {
+    //             const selectedCompany = companyNameSelect.value;
     
-                if (selectedCompany) {
-                    fetch(`/get-devices?companyName=${encodeURIComponent(selectedCompany)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            devicesContainer.innerHTML = ''; // Clear current checkboxes
+    //             if (selectedCompany) {
+    //                 fetch(`/get-devices?companyName=${encodeURIComponent(selectedCompany)}`)
+    //                     .then(response => response.json())
+    //                     .then(data => {
+    //                         devicesContainer.innerHTML = ''; // Clear current checkboxes
     
-                            data.devices.forEach((device, index) => {
-                                const checkboxDiv = document.createElement('div');
-                                checkboxDiv.className = 'form-check';
+    //                         data.devices.forEach((device, index) => {
+    //                             const checkboxDiv = document.createElement('div');
+    //                             checkboxDiv.className = 'form-check';
     
-                                const checkbox = document.createElement('input');
-                                checkbox.type = 'checkbox';
-                                checkbox.className = 'form-check-input device-checkbox';
-                                checkbox.id = `device_${index}`;
-                                checkbox.name = 'devices';
-                                checkbox.value = device;
+    //                             const checkbox = document.createElement('input');
+    //                             checkbox.type = 'checkbox';
+    //                             checkbox.className = 'form-check-input device-checkbox';
+    //                             checkbox.id = `device_${index}`;
+    //                             checkbox.name = 'devices';
+    //                             checkbox.value = device;
     
-                                const label = document.createElement('label');
-                                label.className = 'form-check-label';
-                                label.htmlFor = `device_${index}`;
-                                label.textContent = device;
+    //                             const label = document.createElement('label');
+    //                             label.className = 'form-check-label';
+    //                             label.htmlFor = `device_${index}`;
+    //                             label.textContent = device;
     
-                                checkboxDiv.appendChild(checkbox);
-                                checkboxDiv.appendChild(label);
-                                devicesContainer.appendChild(checkboxDiv);
-                            });
-                        })
-                        .catch(error => console.error('Error fetching devices:', error));
-                }
-            });
-        });
+    //                             checkboxDiv.appendChild(checkbox);
+    //                             checkboxDiv.appendChild(label);
+    //                             devicesContainer.appendChild(checkboxDiv);
+    //                         });
+    //                     })
+    //                     .catch(error => console.error('Error fetching devices:', error));
+    //             }
+    //         });
+    //     });
 
-        document.addEventListener('DOMContentLoaded', () => {
-        const companyNameSelect = document.getElementById('companyName');
-        const premisesContainer = document.getElementById('premises'); // Target the premises container
+    //     document.addEventListener('DOMContentLoaded', () => {
+    //     const companyNameSelect = document.getElementById('companyName');
+    //     const premisesContainer = document.getElementById('premises'); // Target the premises container
     
-        companyNameSelect.addEventListener('change', () => {
-            const selectedCompany = companyNameSelect.value; // Get the selected company
+    //     companyNameSelect.addEventListener('change', () => {
+    //         const selectedCompany = companyNameSelect.value; // Get the selected company
     
-            if (selectedCompany) {
-                fetch(`/get-premises?companyName=${encodeURIComponent(selectedCompany)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        premisesContainer.innerHTML = ''; // Clear existing options
+    //         if (selectedCompany) {
+    //             fetch(`/get-premises?companyName=${encodeURIComponent(selectedCompany)}`)
+    //                 .then(response => response.json())
+    //                 .then(data => {
+    //                     premisesContainer.innerHTML = ''; // Clear existing options
 
-                        // Populate premises dropdown
-                        data.premises.forEach((premise, index) => {
-                            const checkboxDiv = document.createElement('div');
-                            checkboxDiv.className = 'form-check';
+    //                     // Populate premises dropdown
+    //                     data.premises.forEach((premise, index) => {
+    //                         const checkboxDiv = document.createElement('div');
+    //                         checkboxDiv.className = 'form-check';
 
-                            const checkbox = document.createElement('input');
-                            checkbox.type = 'checkbox';
-                            checkbox.className = 'form-check-input premise-checkbox';
-                            checkbox.id = `premise_${index}`;
-                            checkbox.name = 'premises';
-                            checkbox.value = premise;
+    //                         const checkbox = document.createElement('input');
+    //                         checkbox.type = 'checkbox';
+    //                         checkbox.className = 'form-check-input premise-checkbox';
+    //                         checkbox.id = `premise_${index}`;
+    //                         checkbox.name = 'premises';
+    //                         checkbox.value = premise;
 
-                            const label = document.createElement('label');
-                            label.className = 'form-check-label';
-                            label.htmlFor = `premise_${index}`;
-                            label.textContent = premise;
+    //                         const label = document.createElement('label');
+    //                         label.className = 'form-check-label';
+    //                         label.htmlFor = `premise_${index}`;
+    //                         label.textContent = premise;
 
-                            checkboxDiv.appendChild(checkbox);
-                            checkboxDiv.appendChild(label);
-                            premisesContainer.appendChild(checkboxDiv);
-                        });
-                    })
-                    .catch(error => console.error('Error fetching premises:', error));
-            }
-        });
+    //                         checkboxDiv.appendChild(checkbox);
+    //                         checkboxDiv.appendChild(label);
+    //                         premisesContainer.appendChild(checkboxDiv);
+    //                     });
+    //                 })
+    //                 .catch(error => console.error('Error fetching premises:', error));
+    //         }
+    //     });
+    // });
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+    const companySelect = document.getElementById("companyName");
+    const premiseContainer = document.getElementById("premises");
+    const deviceContainer = document.getElementById("devices");
+
+    // Fetch premises when a company is selected
+    companySelect.addEventListener("change", () => {
+        const selectedCompany = companySelect.value;
+        if (!selectedCompany) return;
+
+        fetch(`/get-premises?companyName=${encodeURIComponent(selectedCompany)}`)
+            .then(response => response.json())
+            .then(data => {
+                premiseContainer.innerHTML = ""; // Clear existing premises
+
+                data.premises.forEach((premise, index) => {
+                    const checkboxDiv = document.createElement("div");
+                    checkboxDiv.className = "form-check";
+
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.className = "form-check-input premise-checkbox";
+                    checkbox.id = `premise_${index}`;
+                    checkbox.name = "premises";
+                    checkbox.value = premise;
+
+                    const label = document.createElement("label");
+                    label.className = "form-check-label";
+                    label.htmlFor = `premise_${index}`;
+                    label.textContent = premise;
+
+                    checkboxDiv.appendChild(checkbox);
+                    checkboxDiv.appendChild(label);
+                    premiseContainer.appendChild(checkboxDiv);
+
+                    // Fetch devices when a premise is selected
+                    checkbox.addEventListener("change", () => {
+                        if (checkbox.checked) {
+                            fetch(`/get-devices?premiseName=${encodeURIComponent(premise)}`)
+                                .then(response => response.json())
+                                .then(deviceData => {
+                                    deviceContainer.innerHTML = ""; // Clear devices
+
+                                    deviceData.devices.forEach((device, dIndex) => {
+                                        const deviceDiv = document.createElement("div");
+                                        deviceDiv.className = "form-check";
+
+                                        const deviceCheckbox = document.createElement("input");
+                                        deviceCheckbox.type = "checkbox";
+                                        deviceCheckbox.className = "form-check-input device-checkbox";
+                                        deviceCheckbox.id = `device_${dIndex}`;
+                                        deviceCheckbox.name = "devices";
+                                        deviceCheckbox.value = device;
+
+                                        const deviceLabel = document.createElement("label");
+                                        deviceLabel.className = "form-check-label";
+                                        deviceLabel.htmlFor = `device_${dIndex}`;
+                                        deviceLabel.textContent = device;
+
+                                        deviceDiv.appendChild(deviceCheckbox);
+                                        deviceDiv.appendChild(deviceLabel);
+                                        deviceContainer.appendChild(deviceDiv);
+                                    });
+                                })
+                                .catch(error => console.error("Error fetching devices:", error));
+                        }
+                    });
+                });
+            })
+            .catch(error => console.error("Error fetching premises:", error));
     });
+});
+
 
     document.addEventListener('DOMContentLoaded', () => {
     // Enable/disable "Change Scent" textbox
