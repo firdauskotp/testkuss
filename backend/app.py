@@ -14,7 +14,7 @@ from werkzeug.security import generate_password_hash
 import gridfs
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
-from utils import log_activity
+from utils import log_activity, safe_int
 from flask_cors import CORS
 
 
@@ -1163,6 +1163,8 @@ def new_customer():
     if 'username' not in session:
         return redirect(url_for('admin_login'))
     if request.method == "POST":
+        print("Request form data:", request.form)
+
         # Extract and format date
         date_str = request.form.get("dateCreated")
         dateCreated = datetime.strptime(date_str, "%Y-%m-%d") if date_str else None  
@@ -1180,21 +1182,28 @@ def new_customer():
         premise_name = request.form.get('premiseName')
         premise_area = request.form.get('premiseArea')
         premise_address = request.form.get('premiseAddress')
-        contact_premise = request.form.get('contactPremise')
 
-        if premise_name and premise_area and premise_address:
-            premise_record = {
-                "company": companyName,
-                "month_year": dateCreated,
-                "industry": industry,
-                "premise_name": premise_name,
-                "premise_area": premise_area,
-                "premise_address": premise_address,
-                "contact_premise": contact_premise,
-                "created_at": datetime.now(),
-            }
-            premises.append(premise_record)
-            master_list.append(premise_record)
+        if companyName:
+            # Create a separate record for the premise
+            k=1
+            premise_name = request.form.get(f'premiseName{k}')
+            premise_area = request.form.get(f'premiseArea{k}')
+            premise_address = request.form.get(f'premiseAddress{k}')
+            while True:
+                if not premise_name:
+                    break
+                premise_record = {
+                    "company": companyName,
+                    "month_year": dateCreated,
+                    "industry": industry,
+                    "premise_name": premise_name,
+                    "premise_area": premise_area,
+                    "premise_address": premise_address,
+                    "created_at": datetime.now(),
+                }
+                premises.append(premise_record)
+                master_list.append(premise_record)
+                k+=1
 
             # Extract and store each PIC as a separate record
             i = 1
@@ -1203,22 +1212,25 @@ def new_customer():
                 pic_designation = request.form.get(f'picDesignation{i}')
                 pic_contact = request.form.get(f'picContact{i}')
                 pic_email = request.form.get(f'picEmail{i}')
+                contact_premise = request.form.get(f'contactPremise{i}')
 
                 if not pic_name:
                     break
 
-                pic_records.append({
+                picdata=({
                     "company": companyName,
-                    "premise_name": premise_name,
+                    "tied to": contact_premise,
                     "name": pic_name,
                     "designation": pic_designation,
                     "contact": pic_contact,
                     "email": pic_email,
                     "created_at": datetime.now(),
                 })
+                pic_records.append(picdata)
+                master_list.append(picdata)
                 i += 1  # Move to the next PIC
 
-            # Extract and store each device with ALL schedules inside
+            # Extract and store each device as a separate record
             j = 1
             while True:
                 device_location = request.form.get(f'deviceLocation{j}')
@@ -1227,46 +1239,132 @@ def new_customer():
                 device_colour = request.form.get(f'deviceColour{j}')
                 device_volume = request.form.get(f'deviceVolume{j}')
                 device_scent = request.form.get(f'deviceScent{j}')
+                device_premise = request.form.get(f'devicePremise{j}')
 
+                
                 if not device_sn:
                     break
 
-                device_record = {
+                devicedata=({
                     "company": companyName,
-                    "premise_name": premise_name,
+                    "tied to": device_premise,
                     "location": device_location,
-                    "S/N": device_sn,
+                    "S/N": safe_int(device_sn),
                     "Model": device_model,
                     "Color": device_colour,
-                    "Volume": device_volume,
+                    "Volume": safe_int(device_volume),
                     "Current EO": device_scent,
-                    "E1 - DAYS": request.form.get("E1Days"),
-                    "E1 - START": request.form.get("E1StartTime"),
-                    "E1 - END": request.form.get("E1EndTime"),
-                    "E1 - PAUSE": request.form.get("E1Pause"),
-                    "E1 - WORK": request.form.get("E1Work"),
-                    "E2 - DAYS": request.form.get("E2Days"),
-                    "E2 - START": request.form.get("E2StartTime"),
-                    "E2 - END": request.form.get("E2EndTime"),
-                    "E2 - PAUSE": request.form.get("E2Pause"),
-                    "E2 - WORK": request.form.get("E2Work"),
-                    "E3 - DAYS": request.form.get("E3Days"),
-                    "E3 - START": request.form.get("E3StartTime"),
-                    "E3 - END": request.form.get("E3EndTime"),
-                    "E3 - PAUSE": request.form.get("E3Pause"),
-                    "E3 - WORK": request.form.get("E3Work"),
-                    "E4 - DAYS": request.form.get("E4Days"),
-                    "E4 - START": request.form.get("E4StartTime"),
-                    "E4 - END": request.form.get("E4EndTime"),
-                    "E4 - PAUSE": request.form.get("E4Pause"),
-                    "E4 - WORK": request.form.get("E4Work"),
+                    "E1 - DAYS": request.form.get(f"E1Days{j}"),
+                    "E1 - START": request.form.get(f"E1StartTime{j}"),
+                    "E1 - END": request.form.get(f"E1EndTime{j}"),
+                    "E1 - PAUSE": safe_int(request.form.get(f"E1Pause{j}")),
+                    "E1 - WORK": safe_int(request.form.get(f"E1Work{j}")),
+                    "E2 - DAYS": request.form.get(f"E2Days{j}"),
+                    "E2 - START": request.form.get(f"E2StartTime{j}"),
+                    "E2 - END": request.form.get(f"E2EndTime{j}"),
+                    "E2 - PAUSE": safe_int(request.form.get(f"E2Pause{j}")),
+                    "E2 - WORK": safe_int(request.form.get(f"E2Work{j}")),
+                    "E3 - DAYS": request.form.get(f"E3Days{j}"),
+                    "E3 - START": request.form.get(f"E3StartTime{j}"),
+                    "E3 - END": request.form.get(f"E3EndTime{j}"),
+                    "E3 - PAUSE": safe_int(request.form.get(f"E3Pause{j}")),
+                    "E3 - WORK": safe_int(request.form.get(f"E3Work{j}")),
+                    "E4 - DAYS": request.form.get(f"E4Days{j}"),
+                    "E4 - START": request.form.get(f"E4StartTime{j}"),
+                    "E4 - END": request.form.get(f"E4EndTime{j}"),
+                    "E4 - PAUSE": safe_int(request.form.get(f"E4Pause{j}")),
+                    "E4 - WORK": safe_int(request.form.get(f"E4Work{j}")),
                     "created_at": datetime.now(),
-                }
-                device_records.append(device_record)
-                master_list.append(device_record)
-
-
+                })
+                device_records.append(devicedata)
+                master_list.append(devicedata)
                 j += 1  # Move to the next device
+
+        # if premise_name and premise_area and premise_address:
+        #     premise_record = {
+        #         "company": companyName,
+        #         "month_year": dateCreated,
+        #         "industry": industry,
+        #         "premise_name": premise_name,
+        #         "premise_area": premise_area,
+        #         "premise_address": premise_address,
+        #         "contact_premise": contact_premise,
+        #         "created_at": datetime.now(),
+        #     }
+        #     premises.append(premise_record)
+        #     master_list.append(premise_record)
+
+        #     # Extract and store each PIC as a separate record
+        #     i = 1
+        #     while True:
+        #         pic_name = request.form.get(f'picName{i}')
+        #         pic_designation = request.form.get(f'picDesignation{i}')
+        #         pic_contact = request.form.get(f'picContact{i}')
+        #         pic_email = request.form.get(f'picEmail{i}')
+
+        #         if not pic_name:
+        #             break
+
+        #         pic_records.append({
+        #             "company": companyName,
+        #             "premise_name": premise_name,
+        #             "name": pic_name,
+        #             "designation": pic_designation,
+        #             "contact": pic_contact,
+        #             "email": pic_email,
+        #             "created_at": datetime.now(),
+        #         })
+        #         i += 1  # Move to the next PIC
+
+        #     # Extract and store each device with ALL schedules inside
+        #     j = 1
+        #     while True:
+        #         device_location = request.form.get(f'deviceLocation{j}')
+        #         device_sn = request.form.get(f'deviceSN{j}')
+        #         device_model = request.form.get(f'deviceModel{j}')
+        #         device_colour = request.form.get(f'deviceColour{j}')
+        #         device_volume = request.form.get(f'deviceVolume{j}')
+        #         device_scent = request.form.get(f'deviceScent{j}')
+
+        #         if not device_sn:
+        #             break
+
+        #         device_record = {
+        #             "company": companyName,
+        #             "premise_name": premise_name,
+        #             "location": device_location,
+        #             "S/N": device_sn,
+        #             "Model": device_model,
+        #             "Color": device_colour,
+        #             "Volume": device_volume,
+        #             "Current EO": device_scent,
+        #             "E1 - DAYS": request.form.get("E1Days"),
+        #             "E1 - START": request.form.get("E1StartTime"),
+        #             "E1 - END": request.form.get("E1EndTime"),
+        #             "E1 - PAUSE": request.form.get("E1Pause"),
+        #             "E1 - WORK": request.form.get("E1Work"),
+        #             "E2 - DAYS": request.form.get("E2Days"),
+        #             "E2 - START": request.form.get("E2StartTime"),
+        #             "E2 - END": request.form.get("E2EndTime"),
+        #             "E2 - PAUSE": request.form.get("E2Pause"),
+        #             "E2 - WORK": request.form.get("E2Work"),
+        #             "E3 - DAYS": request.form.get("E3Days"),
+        #             "E3 - START": request.form.get("E3StartTime"),
+        #             "E3 - END": request.form.get("E3EndTime"),
+        #             "E3 - PAUSE": request.form.get("E3Pause"),
+        #             "E3 - WORK": request.form.get("E3Work"),
+        #             "E4 - DAYS": request.form.get("E4Days"),
+        #             "E4 - START": request.form.get("E4StartTime"),
+        #             "E4 - END": request.form.get("E4EndTime"),
+        #             "E4 - PAUSE": request.form.get("E4Pause"),
+        #             "E4 - WORK": request.form.get("E4Work"),
+        #             "created_at": datetime.now(),
+        #         }
+        #         device_records.append(device_record)
+        #         master_list.append(device_record)
+
+
+        #         j += 1  # Move to the next device
 
         # Debugging
         print("Premises:", premises)
@@ -1284,13 +1382,13 @@ def new_customer():
         if device_records:
             device_list_collection.insert_many(device_records)  # Store devices with schedules in the same document
         if master_list:
-            test_collection.insert_many(device_records)  # Store devices with schedules in the same document
+            test_collection.insert_many(master_list)  # Store devices with schedules in the same document
         
         log_activity(session["username"],"added new customer : " +str(companyName),logs_collection)
 
         flash(f"Company {companyName} added successfully!", "success")
 
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("new_customer"))
 
     return render_template('new-customer.html')
 

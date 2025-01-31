@@ -7,3 +7,9 @@ def log_activity(name, action, database):
         "timestamp": datetime.now(),
     }
     database.insert_one(log_entry)
+
+def safe_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return value
