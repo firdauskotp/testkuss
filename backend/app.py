@@ -78,6 +78,7 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_TEST_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
+app.config['MODE'] = os.getenv('MODE')
 
 mail = Mail(app)
 
@@ -1162,9 +1163,8 @@ def get_image(image_id):
 def new_customer():
     if 'username' not in session:
         return redirect(url_for('admin_login'))
+    
     if request.method == "POST":
-        print("Request form data:", request.form)
-
         # Extract and format date
         date_str = request.form.get("dateCreated")
         dateCreated = datetime.strptime(date_str, "%Y-%m-%d") if date_str else None  
@@ -1178,23 +1178,23 @@ def new_customer():
         device_records = []
         master_list = []
 
-        # Extract premise details
-        premise_name = request.form.get('premiseName')
-        premise_area = request.form.get('premiseArea')
-        premise_address = request.form.get('premiseAddress')
-
         if companyName:
-            # Create a separate record for the premise
-            k=1
-            premise_name = request.form.get(f'premiseName{k}')
-            premise_area = request.form.get(f'premiseArea{k}')
-            premise_address = request.form.get(f'premiseAddress{k}')
+            premise_map = {}  # Store premises for lookup
+            pic_map = {}  # Store PICs tied to premises
+
+            # Step 1: Extract Premises
+            k = 1
             while True:
+                premise_name = request.form.get(f'premiseName{k}')
+                premise_area = request.form.get(f'premiseArea{k}')
+                premise_address = request.form.get(f'premiseAddress{k}')
+
                 if not premise_name:
                     break
+                
                 premise_record = {
                     "company": companyName,
-                    "month_year": dateCreated,
+                    "month_year": datetime.now(),
                     "industry": industry,
                     "premise_name": premise_name,
                     "premise_area": premise_area,
@@ -1202,35 +1202,41 @@ def new_customer():
                     "created_at": datetime.now(),
                 }
                 premises.append(premise_record)
-                master_list.append(premise_record)
-                k+=1
+                premise_map[premise_name] = premise_record  # Store for lookup
 
-            # Extract and store each PIC as a separate record
+                k += 1
+
+            # Step 2: Extract PICs and Store by Premise
             i = 1
             while True:
                 pic_name = request.form.get(f'picName{i}')
                 pic_designation = request.form.get(f'picDesignation{i}')
                 pic_contact = request.form.get(f'picContact{i}')
                 pic_email = request.form.get(f'picEmail{i}')
-                contact_premise = request.form.get(f'contactPremise{i}')
+                contact_premise = request.form.get(f'contactPremise{i}')  # Premise linked to this PIC
 
                 if not pic_name:
                     break
 
-                picdata=({
+                picdata = {
                     "company": companyName,
-                    "tied to": contact_premise,
+                    "tied_to_premise": contact_premise,
                     "name": pic_name,
                     "designation": pic_designation,
                     "contact": pic_contact,
                     "email": pic_email,
                     "created_at": datetime.now(),
-                })
+                }
                 pic_records.append(picdata)
-                master_list.append(picdata)
+
+                if contact_premise:
+                    if contact_premise not in pic_map:
+                        pic_map[contact_premise] = []
+                    pic_map[contact_premise].append(picdata)  # Store PICs linked to premises
+
                 i += 1  # Move to the next PIC
 
-            # Extract and store each device as a separate record
+            # Step 3: Extract Devices and Build Master List
             j = 1
             while True:
                 device_location = request.form.get(f'deviceLocation{j}')
@@ -1239,15 +1245,14 @@ def new_customer():
                 device_colour = request.form.get(f'deviceColour{j}')
                 device_volume = request.form.get(f'deviceVolume{j}')
                 device_scent = request.form.get(f'deviceScent{j}')
-                device_premise = request.form.get(f'devicePremise{j}')
+                device_premise = request.form.get(f'devicePremise{j}')  # Premise linked to this device
 
-                
                 if not device_sn:
                     break
 
-                devicedata=({
+                devicedata = {
                     "company": companyName,
-                    "tied to": device_premise,
+                    "tied_to_premise": device_premise,
                     "location": device_location,
                     "S/N": safe_int(device_sn),
                     "Model": device_model,
@@ -1275,102 +1280,23 @@ def new_customer():
                     "E4 - PAUSE": safe_int(request.form.get(f"E4Pause{j}")),
                     "E4 - WORK": safe_int(request.form.get(f"E4Work{j}")),
                     "created_at": datetime.now(),
-                })
+                }
                 device_records.append(devicedata)
-                master_list.append(devicedata)
+
+                # Generate master records (each PIC gets its own row)
+                assigned_pics = pic_map.get(device_premise, [{}])  # Get all PICs for this premise
+                for pic in assigned_pics:
+                    master_record = {
+                        "company": companyName,
+                        "industry": industry,
+                        "month_year": dateCreated,
+                        **premise_map.get(device_premise, {}),  # Attach premise details
+                        **pic,  # Attach one PIC per entry
+                        **devicedata  # Attach device details
+                    }
+                    master_list.append(master_record)
+
                 j += 1  # Move to the next device
-
-        # if premise_name and premise_area and premise_address:
-        #     premise_record = {
-        #         "company": companyName,
-        #         "month_year": dateCreated,
-        #         "industry": industry,
-        #         "premise_name": premise_name,
-        #         "premise_area": premise_area,
-        #         "premise_address": premise_address,
-        #         "contact_premise": contact_premise,
-        #         "created_at": datetime.now(),
-        #     }
-        #     premises.append(premise_record)
-        #     master_list.append(premise_record)
-
-        #     # Extract and store each PIC as a separate record
-        #     i = 1
-        #     while True:
-        #         pic_name = request.form.get(f'picName{i}')
-        #         pic_designation = request.form.get(f'picDesignation{i}')
-        #         pic_contact = request.form.get(f'picContact{i}')
-        #         pic_email = request.form.get(f'picEmail{i}')
-
-        #         if not pic_name:
-        #             break
-
-        #         pic_records.append({
-        #             "company": companyName,
-        #             "premise_name": premise_name,
-        #             "name": pic_name,
-        #             "designation": pic_designation,
-        #             "contact": pic_contact,
-        #             "email": pic_email,
-        #             "created_at": datetime.now(),
-        #         })
-        #         i += 1  # Move to the next PIC
-
-        #     # Extract and store each device with ALL schedules inside
-        #     j = 1
-        #     while True:
-        #         device_location = request.form.get(f'deviceLocation{j}')
-        #         device_sn = request.form.get(f'deviceSN{j}')
-        #         device_model = request.form.get(f'deviceModel{j}')
-        #         device_colour = request.form.get(f'deviceColour{j}')
-        #         device_volume = request.form.get(f'deviceVolume{j}')
-        #         device_scent = request.form.get(f'deviceScent{j}')
-
-        #         if not device_sn:
-        #             break
-
-        #         device_record = {
-        #             "company": companyName,
-        #             "premise_name": premise_name,
-        #             "location": device_location,
-        #             "S/N": device_sn,
-        #             "Model": device_model,
-        #             "Color": device_colour,
-        #             "Volume": device_volume,
-        #             "Current EO": device_scent,
-        #             "E1 - DAYS": request.form.get("E1Days"),
-        #             "E1 - START": request.form.get("E1StartTime"),
-        #             "E1 - END": request.form.get("E1EndTime"),
-        #             "E1 - PAUSE": request.form.get("E1Pause"),
-        #             "E1 - WORK": request.form.get("E1Work"),
-        #             "E2 - DAYS": request.form.get("E2Days"),
-        #             "E2 - START": request.form.get("E2StartTime"),
-        #             "E2 - END": request.form.get("E2EndTime"),
-        #             "E2 - PAUSE": request.form.get("E2Pause"),
-        #             "E2 - WORK": request.form.get("E2Work"),
-        #             "E3 - DAYS": request.form.get("E3Days"),
-        #             "E3 - START": request.form.get("E3StartTime"),
-        #             "E3 - END": request.form.get("E3EndTime"),
-        #             "E3 - PAUSE": request.form.get("E3Pause"),
-        #             "E3 - WORK": request.form.get("E3Work"),
-        #             "E4 - DAYS": request.form.get("E4Days"),
-        #             "E4 - START": request.form.get("E4StartTime"),
-        #             "E4 - END": request.form.get("E4EndTime"),
-        #             "E4 - PAUSE": request.form.get("E4Pause"),
-        #             "E4 - WORK": request.form.get("E4Work"),
-        #             "created_at": datetime.now(),
-        #         }
-        #         device_records.append(device_record)
-        #         master_list.append(device_record)
-
-
-        #         j += 1  # Move to the next device
-
-        # Debugging
-        print("Premises:", premises)
-        print("PIC Records:", pic_records)
-        print("Device Records:", device_records)
-        print("Master:",master_list)
 
         # Insert into MongoDB
         if premises:
@@ -1380,16 +1306,19 @@ def new_customer():
             profile_list_collection.insert_many(pic_records)  # Store PICs separately
 
         if device_records:
-            device_list_collection.insert_many(device_records)  # Store devices with schedules in the same document
+            device_list_collection.insert_many(device_records)  # Store devices separately
+
         if master_list:
-            test_collection.insert_many(master_list)  # Store devices with schedules in the same document
-        
-        log_activity(session["username"],"added new customer : " +str(companyName),logs_collection)
+            if app.config['MODE'] == "PROD":
+                services_collection.insert_many(master_list)
+            else:
+                test_collection.insert_many(master_list)  # Store in test collection
+
+        log_activity(session["username"], f"added new customer: {companyName}", logs_collection)
 
         flash(f"Company {companyName} added successfully!", "success")
 
         return redirect(url_for("new_customer"))
-
     return render_template('new-customer.html')
 
 

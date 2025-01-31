@@ -353,3 +353,89 @@ document.getElementById('combinedBtn2').addEventListener('click', () => {
         </div>`;
     deviceContainer.insertAdjacentHTML('beforeend', newDevice);
 });
+
+# if premise_name and premise_area and premise_address:
+#     premise_record = {
+#         "company": companyName,
+#         "month_year": dateCreated,
+#         "industry": industry,
+#         "premise_name": premise_name,
+#         "premise_area": premise_area,
+#         "premise_address": premise_address,
+#         "contact_premise": contact_premise,
+#         "created_at": datetime.now(),
+#     }
+#     premises.append(premise_record)
+#     master_list.append(premise_record)
+
+#     # Extract and store each PIC as a separate record
+#     i = 1
+#     while True:
+#         pic_name = request.form.get(f'picName{i}')
+#         pic_designation = request.form.get(f'picDesignation{i}')
+#         pic_contact = request.form.get(f'picContact{i}')
+#         pic_email = request.form.get(f'picEmail{i}')
+
+#         if not pic_name:
+#             break
+
+#         pic_records.append({
+#             "company": companyName,
+#             "premise_name": premise_name,
+#             "name": pic_name,
+#             "designation": pic_designation,
+#             "contact": pic_contact,
+#             "email": pic_email,
+#             "created_at": datetime.now(),
+#         })
+#         i += 1  # Move to the next PIC
+
+#     # Extract and store each device with ALL schedules inside
+#     j = 1
+#     while True:
+#         device_location = request.form.get(f'deviceLocation{j}')
+#         device_sn = request.form.get(f'deviceSN{j}')
+#         device_model = request.form.get(f'deviceModel{j}')
+#         device_colour = request.form.get(f'deviceColour{j}')
+#         device_volume = request.form.get(f'deviceVolume{j}')
+#         device_scent = request.form.get(f'deviceScent{j}')
+
+#         if not device_sn:
+#             break
+
+#         device_record = {
+#             "company": companyName,
+#             "premise_name": premise_name,
+#             "location": device_location,
+#             "S/N": device_sn,
+#             "Model": device_model,
+#             "Color": device_colour,
+#             "Volume": device_volume,
+#             "Current EO": device_scent,
+#             "E1 - DAYS": request.form.get("E1Days"),
+#             "E1 - START": request.form.get("E1StartTime"),
+#             "E1 - END": request.form.get("E1EndTime"),
+#             "E1 - PAUSE": request.form.get("E1Pause"),
+#             "E1 - WORK": request.form.get("E1Work"),
+#             "E2 - DAYS": request.form.get("E2Days"),
+#             "E2 - START": request.form.get("E2StartTime"),
+#             "E2 - END": request.form.get("E2EndTime"),
+#             "E2 - PAUSE": request.form.get("E2Pause"),
+#             "E2 - WORK": request.form.get("E2Work"),
+#             "E3 - DAYS": request.form.get("E3Days"),
+#             "E3 - START": request.form.get("E3StartTime"),
+#             "E3 - END": request.form.get("E3EndTime"),
+#             "E3 - PAUSE": request.form.get("E3Pause"),
+#             "E3 - WORK": request.form.get("E3Work"),
+#             "E4 - DAYS": request.form.get("E4Days"),
+#             "E4 - START": request.form.get("E4StartTime"),
+#             "E4 - END": request.form.get("E4EndTime"),
+#             "E4 - PAUSE": request.form.get("E4Pause"),
+#             "E4 - WORK": request.form.get("E4Work"),
+#             "created_at": datetime.now(),
+#         }
+#         device_records.append(device_record)
+#         master_list.append(device_record)
+
+
+#         j += 1  # Move to the next device
