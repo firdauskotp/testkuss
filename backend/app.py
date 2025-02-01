@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from bson import ObjectId, json_util
 from utils import log_activity, safe_int
 from flask_cors import CORS
+from collections import defaultdict
 
 
 app = Flask(__name__)
@@ -1667,46 +1668,350 @@ def get_logs():
                             query_params=query_params,
                            )
 
+@app.route('/profile', methods=['GET','POST'])
+def profile():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    # Pagination parameters
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
 
+    # Filters
+    company = request.args.get('company', '').strip()
+    industry = request.args.get('industry', '').strip()
+    premise = request.args.get('premise', '').strip()
+    pic = request.args.get('pic', '').strip()
+    month = request.args.get('month', '').strip()
+    year = request.args.get('year', '').strip()
 
+    # MongoDB query filter
+    query = {}
+    if company:
+        query["company"] = {'$regex': company, '$options': 'i'}
+    if industry:
+        query["industry"] = {'$regex': industry, '$options': 'i'}
+    if premise:
+        query["premise_name"] = {'$regex': premise, '$options': 'i'}
+    if pic:
+        query["name"] = {'$regex': pic, '$options': 'i'}
 
-@app.route('/new-customer-submit', methods=['POST','GET'])
-def new_customer_submit():
-    # Extract company information
-    company_name = request.form.get("companyName")
-    # contact_info = request.form.get("contact_info")
-
-    # Extract premises data (assuming multiple premises can be submitted as comma-separated values)
-    premises = request.form.getlist("premises[]")  # Using getlist for multiple premises
-
-    # Extract devices data (assuming devices are tied to premises)
-    devices = request.form.getlist("devices[]")  # Using getlist for multiple devices
-
-    contact_info = request.form.getlist("contacts[]")
-
-    # if not company_name or not premises:
-    #     return jsonify({"error": "Company name and premises are required!"}), 400
-
-    # Push premises to MongoDB
-    for premise in premises:
-        for i in contact_info:
-            premise_record = {
-                "company_name": company_name,
-                "contact_info": i,
-                "premise": premise,
-            }
-        test_db["premises"].insert_one(premise_record)
-
-    # Push devices to MongoDB
-    for device in devices:
-        # Here, you can split the device details to tie them to the respective premise if needed
-        device_record = {
-            "company_name": company_name,
-            "device_name": device,
+    # Filter by month and year from created_at
+    if month and year:
+        month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
+        query['$expr'] = {
+            '$and': [
+                {'$in': [{'$month': '$created_at'}, month_list]},
+                {'$eq': [{'$year': '$created_at'}, int(year)]}
+            ]
         }
-        test_db["devices"].insert_one(device_record)
 
-    return jsonify({"message": "Data successfully submitted!"}), 200
+    # Fetch records from MongoDB
+    records = list(profile_list_collection.find(query))
+
+    # Dictionary to store grouped data
+    grouped_data = defaultdict(lambda: {
+        "company": "",
+        "industry": "",
+        "premise_name": "",
+        "premise_area": "",
+        "premise_address": "",
+        "month": "",  # Store month separately
+        "year": "",
+        "pics": []
+    })
+
+    for record in records:
+        created_at = record.get("created_at")
+        month_year = created_at.strftime("%B %Y") if isinstance(created_at, datetime) else ""
+
+        if "premise_name" in record:
+            key = (record["company"], record["premise_name"])
+            grouped_data[key].update({
+                "company": record["company"],
+                "industry": record.get("industry", ""),
+                "premise_name": record["premise_name"],
+                "premise_area": record.get("premise_area", ""),
+                "premise_address": record.get("premise_address", ""),
+                "month": created_at.month if created_at else "",
+                "year": created_at.year if created_at else ""
+            })
+
+        elif "tied_to_premise" in record:
+            key = (record["company"], record["tied_to_premise"])
+            grouped_data[key]["pics"].append({
+                "name": record["name"],
+                "designation": record.get("designation", ""),
+                "contact": record.get("contact", ""),
+                "email": record.get("email", ""),
+            })
+
+    # Convert dictionary to list for pagination
+    structured_data = list(grouped_data.values())
+
+    # Pagination logic applied after processing data
+    total_records = len(structured_data)
+    total_pages = (total_records + limit - 1) // limit
+
+    # Apply slicing for pagination
+    paginated_data = structured_data[(page - 1) * limit: page * limit]
+
+    # URL for pagination links
+    base_url = request.path
+    query_params = request.args.to_dict()
+    pagination_base_url = f"{base_url}?"
+
+    return render_template(
+        'profile.html',
+        page=page, 
+        total_pages=total_pages,
+        limit=limit,
+        pagination_base_url=pagination_base_url,
+        query_params=query_params,
+        data=paginated_data  # Send paginated structured data
+    )
+
+
+@app.route('/view-device', methods=['GET','POST'])
+def view_device():
+    
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+
+    # Pagination parameters
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+
+    # Filters
+    company = request.args.get('company', '').strip()
+    tied_to_premise = request.args.get('tied_to_premise', '').strip()
+    location = request.args.get('location', '').strip()
+    sn = request.args.get('sn', '').strip()
+    model = request.args.get('model', '').strip()
+    color = request.args.get('color', '').strip()
+    current_eo = request.args.get('current_eo', '').strip()
+    e1_days = request.args.get('e1_days', '').strip()
+    e1_start = request.args.get('e1_start', '').strip()
+    e1_end = request.args.get('e1_end', '').strip()
+    e1_pause = request.args.get('e1_pause', '').strip()
+    e1_work = request.args.get('e1_work', '').strip()
+    e2_days = request.args.get('e2_days', '').strip()
+    e2_start = request.args.get('e2_start', '').strip()
+    e2_end = request.args.get('e2_end', '').strip()
+    e2_pause = request.args.get('e2_pause', '').strip()
+    e2_work = request.args.get('e2_work', '').strip()
+    e3_days = request.args.get('e3_days', '').strip()
+    e3_start = request.args.get('e3_start', '').strip()
+    e3_end = request.args.get('e3_end', '').strip()
+    e3_pause = request.args.get('e3_pause', '').strip()
+    e3_work = request.args.get('e3_work', '').strip()
+    e4_days = request.args.get('e4_days', '').strip()
+    e4_start = request.args.get('e4_start', '').strip()
+    e4_end = request.args.get('e4_end', '').strip()
+    e4_pause = request.args.get('e4_pause', '').strip()
+    e4_work = request.args.get('e4_work', '').strip()
+    month = request.args.get('month', '').strip()
+    year = request.args.get('year', '').strip()
+
+    # MongoDB query filter
+    query = {}
+    if company:
+        query["company"] = {'$regex': company, '$options': 'i'}
+    if tied_to_premise:
+        query["tied_to_premise"] = {'$regex': tied_to_premise, '$options': 'i'}
+    if location:
+        query["location"] = {'$regex': location, '$options': 'i'}
+    if sn:
+        query["S/N"] = int(sn)
+    if model:
+        query["Model"] = {'$regex': model, '$options': 'i'}
+    if color:
+        query["Color"] = {'$regex': color, '$options': 'i'}
+    if current_eo:
+        query["Current EO"] = {'$regex': current_eo, '$options': 'i'}
+    if e1_days:
+        query["E1 - DAYS"] = {'$regex': e1_days, '$options': 'i'}
+    if e1_start:
+        query["E1 - START"] = {'$regex': e1_start, '$options': 'i'}
+    if e1_end:
+        query["E1 - END"] = {'$regex': e1_end, '$options': 'i'}
+    if e1_pause:
+        query["E1 - PAUSE"] = int(e1_pause)
+    if e1_work:
+        query["E1 - WORK"] = int(e1_work)
+    if e2_days:
+        query["E2 - DAYS"] = {'$regex': e2_days, '$options': 'i'}
+    if e2_start:
+        query["E2 - START"] = {'$regex': e2_start, '$options': 'i'}
+    if e2_end:
+        query["E2 - END"] = {'$regex': e2_end, '$options': 'i'}
+    if e2_pause:
+        query["E2 - PAUSE"] = int(e2_pause)
+    if e2_work:
+        query["E2 - WORK"] = int(e2_work)
+    if e3_days:
+        query["E3 - DAYS"] = {'$regex': e3_days, '$options': 'i'}
+    if e3_start:
+        query["E3 - START"] = {'$regex': e3_start, '$options': 'i'}
+    if e3_end:
+        query["E3 - END"] = {'$regex': e3_end, '$options': 'i'}
+    if e3_pause:
+        query["E3 - PAUSE"] = int(e3_pause)
+    if e3_work:
+        query["E3 - WORK"] = int(e3_work)
+    if e4_days:
+        query["E4 - DAYS"] = {'$regex': e4_days, '$options': 'i'}
+    if e4_start:
+        query["E4 - START"] = {'$regex': e4_start, '$options': 'i'}
+    if e4_end:
+        query["E4 - END"] = {'$regex': e4_end, '$options': 'i'}
+    if e4_pause:
+        query["E4 - PAUSE"] = int(e4_pause)
+    if e4_work:
+        query["E4 - WORK"] = int(e4_work)
+
+    # Filter by month and year from created_at
+    if month and year:
+        month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
+        query['$expr'] = {
+            '$and': [
+                {'$in': [{'$month': '$created_at'}, month_list]},
+                {'$eq': [{'$year': '$created_at'}, int(year)]}
+            ]
+        }
+
+    # Fetch records from MongoDB
+    records = list(device_list_collection.find(query))
+
+    # Dictionary to store grouped data
+    grouped_data = defaultdict(lambda: {
+        "company": "",
+        "location": "",
+        "sn": "",
+        "model": "",
+        "color": "",
+        "volume": "",
+        "current_eo": "",
+        "e1_days": "",
+        "e1_start": "",
+        "e1_end": "",
+        "e1_pause": "",
+        "e1_work": "",
+        "e2_days": "",
+        "e2_start": "",
+        "e2_end": "",
+        "e2_pause": "",
+        "e2_work": "",
+        "e3_days": "",
+        "e3_start": "",
+        "e3_end": "",
+        "e3_pause": "",
+        "e3_work": "",
+        "e4_days": "",
+        "e4_start": "",
+        "e4_end": "",
+        "e4_pause": "",
+        "e4_work": "",
+        "created_at_month": "",
+        "created_at_year": "",
+        "tied_to_premise": "",
+    })
+
+    for record in records:
+        created_at = record.get("created_at")
+        month_year = created_at.strftime("%B %Y") if isinstance(created_at, datetime) else ""
+
+        # Group by company and sn for display purposes
+        if "S/N" in record:
+            key = (record["company"], record["S/N"])
+            grouped_data[key].update({
+                "company": record["company"],
+                "location": record.get("location", ""),
+                "sn": record.get("S/N", ""),
+                "model": record.get("Model", ""),
+                "color": record.get("Color", ""),
+                "volume": record.get("Volume", ""),
+                "current_eo": record.get("Current EO", ""),
+                "e1_days": record.get("E1 - DAYS", ""),
+                "e1_start": record.get("E1 - START", ""),
+                "e1_end": record.get("E1 - END", ""),
+                "e1_pause": record.get("E1 - PAUSE", ""),
+                "e1_work": record.get("E1 - WORK", ""),
+                "e2_days": record.get("E2 - DAYS", ""),
+                "e2_start": record.get("E2 - START", ""),
+                "e2_end": record.get("E2 - END", ""),
+                "e2_pause": record.get("E2 - PAUSE", ""),
+                "e2_work": record.get("E2 - WORK", ""),
+                "e3_days": record.get("E3 - DAYS", ""),
+                "e3_start": record.get("E3 - START", ""),
+                "e3_end": record.get("E3 - END", ""),
+                "e3_pause": record.get("E3 - PAUSE", ""),
+                "e3_work": record.get("E3 - WORK", ""),
+                "e4_days": record.get("E4 - DAYS", ""),
+                "e4_start": record.get("E4 - START", ""),
+                "e4_end": record.get("E4 - END", ""),
+                "e4_pause": record.get("E4 - PAUSE", ""),
+                "e4_work": record.get("E4 - WORK", ""),
+                "tied_to_premise": record.get("tied_to_premise", ""),
+                "created_at_month": created_at.month if created_at else "",
+                "created_at_year": created_at.year if created_at else "",
+            })
+
+    # Convert dictionary to list for pagination
+    structured_data = list(grouped_data.values())
+
+    # Pagination logic applied after processing data
+    total_records = len(structured_data)
+    total_pages = (total_records + limit - 1) // limit
+
+    # Apply slicing for pagination
+    paginated_data = structured_data[(page - 1) * limit: page * limit]
+
+    # URL for pagination links
+    base_url = request.path
+    query_params = request.args.to_dict()
+    pagination_base_url = f"{base_url}?"
+
+    return render_template(
+        'device.html',
+        page=page, 
+        total_pages=total_pages,
+        limit=limit,
+        pagination_base_url=pagination_base_url,
+        query_params=query_params,
+        data=paginated_data  # Send paginated structured data
+    )
+
+
+@app.route('/delete_record/<record_id>', methods=['POST'])
+def delete_record(record_id):
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    result = profile_list_collection.delete_one({"_id": ObjectId(record_id)})
+    if result.deleted_count > 0:
+        return jsonify({"success": True, "message": "Record deleted successfully"}), 200
+    else:
+        return jsonify({"success": False, "message": "Record not found"}), 404
+
+
+@app.route('/edit_record/<record_id>', methods=['POST'])
+def edit_record(record_id):
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.json  # Get JSON data from frontend
+
+    # Prevent editing month and year
+    if "month" in data:
+        data.pop("month")
+    if "year" in data:
+        data.pop("year")
+
+    result = profile_list_collection.update_one(
+        {"_id": ObjectId(record_id)},
+        {"$set": data}
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

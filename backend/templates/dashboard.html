@@ -74,35 +74,7 @@
     <p>Current Date & Time: <span id="datetime"></span></p>
   </div>
 
-  <!-- Main Navbar -->
-  <!-- <nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container-fluid">
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="mainNavbar">
-        <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('new_customer') }}">Add New Customer</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('change_form') }}">Change Form (Settings)</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('pre_service') }}">Pre-Service</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('service') }}">Service</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('post_service') }}">Post-Service</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('remark') }}">Remarks</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Add User</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('view_users') }}">View Customers</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('view_admins') }}">View Admins</a></li>
-
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('get_logs') }}">Activity Log</a></li>
-
-        </ul>
-        <ul class="navbar-nav ml-auto">
-         
-          <li class="nav-item"><a class="nav-link logout-btn" href="/logout">Logout</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav> -->
+ 
 
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
@@ -212,6 +184,20 @@
     </div>
   </div>
 
+  <div class="second-navbar">
+    <div class="container-fluid">
+      <div class="row">
+        
+        <div class="col" data-toggle="modal" data-target="#profileModal">
+          <p>Profile Master List</p>
+        </div>
+        <div class="col" data-toggle="modal" data-target="#deviceModal">
+          <p>Device Master List</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modals -->
   <div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -300,6 +286,42 @@
           <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
           <a href="{{ url_for('pack_list') }}" class="btn btn-primary">Yes</a>
           
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to see the dashboard for profile master list??
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('profile') }}" class="btn btn-primary">Yes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="deviceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to see the dashboard for all devices?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('view_device') }}" class="btn btn-primary">Yes</a>
         </div>
       </div>
     </div>
