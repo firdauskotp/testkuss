@@ -32,11 +32,11 @@
                 <select class="form-select" id="essential_oil" name="essential_oil" required></select>
             </div>
             <div class="mb-3">
-                <label for="oil_balance" class="form-label">Oil Balance</label>
+                <label for="oil_balance" class="form-label">Oil Balance (ml)</label>
                 <input type="number" class="form-control" id="oil_balance" name="oil_balance" required>
             </div>
             <div class="mb-3">
-                <label for="balance_brought_back" class="form-label">Balance Brought Back</label>
+                <label for="balance_brought_back" class="form-label">Balance Brought Back (ml)</label>
                 <input type="number" class="form-control" id="balance_brought_back" name="balance_brought_back" required>
             </div>
             <div class="mb-3">
@@ -44,8 +44,8 @@
                 <input type="text" class="form-control" id="balance_brought_back_percent" name="balance_brought_back_percent" disabled>
             </div>
             <div class="mb-3">
-                <label for="refill_amount" class="form-label">Refill Amount</label>
-                <input type="number" class="form-control" id="refill_amount" name="refill_amount" required>
+                <label for="refill_amount" class="form-label">Refill Amount (ml)</label>
+                <input type="number" class="form-control" id="refill_amount" name="refill_amount" disabled>
             </div>
             <div class="mb-3">
                 <label for="refill_amount_percent" class="form-label">Refill Amount (%)</label>
@@ -57,11 +57,11 @@
     </div>
     <script>
         // Populate company dropdown
-        axios.get("/get_companies").then(response => {
-            const companies = response.data;
-            const companySelect = document.getElementById("company_name");
-            companySelect.innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join("");
-        });
+        // axios.get("/get_companies").then(response => {
+        //     const companies = response.data;
+        //     const companySelect = document.getElementById("company_name");
+        //     companySelect.innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join("");
+        // });
 
         // Populate essential oil dropdown
         axios.get("/get_essential_oils").then(response => {
@@ -81,45 +81,51 @@
         //         });
         // });
 
-        document.getElementById("company_name").addEventListener("change", function () {
-    const selectedCompany = this.value;
+    //     document.getElementById("company_name").addEventListener("change", function () {
+    // const selectedCompany = this.value;
 
     // Clear existing options in the premises dropdown
-    const premiseDropdown = document.getElementById("premise");
-    premiseDropdown.innerHTML = '<option value="" disabled selected>Select a premise</option>';
+    // const premiseDropdown = document.getElementById("premise");
+    // premiseDropdown.innerHTML = '<option value="" disabled selected>Select a premise</option>';
 
     // Fetch premises for the selected company
-    fetch(`/get_premises?company_name=${encodeURIComponent(selectedCompany)}`)
-        .then(response => response.json())
-        .then(premises => {
-            premises.forEach(premise => {
-                const option = document.createElement("option");
-                option.value = premise;
-                option.textContent = premise;
-                premiseDropdown.appendChild(option);
-            });
-        })
-        .catch(error => console.error("Error fetching premises:", error));
-});
+//     fetch(`/get_premises?company_name=${encodeURIComponent(selectedCompany)}`)
+//         .then(response => response.json())
+//         .then(premises => {
+//             premises.forEach(premise => {
+//                 const option = document.createElement("option");
+//                 option.value = premise;
+//                 option.textContent = premise;
+//                 premiseDropdown.appendChild(option);
+//             });
+//         })
+//         .catch(error => console.error("Error fetching premises:", error));
+// });
 
 
         // Update devices based on premise
-        document.getElementById("premise").addEventListener("change", function() {
-            const premise = this.value;
-            const companyName = document.getElementById("company_name").value;
-            axios.post("/get_devices", { company_name: companyName, premise: premise })
-                .then(response => {
-                    const devices = response.data;
-                    const deviceSelect = document.getElementById("device");
-                    deviceSelect.innerHTML = devices.map(d => `<option value="${d}">${d}</option>`).join("");
-                });
-        });
+        // document.getElementById("premise").addEventListener("change", function() {
+        //     const premise = this.value;
+        //     const companyName = document.getElementById("company_name").value;
+        //     axios.post("/get_devices", { company_name: companyName, premise: premise })
+        //         .then(response => {
+        //             const devices = response.data;
+        //             const deviceSelect = document.getElementById("device");
+        //             deviceSelect.innerHTML = devices.map(d => `<option value="${d}">${d}</option>`).join("");
+        //         });
+        // });
 
         // Realtime percentage calculation
         document.getElementById("post-service-form").addEventListener("input", function() {
             const oilBalance = parseFloat(document.getElementById("oil_balance").value) || 0;
             const balanceBroughtBack = parseFloat(document.getElementById("balance_brought_back").value) || 0;
-            const refillAmount = parseFloat(document.getElementById("refill_amount").value) || 0;
+            // const refillAmount = parseFloat(document.getElementById("refill_amount").value) || 0;
+
+
+        // Calculate refill amount
+        const refillAmount = oilBalance - balanceBroughtBack;
+        document.getElementById("refill_amount").value = refillAmount.toFixed(2); // Auto-fill & format
+
 
             const balancePercent = oilBalance ? (balanceBroughtBack / oilBalance) * 100 : 0;
             const refillPercent = oilBalance ? (refillAmount / oilBalance) * 100 : 0;
