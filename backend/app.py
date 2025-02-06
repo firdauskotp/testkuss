@@ -14,9 +14,10 @@ from werkzeug.security import generate_password_hash
 import gridfs
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
-from utils import log_activity, safe_int
+from utils import log_activity, safe_int, send_email_to_admin, send_email_to_customer, replicate_monthly_routes
 from flask_cors import CORS
 from collections import defaultdict
+from flask_apscheduler import APScheduler
 
 
 app = Flask(__name__)
@@ -30,6 +31,8 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+scheduler = APScheduler()
 
 
 # MongoDB Configuration
@@ -57,6 +60,7 @@ empty_bottles_list_collection = dashboard_db['others_empty_bottle_pack']
 straw_list_collection = dashboard_db['straw_mist_heads_pack']
 profile_list_collection = dashboard_db['profile']
 device_list_collection = dashboard_db['device']
+route_list_collection = dashboard_db['routes']
 
 # customer_collection = dashboard_db['customer']
 # device_collection = dashboard_db['device']
@@ -156,8 +160,8 @@ def customer_form():
         })
 
         # Send emails to the customer and admin
-        send_email_to_customer(case_no, user_email)
-        send_email_to_admin(case_no)
+        send_email_to_customer(case_no, user_email,app.config['MAIL_USERNAME'],mail)
+        send_email_to_admin(case_no,app.config['MAIL_USERNAME'],mail)
         
 
         # Redirect to success page
@@ -236,50 +240,6 @@ def case_success(case_no):
     """Success page after creating a case."""
     return render_template("case-success.html", case_no=case_no)
 
-
-def send_email_to_customer(case_no, user_email):
-    """Send a confirmation email to the customer."""
-    subject = f"Case #{case_no} Created Successfully"
-    body = f"Thank you for submitting your case. Your case number is #{case_no}. Our staff will get in touch with you shortly."
-    send_email(user_email, app.config['MAIL_USERNAME'], subject, body)
-
-
-def send_email_to_admin(case_no):
-    """Notify admin about a new case creation."""
-    subject = f"New Case #{case_no} Created"
-    body = f"A new case with case number #{case_no} has been created. Please check the system for details."
-    send_email('medoroyalrma@gmail.com', app.config['MAIL_USERNAME'], subject, body)
-
-
-# def send_email(to_email, subject, body):
-#     """Generic function to send an email."""
-#     try:
-#         msg = MIMEMultipart()
-#         msg["From"] = app.config['MAIL_USERNAME']
-#         msg["To"] = to_email
-#         msg["Subject"] = subject
-
-#         msg.attach(MIMEText(body, "plain"))
-
-#         with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
-#             server.starttls()
-#             server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-#             server.send_message(msg)
-#     except Exception as e:
-#         print(f"Failed to send email: {e}")
-
-def send_email(to_email, from_email, subject, body):
-    """Generic function to send an email using Flask-Mail."""
-    try:
-        msg = Message(subject, sender= from_email, recipients=[to_email])
-        msg.body = body
-        print(body)
-        print(to_email)
-        print(from_email)
-        print(subject)
-        mail.send(msg)
-    except Exception as e:
-        print(f"Failed to send email: {e}")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -434,6 +394,12 @@ def reports():
         Scent_Effectiveness = request.args.get("Scent_Effectiveness")
         Common_Encounters = request.args.get("Common_Encounters")
         Other_Remarks = request.args.get("Other_Remarks")
+        # Filters
+        industry = request.args.get('industry', '').strip()
+        premise = request.args.get('premise', '').strip()
+        pic = request.args.get('pic', '').strip()
+
+        
 
 
         query = {}
@@ -451,6 +417,13 @@ def reports():
        
         
         # Filter by EO (string partial match)
+
+        if industry:
+            query["industry"] = {'$regex': industry, '$options': 'i'}
+        if premise:
+            query["premise_name"] = {'$regex': premise, '$options': 'i'}
+        if pic:
+            query["name"] = {'$regex': pic, '$options': 'i'}
 
         if EO:
             query['Current EO'] = {'$regex': EO, '$options': 'i'}  # Case-insensitive partial match
@@ -1115,7 +1088,6 @@ def view_remarks(remark_type):
         return redirect(url_for('admin_login'))
     is_urgent = True if remark_type == 'urgent' else False
     remarks = list(remark_collection.find({'urgent': is_urgent}))
-    log_activity(session["username"],"added remarks : " +str(remarks),logs_collection)
 
     return render_template('view_remarks.html', remarks=remarks, remark_type=remark_type)
 
@@ -1324,17 +1296,71 @@ def new_customer():
 
 
 
-@app.route('/pre-service')
+@app.route('/pre-service',  methods=['GET', 'POST'])
 def pre_service():
-    if "username" in session:
-
-        # log_activity(session["username"],"pre-service : " +str(remarks),logs_collection)
-
-        return render_template('pre-service.html')
-    else:
+    if "username" not in session:
         return redirect(url_for('admin_login'))
-
+    companies = services_collection.distinct('company')
     
+
+    if request.method == 'POST':
+        # Get form data
+        # data = request.json
+        date_str = request.form.get('date')
+
+        # Convert to datetime (ensuring correct format)
+        # date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
+
+
+        # Prepare data for insertion
+        entry = {
+            "date": date_obj,
+            "company": request.form.get('company'),
+            "premise": request.form.get('premise'),
+            "model": request.form.get('model'),
+            "color": request.form.get('color'),
+            "eo": request.form.get('eo')
+        }
+        route_list_collection.insert_one(entry)
+
+        flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
+
+        log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
+
+        companies = services_collection.distinct('company')
+        return render_template('pre-service.html', companies=companies)
+    return render_template('pre-service.html', companies=companies)
+    
+
+@app.route('/get-premises/<company>')
+def get_premises(company):
+    premises = services_collection.find({"company": company}, {"Premise Name": 1, "_id": 0})
+    return jsonify([p['Premise Name'] for p in premises])
+
+@app.route('/get-models/<premise>')
+def get_models(premise):
+    models = services_collection.find({"Premise Name": premise}, {"Model": 1, "_id": 0})
+    return jsonify([m['Model'] for m in models])
+
+@app.route('/get-colors/<model>/<premise>')
+def get_colors(model, premise):
+    colors = services_collection.find(
+        {"Model": model, "Premise Name": premise},  # Ensure it's the same document
+        {"Color": 1, "_id": 0}
+    )
+    unique_colors = list(set(c.get('Color') for c in colors if c.get('Color')))  # Ensure no NaN
+    return jsonify(unique_colors)
+
+@app.route('/get-eo/<model>/<premise>/<color>')
+def get_eo(model, premise, color):
+    eos = services_collection.find(
+        {"Model": model, "Premise Name": premise, "Color": color},  # Exact match
+        {"Current EO": 1, "_id": 0}
+    )
+    unique_eos = list(set(e.get('Current EO') for e in eos if e.get('Current EO')))  # Ensure no NaN
+    return jsonify(unique_eos)
+
 @app.route('/service')
 def service():
     if "username" in session:
@@ -1356,7 +1382,7 @@ def remark():
         is_urgent = 'urgent' in request.form  # Checkbox value
         
         # Push data to MongoDB
-        log_activity(session["username"],"added remarks : " +str(remark_text),logs_collection)
+        log_activity(session["username"],"added remarks : " +str(remark_text) + "urgent : " + str(is_urgent),logs_collection)
 
         remark_collection.insert_one({
             'username': username,
@@ -1399,30 +1425,10 @@ def get_essential_oils():
     essential_oils = eo_pack_collection.find({}, {"eo_name": 1, "_id": 0})
     return jsonify([eo["eo_name"] for eo in essential_oils])
 
-# @app.route("/get_premises", methods=["POST"])
-# def get_premises():
-#     company_name = request.json.get("company_name")
-#     company = services_collection.find_one({"name": company_name})
-#     return jsonify(company.get("Premise Name", [])) if company else jsonify([])
 
-# @app.route("/get_premises", methods=["GET"])
-# def get_premises():
-#     company_name = request.args.get("company_name")
-#     if not company_name:
-#         return jsonify([])  # Return an empty list if no company is selected
-    
-#     # Find premises for the selected company
-#     premises = services_collection.find(
-#         {"company": company_name},  # Filter by the selected company
-#         {"premise": 1, "_id": 0}   # Fetch only the premise field
-#     )
-    
-#     # Extract unique premises
-#     unique_premises = sorted({premise.get("Premise Name") for premise in premises if "Premise Name" in premise})
-#     return jsonify(unique_premises)
 
-@app.route("/get-premises")
-def get_premises():
+@app.route("/get-premises-test")
+def get_premises_test():
     company_name = request.args.get("companyName")
     premises = services_collection.find({"company": company_name})
     premises_list = [premise["Premise Name"] for premise in premises]
@@ -1994,6 +2000,115 @@ def delete_record(record_id):
     else:
         return jsonify({"success": False, "message": "Record not found"}), 404
 
+@app.route('/route_table', methods=['GET'])
+def route_table():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    # Pagination parameters
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+
+    # Filters
+    company = request.args.get('company', '').strip()
+    premise = request.args.get('premise', '').strip()
+    day = request.args.get('day', '').strip()
+    month = request.args.get('month', '').strip()
+    year = request.args.get('year', '').strip()
+
+    # MongoDB query filter
+    query = {}
+    if company:
+        query["company"] = {'$regex': company, '$options': 'i'}
+    if premise:
+        query["premise"] = {'$regex': premise, '$options': 'i'}
+
+    # Filter by date fields
+    if day or month or year:
+        expr_conditions = []
+        
+        if day:
+            day_list = [int(d.strip()) for d in day.split(',') if d.strip().isdigit()]
+            expr_conditions.append({'$in': [{'$dayOfMonth': '$created_at'}, day_list]})
+
+        if month:
+            month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
+            expr_conditions.append({'$in': [{'$month': '$created_at'}, month_list]})
+
+        if year:
+            expr_conditions.append({'$eq': [{'$year': '$created_at'}, int(year)]})
+
+        query['$expr'] = {'$and': expr_conditions} if expr_conditions else {}
+
+    # Fetch records from MongoDB
+    records = list(route_list_collection.find(query))
+
+    # Dictionary to store grouped data
+    grouped_data = defaultdict(lambda: {
+        "_id": "",
+        "company": "",
+        "premise_name": "",
+        "premise_area": "",
+        "premise_address": "",
+        "model": "",
+        "color": "",
+        "eo": "",
+        "pics": [],
+        "day": "",
+        "month": "",
+        "year": ""
+    })
+
+    # Process records
+    for record in records:
+        premise_name = record.get("premise", "")
+        company_name = record.get("company", "")
+        route_id = str(record.get("_id", ""))
+        
+        key = (company_name, premise_name)
+        grouped_data[key].update({
+            "_id": route_id,
+            "company": company_name,
+            "premise_name": premise_name,
+            "model": record.get("model", ""),
+            "color": record.get("color", ""),
+            "eo": record.get("eo", ""),
+            "day": record["date"].day if record.get("date") else "",
+            "month": record["date"].month if record.get("date") else "",
+            "year": record["date"].year if record.get("date") else ""
+        })
+
+        # Fetch additional profile details (PICs, Address)
+        profile = profile_list_collection.find_one({"premise_name": premise_name})
+        if profile:
+            grouped_data[key].update({
+                "premise_area": profile.get("premise_area", ""),
+                "premise_address": profile.get("premise_address", ""),
+                "pics": profile.get("pics", [])
+            })
+
+    # Convert dictionary to list for pagination
+    structured_data = list(grouped_data.values())
+
+    # Pagination logic
+    total_records = len(structured_data)
+    total_pages = (total_records + limit - 1) // limit
+    paginated_data = structured_data[(page - 1) * limit: page * limit]
+
+    # URL for pagination links
+    base_url = request.path
+    query_params = request.args.to_dict()
+    pagination_base_url = f"{base_url}?"
+
+    return render_template(
+        'route-table.html',
+        page=page,
+        total_pages=total_pages,
+        limit=limit,
+        pagination_base_url=pagination_base_url,
+        query_params=query_params,
+        data=paginated_data
+    )
 
 @app.route('/edit_record/<record_id>', methods=['POST'])
 def edit_record(record_id):
@@ -2012,6 +2127,79 @@ def edit_record(record_id):
         {"_id": ObjectId(record_id)},
         {"$set": data}
     )
+
+@app.route('/delete-route2', methods=['POST'])  # Change from DELETE to POST
+def delete_route2():
+    route_id = request.form.get("route_id")  # Use form data
+    try:
+        route = mongo.db.route_list_collection.find_one({"_id": ObjectId(route_id)})
+        if not route:
+            flash("Route not found!", "danger")
+            return jsonify({"success": False, "error": "Not found"}), 404
+
+        # Extract Premise, Day, Month, Year before deleting
+        premise = route.get("premise", "Unknown")
+        day = route.get("day", "Unknown")
+        month = route.get("month", "Unknown")
+        year = route.get("year", "Unknown")
+
+        result = route_list_collection.delete_one({"_id": ObjectId(route_id)})
+        if result.deleted_count == 1:
+            # Log the deletion
+            log_activity(session["username"], f"Deleted route for {premise}, {day}/{month}/{year}", logs_collection)
+
+            flash("Route deleted successfully!", "success")
+            return redirect(url_for("route_table"))  # Redirect after deletion
+        
+        else:
+            flash("Route not found!", "danger")
+            return redirect(url_for("route_table"))  # Redirect after deletion
+
+    except Exception as e:
+        flash(f"Error: {str(e)}", "danger")
+        return redirect(url_for("route_table"))  # Redirect after deletion
+        
+    # try:
+    #     result = route_list_collection.delete_one({"_id": ObjectId(route_id)})
+    #     if result.deleted_count == 1:
+    #         flash(, "success")
+    #         return redirect(url_for("route_table"))  # Ensure the route name is correct
+    #     else:
+    #         flash("Route not found!", "danger")
+    #         return redirect(url_for("route_table"))
+    # except Exception as e:
+    #     flash(f"Error: {str(e)}", "danger")
+    #     return redirect(url_for("route_table"))
+
+@app.route('/delete_route', methods=['POST'])
+def delete_route():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    
+    record_id = request.form['record_id']
+    
+    record = route_list_collection.find_one({'_id': ObjectId(record_id)})
+
+
+    company = record.get('company', 'Unknown')  # Get the username or default to 'Unknown'
+    premise = record.get('premise', 'Unknown')  # Get the username or default to 'Unknown'
+    date = record.get('date', 'Unknown')  # Get the username or default to 'Unknown'
+    
+    if record:
+        route_list_collection.delete_one({'_id': ObjectId(record_id)})
+        log_activity(session["username"], f"deleted route for Company: {company} Premise: {premise} Date: {date}", logs_collection)
+
+        flash("Record deleted successfully!", "success")
+    else:
+        flash("Record failed to delete!", "error")
+    
+    return redirect(url_for('route_table'))
+@scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
+def scheduled_route_update():
+    replicate_monthly_routes(route_list_collection)
+
+scheduler.init_app(app)
+scheduler.start()
 
 if __name__ == "__main__":
     app.run(debug=True)

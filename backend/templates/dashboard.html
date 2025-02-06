@@ -164,6 +164,24 @@
           <h4>{{ urgent_remarks_count }}</h4>
           <p>Urgent Remark</p>
         </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="second-navbar">
+    <div class="container-fluid">
+      <div class="row">
+        
+        <div class="col" data-toggle="modal" data-target="#profileModal">
+          <p>Profile Master List</p>
+        </div>
+        <div class="col" data-toggle="modal" data-target="#deviceModal">
+          <p>Device Master List</p>
+        </div>
+        <div class="col" data-toggle="modal" data-target="#RouteModal">
+          <p>Routes</p>
+        </div>
       </div>
     </div>
   </div>
@@ -184,19 +202,7 @@
     </div>
   </div>
 
-  <div class="second-navbar">
-    <div class="container-fluid">
-      <div class="row">
-        
-        <div class="col" data-toggle="modal" data-target="#profileModal">
-          <p>Profile Master List</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#deviceModal">
-          <p>Device Master List</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  
 
   <!-- Modals -->
   <div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
@@ -322,6 +328,24 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
           <a href="{{ url_for('view_device') }}" class="btn btn-primary">Yes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="RouteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Navigation</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Do you want to see all the routes?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <a href="{{ url_for('route_table') }}" class="btn btn-primary">Yes</a>
         </div>
       </div>
     </div>

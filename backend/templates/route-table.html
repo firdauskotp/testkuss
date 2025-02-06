@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Master List</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .toggle-password {
+            cursor: pointer;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+        <p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+
+        </p>
+
+    
+
+    <!-- Users Table -->
+    <h3>Route Master List</h3>
+    <form class="mb-4" method="get" action="/route_table">
+        <div class="accordion" id="filterAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="filterHeader">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#filterContent" aria-expanded="false" aria-controls="filterContent">
+                        Filter
+                    </button>
+                </h2>
+                <div id="filterContent" class="accordion-collapse collapse" aria-labelledby="filterHeader">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="company" class="form-label">Company</label>
+                                <input type="text" id="company" name="company" class="form-control" placeholder="Company Name">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="industry" class="form-label">Industry</label>
+                                <input type="text" id="industry" name="industry" class="form-control" placeholder="Industry">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="premise" class="form-label">Premise Name</label>
+                                <input type="text" id="premise" name="premise" class="form-control" placeholder="Premise Name">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="pic" class="form-label">PIC Name</label>
+                                <input type="text" id="pic" name="pic" class="form-control" placeholder="Person In Charge">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="day" class="form-label">Day</label>
+                                <input type="text" id="day" name="day" class="form-control" placeholder="1,15,30">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="month" class="form-label">Month</label>
+                                <input type="text" id="month" name="month" class="form-control" placeholder="1,3,7">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="year" class="form-label">Year</label>
+                                <input type="number" id="year" name="year" class="form-control" placeholder="2024">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Filter</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="table-responsive">
+
+    <table class="table table-striped table-bordered">
+    
+    <!-- <table class="table table-bordered table-hover mt-3"> -->
+        <thead class="table-dark">
+            <tr>
+                <th>Company</th>
+                <th>Premise Name</th>
+                <th>Premise Area</th>
+                <th>Premise Address</th>
+                <th>PICs</th>
+                <th>Model</th>
+                <th>Color</th>
+                <th>EO</th>
+                <th>Day</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data %}
+            <tr id="row-{{ item._id }}">
+                <td>{{ item.company }}</td>
+                <td>{{ item.premise_name }}</td>
+                <td>{{ item.premise_area }}</td>
+                <td>{{ item.premise_address }}</td>
+                <td>
+                    {% if item.pics %}
+                        <ul>
+                        {% for pic in item.pics %}
+                            <li><strong>PIC Name = {{ pic.name }}</strong></li>
+                            <li>PIC Designation = ({{ pic.designation }})</li>
+                            <li>PIC Contact = {{ pic.contact }}</li>
+                            <li>PIC Email = {{ pic.email }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        No PIC assigned
+                    {% endif %}
+                </td>
+                <td>{{ item.model }}</td>
+                <td>{{ item.color }}</td>
+                <td>{{ item.eo }}</td>
+                <td>{{ item.day }}</td>
+                <td>{{ item.month }}</td>
+                <td>{{ item.year }}</td>
+                <td>
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-record-id="{{ item['_id'] }}">
+                        Delete
+                    </button>
+                    
+                    
+                    
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        
+    </table></div>
+     <!-- Pagination Controls -->
+     <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center mt-4">
+            <!-- Previous Button -->
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" 
+                   href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}" 
+                   aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+    
+            <!-- First Page and Ellipsis -->
+            {% if page > 3 %}
+            <li class="page-item">
+                <a class="page-link" 
+                href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}">1</a>
+            </li>
+            <li class="page-item disabled d-none d-sm-inline">
+<span class="page-link">...</span>                </li>
+            {% endif %}
+
+            <!-- Dynamic Page Numbers -->
+            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
+            <li class="page-item {% if p == page %}active{% endif %} d-none d-sm-inline">
+                <a class="page-link" 
+                href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}">
+                    {{ p }}
+                </a>
+            </li>
+            {% endfor %}
+
+            <!-- Ellipsis and Last Page -->
+            {% if page < total_pages - 3 %}
+            <li class="page-item disabled d-none d-sm-inline">
+                <span class="page-link">...</span>
+            </li>
+            <li class="page-item">
+                <a class="page-link" 
+                href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', total_pages) }}">
+                    {{ total_pages }}
+                </a>
+            </li>
+            {% endif %}
+    
+            <!-- Next Button -->
+            <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                <a class="page-link" 
+                   href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}" 
+                   aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    </div>
+
+    
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this record?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" method="POST" action="{{ url_for('delete_route') }}">
+                        <input type="hidden" name="record_id" id="deleteRecordId">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    </div>
+
+
+
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+   
+    <script>
+
+
+        const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', (event) => {
+        const button = event.relatedTarget;
+        const recordId = button.getAttribute('data-record-id');
+        document.getElementById('deleteRecordId').value = recordId;
+    });
+</script>
+
+
+    
+    
+</body>
+</html>

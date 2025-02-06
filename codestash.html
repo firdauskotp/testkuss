@@ -469,3 +469,25 @@ document.getElementById('combinedBtn2').addEventListener('click', () => {
       </div>
     </div>
   </nav> -->
+
+  # @app.route("/get_premises", methods=["POST"])
+# def get_premises():
+#     company_name = request.json.get("company_name")
+#     company = services_collection.find_one({"name": company_name})
+#     return jsonify(company.get("Premise Name", [])) if company else jsonify([])
+
+# @app.route("/get_premises", methods=["GET"])
+# def get_premises():
+#     company_name = request.args.get("company_name")
+#     if not company_name:
+#         return jsonify([])  # Return an empty list if no company is selected
+    
+#     # Find premises for the selected company
+#     premises = services_collection.find(
+#         {"company": company_name},  # Filter by the selected company
+#         {"premise": 1, "_id": 0}   # Fetch only the premise field
+#     )
+    
+#     # Extract unique premises
+#     unique_premises = sorted({premise.get("Premise Name") for premise in premises if "Premise Name" in premise})
+#     return jsonify(unique_premises)

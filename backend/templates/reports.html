@@ -47,6 +47,18 @@
                     <input type="text" id="Company" name="Company" class="form-control" placeholder="Valencia">
                 </div>
                 <div class="col-md-3">
+                    <label for="industry" class="form-label">Industry</label>
+                    <input type="text" id="industry" name="industry" class="form-control" placeholder="Industry">
+                </div>
+                <div class="col-md-3">
+                    <label for="premise" class="form-label">Premise Name</label>
+                    <input type="text" id="premise" name="premise" class="form-control" placeholder="Premise Name">
+                </div>
+                <div class="col-md-3">
+                    <label for="pic" class="form-label">PIC Name</label>
+                    <input type="text" id="pic" name="pic" class="form-control" placeholder="Person In Charge">
+                </div>
+                <div class="col-md-3">
                     <label for="Model" class="form-label">Model</label>
                     <input type="text" id="Model" name="Model" class="form-control" placeholder="VOX">
                 </div>
@@ -166,14 +178,14 @@
                     <input type="number" id="E4_Pause" name="E4_Pause" class="form-control" placeholder="120">
                 </div>
                 
-                <div class="col-md-3">
+                <!-- <div class="col-md-3">
                     <label for="Scent_Effectiveness" class="form-label">Scent Effectiveness</label>
                     <input type="text" id="Scent_Effectiveness" name="Scent_Effectiveness" class="form-control" placeholder="Scent Effectiveness">
                 </div>
                 <div class="col-md-3">
                     <label for="Common_Encounters" class="form-label">Common Encounters</label>
                     <input type="text" id="Common_Encounters" name="Common_Encounters" class="form-control" placeholder="Common Encounters">
-                </div>
+                </div> -->
                 <div class="col-md-3">
                     <label for="Other_Remarks" class="form-label">Other Remarks</label>
                     <input type="text" id="Other_Remarks" name="Other_Remarks" class="form-control" placeholder="Other Remarks">
@@ -194,7 +206,11 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Company</th>
-                        <th>Premise Name</th>
+                        <th>Industry</th>
+                <th>Premise Name</th>
+                <th>Premise Area</th>
+                <th>Premise Address</th>
+                <th>PICs</th>
                         <th>Model</th>
                         <th>Colour</th>
                         <th>S/N</th>
@@ -253,7 +269,25 @@
                     data-year="{{ user['year'] }}">
                         <td>{{ user['company'] }}</td>
 
+                      <td>{{ user.industry }}</td>
                       <td>{{ user['Premise Name'] }}</td>
+
+                <td>{{ user.premise_area }}</td>
+                <td>{{ user.premise_address }}</td>
+                <td>
+                    {% if user.pics %}
+                        <ul>
+                        {% for pic in user.pics %}
+                            <li><strong>PIC Name = {{ pic.name }}</strong></li>
+                            <li>PIC Designation = ({{ pic.designation }})</li>
+                             <li>PIC Contact = {{ pic.contact }}</li>
+                             <li>PIC Email = {{ pic.email }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        No PIC assigned
+                    {% endif %}
+                </td>
                         <td>{{ user['Model'] }}</td>
                         <td>{{ user['Color'] }}</td>
                         <td>{{ user['S/N'] }}</td>
