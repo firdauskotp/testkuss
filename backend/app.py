@@ -87,6 +87,13 @@ app.config['MODE'] = os.getenv('MODE')
 
 mail = Mail(app)
 
+@scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
+def scheduled_route_update():
+    replicate_monthly_routes(route_list_collection)
+
+scheduler.init_app(app)
+scheduler.start()
+
 @app.route('/update-data', methods=['POST'])
 def update_data():
     data = request.get_json()
@@ -318,9 +325,10 @@ def delete_admin():
     
     user_id = request.form['user_id']
 
-    user = login_cust_collection.find_one({'_id': ObjectId(user_id)})
+    user = login_collection.find_one({'_id': ObjectId(user_id)})
     username = user.get('username', 'Unknown')  # Get the username or default to 'Unknown'
-    login_cust_collection.delete_one({'_id': ObjectId(user_id)})
+    login_collection.delete_one({'_id': ObjectId(user_id)})
+
     flash("User deleted successfully!", "success")
     log_activity(session["username"], f"deleted user with username: {username}", logs_collection)
     return redirect(url_for('view_admins'))
@@ -1513,10 +1521,13 @@ def view_users():
     total_list = login_cust_collection.count_documents(query)
 
     users = list(
-        login_cust_collection.find(query, {'username': 1, 'email': 1, '_id': 0})
+        login_cust_collection.find(query, {'username': 1, 'email': 1, '_id': 1})
         .skip((page - 1) * limit)
         .limit(limit)
     )
+
+    for user in users:
+        user['_id'] = str(user['_id'])  
 
     total_pages = (total_list + limit - 1) // limit
     base_url = request.path
@@ -1541,6 +1552,8 @@ def view_admins():
     
     admins = list(login_collection.find({}, {'username': 1}))
 
+
+
     page = int(request.args.get('page', 1))  # Current page (default: 1)
     limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
 
@@ -1555,10 +1568,14 @@ def view_admins():
     total_list = login_collection.count_documents(query)
 
     admins = list(
-        login_collection.find(query, {'username': 1,  '_id': 0})
+        login_collection.find(query, {'username': 1,  '_id': 1})
         .skip((page - 1) * limit)
         .limit(limit)
     )
+
+    for admin in admins:
+        admin['_id'] = str(admin['_id'])  
+
 
     total_pages = (total_list + limit - 1) // limit
     base_url = request.path
@@ -2128,48 +2145,6 @@ def edit_record(record_id):
         {"$set": data}
     )
 
-@app.route('/delete-route2', methods=['POST'])  # Change from DELETE to POST
-def delete_route2():
-    route_id = request.form.get("route_id")  # Use form data
-    try:
-        route = mongo.db.route_list_collection.find_one({"_id": ObjectId(route_id)})
-        if not route:
-            flash("Route not found!", "danger")
-            return jsonify({"success": False, "error": "Not found"}), 404
-
-        # Extract Premise, Day, Month, Year before deleting
-        premise = route.get("premise", "Unknown")
-        day = route.get("day", "Unknown")
-        month = route.get("month", "Unknown")
-        year = route.get("year", "Unknown")
-
-        result = route_list_collection.delete_one({"_id": ObjectId(route_id)})
-        if result.deleted_count == 1:
-            # Log the deletion
-            log_activity(session["username"], f"Deleted route for {premise}, {day}/{month}/{year}", logs_collection)
-
-            flash("Route deleted successfully!", "success")
-            return redirect(url_for("route_table"))  # Redirect after deletion
-        
-        else:
-            flash("Route not found!", "danger")
-            return redirect(url_for("route_table"))  # Redirect after deletion
-
-    except Exception as e:
-        flash(f"Error: {str(e)}", "danger")
-        return redirect(url_for("route_table"))  # Redirect after deletion
-        
-    # try:
-    #     result = route_list_collection.delete_one({"_id": ObjectId(route_id)})
-    #     if result.deleted_count == 1:
-    #         flash(, "success")
-    #         return redirect(url_for("route_table"))  # Ensure the route name is correct
-    #     else:
-    #         flash("Route not found!", "danger")
-    #         return redirect(url_for("route_table"))
-    # except Exception as e:
-    #     flash(f"Error: {str(e)}", "danger")
-    #     return redirect(url_for("route_table"))
 
 @app.route('/delete_route', methods=['POST'])
 def delete_route():
@@ -2194,12 +2169,20 @@ def delete_route():
         flash("Record failed to delete!", "error")
     
     return redirect(url_for('route_table'))
-@scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
-def scheduled_route_update():
-    replicate_monthly_routes(route_list_collection)
 
-scheduler.init_app(app)
-scheduler.start()
+@app.route('/view-help-requestssss', methods=['POST','GET'])
+def view_helpss():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    return render_template('view-complaints.html')
+
+@app.route("/view-help-list", methods=['POST','GET'])
+def view_help():
+    if 'username' not in session:
+        return redirect(url_for('admin_login'))
+    """Displays all case numbers with links to their respective staff forms."""
+    cases = collection.find({}, {"case_no": 1})  # Fetch only case_no field
+    return render_template("view-complaint.html", cases=cases)
 
 if __name__ == "__main__":
     app.run(debug=True)
