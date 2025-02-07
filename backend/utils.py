@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 import calendar
+from flask import flash
 
 def log_activity(name, action, database):
     log_entry = {
@@ -94,6 +95,8 @@ def replicate_monthly_routes(database):
         new_routes.append(new_route)
 
     if new_routes:
-        mongo.db.route_list_collection.insert_many(new_routes)
-        mongo.db.route_list_collection.delete_many({"month": previous_month, "year": previous_year})
+        database.insert_many(new_routes)
+        database.delete_many({"month": previous_month, "year": previous_year})
 
+def flash_message(message, category="info"):
+    flash(message, category)

@@ -12,7 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
-from utils import log_activity, safe_int, send_email_to_admin, send_email_to_customer, replicate_monthly_routes
+from utils import log_activity, safe_int, send_email_to_admin, send_email_to_customer, replicate_monthly_routes, flash_message
 from flask_cors import CORS
 from collections import defaultdict
 from flask_apscheduler import APScheduler
@@ -2353,6 +2353,13 @@ def field_service():
     premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
 
     return render_template("service.html", premises=premises, technician_name=technician_name, current_time=current_time)
+
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True)
