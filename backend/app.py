@@ -2263,5 +2263,96 @@ def get_signature(file_id):
     file = fs.get(file_id)
     return send_file(io.BytesIO(file.read()), mimetype=file.content_type)
 
+@app.route('/get-client-details/<premise_name>')
+def get_client_details(premise_name):
+    pics = list(profile_list_collection.find({"tied_to_premise": premise_name}))
+    return jsonify(html=render_template("partials/client-details.html", pics=pics))
+
+@app.route('/get-device-details/<premise_name>')
+def get_device_details(premise_name):
+    devices = list(device_list_collection.find({"tied_to_premise": premise_name}))
+    return jsonify(html=render_template("partials/device-details.html", devices=devices))
+
+@app.route('/field-service', methods=['GET', 'POST'])
+def field_service():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    technician_name = session["username"]
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    if request.method == 'POST':
+        premise_name = request.form.get("premiseName")
+        actions_taken = request.form.getlist("actions")
+        remarks = request.form.get("remarks")
+        staff_name = request.form.get("staffName")
+        signature = request.form.get("signature")
+
+        # Fetch selected premise details
+        premise_details = profile_list_collection.find_one({"premise_name": premise_name})
+        if not premise_details:
+            flash("Invalid premise selected!", "danger")
+            return redirect(url_for("field_service"))
+
+        # Fetch devices linked to the premise
+        devices = list(device_list_collection.find({"tied_to_premise": premise_name}))
+
+        # Fetch PICs linked to the premise
+        pic_records = list(profile_list_collection.find({"tied_to_premise": premise_name}))
+
+        # Process devices
+        device_entries = []
+        for i, device in enumerate(devices, start=1):
+            balance = int(request.form.get(f'balance{i}', 0))
+            volume_required = int(device.get("Volume", 0))
+            consumption = volume_required - balance
+
+            device_entry = {
+                "location": device.get("location"),
+                "serial_number": device.get("S/N"),
+                "model": device.get("Model"),
+                "scent": device.get("Current EO"),
+                "volume_required": volume_required,
+                "balance": balance,
+                "consumption": consumption,
+                "events": []
+            }
+
+            # Process events (E1 to E4)
+            for e in range(1, 5):
+                event_data = {
+                    "days": device.get(f"E{e} - DAYS"),
+                    "start_time": device.get(f"E{e} - START"),
+                    "end_time": device.get(f"E{e} - END"),
+                    "work": device.get(f"E{e} - WORK"),
+                    "pause": device.get(f"E{e} - PAUSE"),
+                }
+                device_entry["events"].append(event_data)
+
+            device_entries.append(device_entry)
+
+        # Create a record for MongoDB
+        field_service_record = {
+            "technician_name": technician_name,
+            "timestamp": current_time,
+            "premise_name": premise_name,
+            "client_pics": pic_records,
+            "devices": device_entries,
+            "actions_taken": actions_taken,
+            "remarks": remarks,
+            "staff_name": staff_name,
+            "signature": signature,
+        }
+
+        change_collection.insert_one(field_service_record)
+
+        flash("Field service report submitted successfully!", "success")
+        return redirect(url_for("field_service"))
+
+    # Fetch all premises for dropdown
+    premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
+
+    return render_template("service.html", premises=premises, technician_name=technician_name, current_time=current_time)
+
 if __name__ == "__main__":
     app.run(debug=True)
