@@ -1,4 +1,4 @@
-import smtplib
+import gridfs, io, os, json, smtplib
 from urllib.parse import urlencode
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify, Response
 from flask_pymongo import MongoClient
@@ -7,11 +7,9 @@ from flask_mail import Mail, Message
 from datetime import datetime
 import certifi  # Only needed for Mac
 from werkzeug.utils import secure_filename
-import os, json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash
-import gridfs
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
 from utils import log_activity, safe_int, send_email_to_admin, send_email_to_customer, replicate_monthly_routes
@@ -177,13 +175,82 @@ def customer_form():
     return render_template("customer-complaint-form.html")
 
 
+# @app.route("/staff-help/<int:case_no>", methods=["GET", "POST"])
+# def staff_form(case_no):
+#     """Form for staff to update and manage cases."""
+#     #case_details = db.case_issue.find_one({"case_no": case_no})
+#    # if not case_details:
+#     #    flash(f"Case #{case_no} not found!", "danger")
+#     #    return redirect(url_for("customer_form"))
+
+#     if request.method == "POST":
+#         # Extract form data
+#         actions_done = request.form.getlist("actions")
+#         remarks = request.form.get("remarks", "")
+#         case_closed = request.form.get("case_closed")
+#         revisit_date = request.form.get("appointment_date")
+#         revisit_time = request.form.get("appointment_time")
+#         staff_name = request.form.get("staff_name")
+        
+#         # Handle signature file upload
+#         signature = None
+#         if "signature" in request.files:
+#             file = request.files["signature"]
+#             if file and file.filename:
+#                 filename = secure_filename(f"case_{case_no}_{file.filename}")
+#                 file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+#                 signature = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+#         # Update case in MongoDB
+#         collection.update_one(
+#             {"case_no": case_no},
+#             {"$set": {
+#                 "actions_done": actions_done,
+#                 "remarks": remarks,
+#                 "case_closed": case_closed,
+#                 "revisit_date": revisit_date,
+#                 "revisit_time": revisit_time,
+#                 "staff_name": staff_name,
+#                 "signature": signature,
+#                 "updated_at": datetime.now(),
+#             }}
+#         )
+
+
+#         # Send Email Notification
+#         msg = Message("Case Updated", sender=app.config['MAIL_USERNAME'], recipients=["team-email@example.com"])
+#         msg.body = f"""
+#         Case No: {case_no}
+#         Actions: {', '.join(actions)}
+#         Remarks: {remarks}
+#         Staff Name: {staff_name}
+#         Revisit Date: {revisit_date}
+#         """
+#         mail.send(msg)
+
+#         flash(f"Case #{case_no} updated successfully!", "success")
+#         return redirect(url_for("staff_form", case_no=case_no))
+
+#     case_data = collection.find_one({"case_no": case_no})
+#     return render_template("staff-complaint-form.html", case_no=case_no, case_data=case_data)
+@app.route("/api/case/<int:case_no>", methods=["GET"])
+def get_case_details(case_no):
+    """API endpoint to get case details."""
+    case_data = collection.find_one({"case_no": case_no}, {"_id": 0})  # Exclude _id for cleaner JSON
+    if not case_data:
+        return jsonify({"error": "Case not found"}), 404
+    return jsonify(case_data)
+
 @app.route("/staff-help/<int:case_no>", methods=["GET", "POST"])
 def staff_form(case_no):
     """Form for staff to update and manage cases."""
-    #case_details = db.case_issue.find_one({"case_no": case_no})
-   # if not case_details:
-    #    flash(f"Case #{case_no} not found!", "danger")
-    #    return redirect(url_for("customer_form"))
+    
+    case_data = collection.find_one({"case_no": case_no})
+    if not case_data:
+        flash(f"Case #{case_no} not found!", "danger")
+        return redirect(url_for("customer_form"))
+
+    case_data["_id"] = str(case_data["_id"])
 
     if request.method == "POST":
         # Extract form data
@@ -193,15 +260,19 @@ def staff_form(case_no):
         revisit_date = request.form.get("appointment_date")
         revisit_time = request.form.get("appointment_time")
         staff_name = request.form.get("staff_name")
-        
-        # Handle signature file upload
-        signature = None
+
+        # Handle signature file upload (Use GridFS instead of local storage)
+        signature_id = None
         if "signature" in request.files:
             file = request.files["signature"]
             if file and file.filename:
-                filename = secure_filename(f"case_{case_no}_{file.filename}")
-                file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-                signature = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                signature_id = fs.put(file.read(), filename=file.filename, content_type=file.content_type)
+
+        # If case is closed, remove it from MongoDB
+        if case_closed == "Yes":
+            collection.delete_one({"case_no": case_no})
+            flash(f"Case #{case_no} has been closed and removed.", "success")
+            return redirect(url_for("customer_form"))  # Redirect to another page after deletion
 
         # Update case in MongoDB
         collection.update_one(
@@ -213,27 +284,25 @@ def staff_form(case_no):
                 "revisit_date": revisit_date,
                 "revisit_time": revisit_time,
                 "staff_name": staff_name,
-                "signature": signature,
+                "signature_id": signature_id,  # Store GridFS ID instead of local file path
                 "updated_at": datetime.now(),
             }}
         )
 
-
         # Send Email Notification
-        msg = Message("Case Updated", sender=app.config['MAIL_USERNAME'], recipients=["team-email@example.com"])
-        msg.body = f"""
-        Case No: {case_no}
-        Actions: {', '.join(actions)}
-        Remarks: {remarks}
-        Staff Name: {staff_name}
-        Revisit Date: {revisit_date}
-        """
-        mail.send(msg)
+        # msg = Message("Case Updated", sender=app.config['MAIL_USERNAME'], recipients=["team-email@example.com"])
+        # msg.body = f"""
+        # Case No: {case_no}
+        # Actions: {', '.join(actions_done)}
+        # Remarks: {remarks}
+        # Staff Name: {staff_name}
+        # Revisit Date: {revisit_date}
+        # """
+        # mail.send(msg)
 
         flash(f"Case #{case_no} updated successfully!", "success")
         return redirect(url_for("staff_form", case_no=case_no))
 
-    case_data = collection.find_one({"case_no": case_no})
     return render_template("staff-complaint-form.html", case_no=case_no, case_data=case_data)
 
 @app.route("/")
@@ -1131,8 +1200,8 @@ def client_login():
 
     return render_template("index.html")
 
-@app.route('/image/<image_id>')
-def get_image(image_id):
+@app.route('/image2/<image_id>')
+def get_image2(image_id):
     """Route to retrieve and display an image from GridFS"""
     image = fs.get(ObjectId(image_id))  # Fetch the image from GridFS
     return send_file(image, mimetype='image/jpeg')  # Return the image as a response
@@ -2183,6 +2252,16 @@ def view_help():
     """Displays all case numbers with links to their respective staff forms."""
     cases = collection.find({}, {"case_no": 1})  # Fetch only case_no field
     return render_template("view-complaint.html", cases=cases)
+
+@app.route("/image/<file_id>")
+def get_image(file_id):
+    file = fs.get(file_id)
+    return send_file(io.BytesIO(file.read()), mimetype=file.content_type)
+
+@app.route("/signature/<file_id>")
+def get_signature(file_id):
+    file = fs.get(file_id)
+    return send_file(io.BytesIO(file.read()), mimetype=file.content_type)
 
 if __name__ == "__main__":
     app.run(debug=True)
