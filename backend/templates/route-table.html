@@ -65,6 +65,20 @@
                                 <label for="pic" class="form-label">PIC Name</label>
                                 <input type="text" id="pic" name="pic" class="form-control" placeholder="Person In Charge">
                             </div>
+                            <!-- <div class="col-md-3">
+                                <label for="day_of_week" class="form-label">Day of the Week</label>
+                                <select id="day_of_week" name="day_of_week" class="form-control">
+                                    <option value="">Any</option>
+                                    <option value="Sunday" {% if request.args.get("day_of_week") == "Sunday" %}selected{% endif %}>Sunday</option>
+                                    <option value="Monday" {% if request.args.get("day_of_week") == "Monday" %}selected{% endif %}>Monday</option>
+                                    <option value="Tuesday" {% if request.args.get("day_of_week") == "Tuesday" %}selected{% endif %}>Tuesday</option>
+                                    <option value="Wednesday" {% if request.args.get("day_of_week") == "Wednesday" %}selected{% endif %}>Wednesday</option>
+                                    <option value="Thursday" {% if request.args.get("day_of_week") == "Thursday" %}selected{% endif %}>Thursday</option>
+                                    <option value="Friday" {% if request.args.get("day_of_week") == "Friday" %}selected{% endif %}>Friday</option>
+                                    <option value="Saturday" {% if request.args.get("day_of_week") == "Saturday" %}selected{% endif %}>Saturday</option>
+                                </select>
+                            </div> -->
+                            
                             <div class="col-md-3">
                                 <label for="day" class="form-label">Day</label>
                                 <input type="text" id="day" name="day" class="form-control" placeholder="1,15,30">
@@ -76,6 +90,13 @@
                             <div class="col-md-3">
                                 <label for="year" class="form-label">Year</label>
                                 <input type="number" id="year" name="year" class="form-control" placeholder="2024">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sort_order" class="form-label">Sort By</label>
+                                <select id="sort_order" name="sort_order" class="form-control">
+                                    <option value="desc" {% if request.args.get("sort_order") == "desc" %}selected{% endif %}>Latest</option>
+                                    <option value="asc" {% if request.args.get("sort_order") == "asc" %}selected{% endif %}>Oldest</option>
+                                </select>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary mt-3">Filter</button>
@@ -151,7 +172,7 @@
             <!-- Previous Button -->
             <li class="page-item {% if page == 1 %}disabled{% endif %}">
                 <a class="page-link" 
-                   href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}" 
+                   href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) | update_querystring('sort_order', sort_order)  }}" 
                    aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
                 </a>

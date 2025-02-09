@@ -49,6 +49,8 @@
                 <div class="mb-3">
                     <label for="companyName" class="form-label">Company Name</label>
                     <input type="text" id="companyName" name="companyName" class="form-control" placeholder="Enter company name" required>
+                    <div class="invalid-feedback"> Field is required.</div>
+
                 </div>
                 <div class="mb-3">
                     <label for="dateCreated" class="form-label">Date Created</label>
@@ -57,6 +59,8 @@
                 <div class="mb-3">
                     <label for="industry" class="form-label">Industry</label>
                     <input type="text" id="industry" name="industry" class="form-control" placeholder="Enter industry type" required>
+                    <div class="invalid-feedback"> Field is required.</div>
+
                 </div>
             </div>
 
@@ -68,8 +72,14 @@
                     <div class="premise-item mb-3" id="premise-1">
                         <label class="form-label">Premise 1 - Name</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter premise name" name="premiseName1" id="premiseName1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control mb-2" placeholder="Enter premise area" name="premiseArea1" id="premiseArea1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control" placeholder="Enter premise address" name="premiseAddress1" id="premiseAddress1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <!-- <button type="button" class="remove-btn mt-2">Remove</button> -->
                     </div>
                 </div>
@@ -85,13 +95,23 @@
                     <div class="contact-item mb-3" id="contact-1">
                         <label class="form-label">PIC 1 - Name</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter name" name="picName1" id="picName1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control mb-2" placeholder="Enter designation" name="picDesignation1" id="picDesignation1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control mb-2" placeholder="Enter contact" name="picContact1" id="picContact1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="email" class="form-control mb-2" placeholder="Enter email" name="picEmail1" id="picEmail1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <select class="form-select"  id="contactPremise1" name="contactPremise1"  required>
                             <option selected disabled>Tie contact to:</option>
                             <option>Premise 1</option>
                         </select>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <!-- <button type="button" class="remove-btn mt-2">Remove</button> -->
                     </div>
                 </div>
@@ -105,93 +125,121 @@
                     <div class="device-item mb-3" id="device-1">
                         <label class="form-label">#1 Location</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter location" name="deviceLocation1" id="deviceLocation1"  required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
 
                         <label class="form-label">#1 S/N</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter serial number"  name="deviceSN1" id="deviceSN1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
 
                         <label class="form-label">#1 Model</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter model" name="deviceModel1" id="deviceModel1"  required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
 
                         <label class="form-label">#1 Colour</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter colour" name="deviceColour1" id="deviceColour1"  required>
+                        <div class="invalid-feedback"> Field is required.</div>
+                        
 
                         <label class="form-label">#1 Volume Required</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter volume required" name="deviceVolume1" id="deviceVolume1"  required>
+                        <div class="invalid-feedback"> Field is required.</div>
+                        
 
                         <label class="form-label">#1 Scent</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter scent" name="deviceScent1" id="deviceScent1"  required>
+                        <div class="invalid-feedback"> Field is required.</div>
+                       
 
                         <label class="form-label">Tie Device to Premise:</label>
                         <select class="form-select mb-2" id="devicePremise1" name="devicePremise1" required>
                             <option selected disabled>Select a premise</option>
                             <option>Premise 1</option>
                         </select>
+                        <div class="invalid-feedback"> Field is required.</div>
+                       
 
                         <!-- Events for Device -->
                         <h6 class="section-heading">Event 1</h6>
                         <label class="form-label">#1 - E1 - Days</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter days" name="E1Days1" id="E1Days1"  required>
+                        <div class="invalid-feedback"> Field is required.</div>
 
                         <label class="form-label">#1 - E1 - Start Time</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E1StartTime1" id="E1StartTime1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
 
                         <label class="form-label">#1 - E1 - End Time</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E1EndTime1" id="E1EndTime1" required>
-
-                        <label class="form-label">#1 - E1 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E1Pause1" id="E1Pause1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
 
                         <label class="form-label">#1 - E1 - Work</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E1Work1" id="E1Work1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
 
+                        
+                        <label class="form-label">#1 - E1 - Pause</label>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E1Pause1" id="E1Pause1" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
+                        
                         <h6 class="section-heading">Event 2</h6>
                         <label class="form-label">#1 - E2 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E2Days1" id="E2Days1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E2Days1" id="E2Days1" >
 
                         <label class="form-label">#1 - E2 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E2StartTime1" id="E2StartTime1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E2StartTime1" id="E2StartTime1" >
 
                         <label class="form-label">#1 - E2 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E2EndTime1" id="E2EndTime1" required>
-
-                        <label class="form-label">#1 - E2 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E2Pause1" id="E2Pause1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E2EndTime1" id="E2EndTime1" >
 
                         <label class="form-label">#1 - E2 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E2Work1" id="E2Work1" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E2Work1" id="E2Work1" >
 
+                        
+                        <label class="form-label">#1 - E2 - Pause</label>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E2Pause1" id="E2Pause1" >
+
+                        
                         <h6 class="section-heading">Event 3</h6>
                         <label class="form-label">#1 - E3 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E3Days1" id="E3Days1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E3Days1" id="E3Days1" >
 
                         <label class="form-label">#1 - E3 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E3StartTime1" id="E3StartTime1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E3StartTime1" id="E3StartTime1" >
 
                         <label class="form-label">#1 - E3 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E3EndTime1" id="E3EndTime1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E3EndTime1" id="E3EndTime1" >
 
-                        <label class="form-label">#1 - E3 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E3Pause1" id="E3Pause1" required>
 
                         <label class="form-label">#1 - E3 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E3Work1" id="E3Work1" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E3Work1" id="E3Work1" >
 
+
+                        <label class="form-label">#1 - E3 - Pause</label>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E3Pause1" id="E3Pause1" >
+
+                        
                         <h6 class="section-heading">Event 4</h6>
                         <label class="form-label">#1 - E4 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E4Days1" id="E4Days1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E4Days1" id="E4Days1" >
 
                         <label class="form-label">#1 - E4 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E4StartTime1" id="E4StartTime1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E4StartTime1" id="E4StartTime1" >
 
                         <label class="form-label">#1 - E4 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E4EndTime1" id="E4EndTime1" required>
-
-                        <label class="form-label">#1 - E4 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E4Pause1" id="E4Pause1" required>
+                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E4EndTime1" id="E4EndTime1" >
 
                         <label class="form-label">#1 - E4 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E4Work1" id="E4Work1" required>
+                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E4Work1" id="E4Work1" >
 
+
+                        <label class="form-label">#1 - E4 - Pause</label>
+                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E4Pause1" id="E4Pause1" >
+
+                       
                     </div>
                 </div>
                 
@@ -227,8 +275,14 @@
                 <div class="premise-item mb-3" id="premise-${premiseCount}">
                     <label class="form-label">Premise ${premiseCount} - Name</label>
                     <input type="text" class="form-control mb-2" placeholder="Enter premise name" name="premiseName${premiseCount}" id="premiseName${premiseCount}" required>
+                    <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control mb-2" placeholder="Enter premise area" name="premiseArea${premiseCount}" id="premiseArea${premiseCount}" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control" placeholder="Enter premise address" name="premiseAddress${premiseCount}" id="premiseAddress${premiseCount}" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                     <button type="button" class="remove-btn mt-2">Remove Premise</button>
                 </div>
             `;
@@ -347,13 +401,24 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                 <div class="contact-item mb-3" id="contact-${contactCount}">
                     <label class="form-label">PIC ${contactCount} - Name</label>
                     <input type="text" class="form-control mb-2" placeholder="Enter name" name="picName${contactCount}" id="picName${contactCount}" required>
+                    <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control mb-2" placeholder="Enter designation" name="picDesignation${contactCount}" id="picDesignation${contactCount}" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="text" class="form-control mb-2" placeholder="Enter contact" name="picContact${contactCount}" id="picContact${contactCount}" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                         <input type="email" class="form-control mb-2" placeholder="Enter email" name="picEmail${contactCount}" id="picEmail${contactCount}" required>
+                        <div class="invalid-feedback"> Field is required.</div>
+
                     <select class="form-select" id="contactPremise${contactCount}" name="contactPremise${contactCount}" required>
                         <option selected disabled>Tie contact to:</option>
                         ${getPremiseOptions()}
                     </select>
+                    <div class="invalid-feedback"> Field is required.</div>
+
+
                     <button type="button" class="remove-btn mt-2">Remove</button>
                 </div>
             `;
@@ -369,93 +434,113 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                     <h5 class="section-heading">Device ${deviceCount}</h5>
                     <label class="form-label">#${deviceCount} Location</label>
                     <input type="text" class="form-control mb-2" name="deviceLocation${deviceCount}" id="deviceLocation${deviceCount}" placeholder="Enter location" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} S/N</label>
                     <input type="number" class="form-control mb-2" name="deviceSN${deviceCount}" id="deviceSN${deviceCount}" placeholder="Enter serial number" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} Model</label>
                     <input type="text" class="form-control mb-2" name="deviceModel${deviceCount}" id="deviceModel${deviceCount}" placeholder="Enter model" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} Colour</label>
                     <input type="text" class="form-control mb-2" placeholder="Enter colour" name="deviceColour${deviceCount}" id="deviceColour${deviceCount}" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} Volume Required</label>
                     <input type="number" class="form-control mb-2" placeholder="Enter volume required"  name="deviceVolume${deviceCount}" id="deviceVolume${deviceCount}" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} Scent</label>
                     <input type="text" class="form-control mb-2" placeholder="Enter scent" name="deviceScent${deviceCount}" id="deviceScent${deviceCount}"  required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">Tie Device to Premise:</label>
                     <select class="form-select mb-2" id="devicePremise${deviceCount}" name="devicePremise${deviceCount}" required>
                         <option selected disabled>Select a premise</option>
                         ${getPremiseOptions()}
                     </select>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <!-- Events for Device -->
                     <h6 class="section-heading">Event 1</h6>
                     <label class="form-label">#${deviceCount} - E1 - Days</label>
                     <input type="text" class="form-control mb-2" name="E1Days${deviceCount}" id="E1Days${deviceCount}" placeholder="Enter days" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} - E1 - Start Time</label>
                     <input type="text" class="form-control mb-2" name="E1StartTime${deviceCount}" id="E1StartTime${deviceCount}" placeholder="Enter start time" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} - E1 - End Time</label>
                     <input type="text" class="form-control mb-2" name="E1EndTime${deviceCount}" id="E1EndTime${deviceCount}" placeholder="Enter end time" required>
-
-                    <label class="form-label">#${deviceCount} - E1 - Pause</label>
-                    <input type="number" class="form-control mb-2"  name="E1Pause${deviceCount}" id="E1Pause${deviceCount}" placeholder="Enter pause duration" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} - E1 - Work</label>
                     <input type="number" class="form-control mb-2" name="E1Work${deviceCount}" id="E1Work${deviceCount}"  placeholder="Enter work duration" required>
+                    <div class="invalid-feedback"> Field is required.</div>
 
+                   
+                    <label class="form-label">#${deviceCount} - E1 - Pause</label>
+                    <input type="number" class="form-control mb-2"  name="E1Pause${deviceCount}" id="E1Pause${deviceCount}" placeholder="Enter pause duration" required>
+                    <div class="invalid-feedback"> Field is required.</div>
+
+                    
                     <h6 class="section-heading">Event 2</h6>
                     <label class="form-label">#${deviceCount} - E2 - Days</label>
-                    <input type="text" class="form-control mb-2" name="E2Days${deviceCount}" id="E2Days${deviceCount}" placeholder="Enter days" required>
+                    <input type="text" class="form-control mb-2" name="E2Days${deviceCount}" id="E2Days${deviceCount}" placeholder="Enter days" >
 
                     <label class="form-label">#${deviceCount} - E2 - Start Time</label>
-                    <input type="text" class="form-control mb-2" name="E2StartTime${deviceCount}" id="E2StartTime${deviceCount}" placeholder="Enter start time" required>
+                    <input type="text" class="form-control mb-2" name="E2StartTime${deviceCount}" id="E2StartTime${deviceCount}" placeholder="Enter start time" >
 
                     <label class="form-label">#${deviceCount} - E2 - End Time</label>
-                    <input type="text" class="form-control mb-2" name="E2EndTime${deviceCount}" id="E2EndTime${deviceCount}" placeholder="Enter end time" required>
-
-                    <label class="form-label">#${deviceCount} - E2 - Pause</label>
-                    <input type="number" class="form-control mb-2" name="E2Pause${deviceCount}" id="E2Pause${deviceCount}" placeholder="Enter pause duration" required>
+                    <input type="text" class="form-control mb-2" name="E2EndTime${deviceCount}" id="E2EndTime${deviceCount}" placeholder="Enter end time" >
 
                     <label class="form-label">#${deviceCount} - E2 - Work</label>
-                    <input type="number" class="form-control mb-2" name="E2Work${deviceCount}" id="E2Work${deviceCount}"  placeholder="Enter work duration" required>
+                    <input type="number" class="form-control mb-2" name="E2Work${deviceCount}" id="E2Work${deviceCount}"  placeholder="Enter work duration" >
 
+
+                    <label class="form-label">#${deviceCount} - E2 - Pause</label>
+                    <input type="number" class="form-control mb-2" name="E2Pause${deviceCount}" id="E2Pause${deviceCount}" placeholder="Enter pause duration" >
+
+                   
                     <h6 class="section-heading">Event 3</h6>
                     <label class="form-label">#${deviceCount} - E3 - Days</label>
-                    <input type="text" class="form-control mb-2" name="E3Days${deviceCount}" id="E3Days${deviceCount}" placeholder="Enter days" required>
+                    <input type="text" class="form-control mb-2" name="E3Days${deviceCount}" id="E3Days${deviceCount}" placeholder="Enter days" >
 
                     <label class="form-label">#${deviceCount} - E3 - Start Time</label>
-                    <input type="text" class="form-control mb-2" name="E3StartTime${deviceCount}" id="E3StartTime${deviceCount}" placeholder="Enter start time" required>
+                    <input type="text" class="form-control mb-2" name="E3StartTime${deviceCount}" id="E3StartTime${deviceCount}" placeholder="Enter start time" >
 
                     <label class="form-label">#${deviceCount} - E3 - End Time</label>
-                    <input type="text" class="form-control mb-2" name="E3EndTime${deviceCount}" id="E3EndTime${deviceCount}" placeholder="Enter end time" required>
-
-                    <label class="form-label">#${deviceCount} - E3 - Pause</label>
-                    <input type="number" class="form-control mb-2" name="E3Pause${deviceCount}" id="E3Pause${deviceCount}" placeholder="Enter pause duration" required>
+                    <input type="text" class="form-control mb-2" name="E3EndTime${deviceCount}" id="E3EndTime${deviceCount}" placeholder="Enter end time" >
 
                     <label class="form-label">#${deviceCount} - E3 - Work</label>
-                    <input type="number" class="form-control mb-2" name="E3Work${deviceCount}" id="E3Work${deviceCount}"  placeholder="Enter work duration" required>
+                    <input type="number" class="form-control mb-2" name="E3Work${deviceCount}" id="E3Work${deviceCount}"  placeholder="Enter work duration" >
 
+                    
+                    <label class="form-label">#${deviceCount} - E3 - Pause</label>
+                    <input type="number" class="form-control mb-2" name="E3Pause${deviceCount}" id="E3Pause${deviceCount}" placeholder="Enter pause duration" >
+
+                  
                     <h6 class="section-heading">Event 4</h6>
                     <label class="form-label">#${deviceCount} - E4 - Days</label>
-                    <input type="text" class="form-control mb-2" name="E4Days${deviceCount}" id="E4Days${deviceCount}" placeholder="Enter days" required>
+                    <input type="text" class="form-control mb-2" name="E4Days${deviceCount}" id="E4Days${deviceCount}" placeholder="Enter days" >
 
                     <label class="form-label">#${deviceCount} - E4 - Start Time</label>
-                    <input type="text" class="form-control mb-2" name="E4StartTime${deviceCount}" id="E4StartTime${deviceCount}" placeholder="Enter start time" required>
+                    <input type="text" class="form-control mb-2" name="E4StartTime${deviceCount}" id="E4StartTime${deviceCount}" placeholder="Enter start time" >
 
                     <label class="form-label">#${deviceCount} - E4 - End Time</label>
-                    <input type="text" class="form-control mb-2" name="E4EndTime${deviceCount}" id="E4EndTime${deviceCount}" placeholder="Enter end time" required>
-
-                    <label class="form-label">#${deviceCount} - E4 - Pause</label>
-                    <input type="number" class="form-control mb-2" name="E4Pause${deviceCount}" id="E4Pause${deviceCount}" placeholder="Enter pause duration" required>
+                    <input type="text" class="form-control mb-2" name="E4EndTime${deviceCount}" id="E4EndTime${deviceCount}" placeholder="Enter end time" >
 
                     <label class="form-label">#${deviceCount} - E4 - Work</label>
-                    <input type="number" class="form-control mb-2" name="E4Work${deviceCount}" id="E4Work${deviceCount}"  placeholder="Enter work duration" required>
+                    <input type="number" class="form-control mb-2" name="E4Work${deviceCount}" id="E4Work${deviceCount}"  placeholder="Enter work duration" >
 
+
+                    <label class="form-label">#${deviceCount} - E4 - Pause</label>
+                    <input type="number" class="form-control mb-2" name="E4Pause${deviceCount}" id="E4Pause${deviceCount}" placeholder="Enter pause duration" >
+
+                   
                     <button type="button" class="remove-btn mt-2">Remove Device</button>
                 </div>`;
             deviceContainer.insertAdjacentHTML('beforeend', newDevice);
@@ -471,6 +556,25 @@ document.getElementById('premiseContainer').addEventListener('input', function (
             const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
             dateInput.value = today;
         });
+
+        document.getElementById('customerForm').addEventListener('submit', function (event) {
+    let isValid = true;
+    const requiredFields = document.querySelectorAll('#customerForm input[required], #customerForm select[required]');
+    
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('is-invalid'); // Bootstrap's error styling
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+
+    if (!isValid) {
+        event.preventDefault(); // Prevent submission if any field is empty
+    }
+});
+
     </script>
 </body>
 </html>

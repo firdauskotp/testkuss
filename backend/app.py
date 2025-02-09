@@ -330,6 +330,12 @@ def register():
             flash("Passwords do not match. Please try again.", "danger")
             return redirect(url_for('register'))
 
+        existing_user = login_cust_collection.find_one({'email': email})
+        if existing_user:
+            flash("This email is already registered. Please use a different email.", "danger")
+            return redirect(url_for('register'))
+
+
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
         login_cust_collection.insert_one({
@@ -339,7 +345,7 @@ def register():
         
         flash("User registered successfully!", "success")
         log_activity(session["username"],"added user : " +str(email),logs_collection)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('register'))
 
 
     return render_template('register.html')
@@ -355,7 +361,13 @@ def register_admin():
 
         if password != confirm_password:
             flash("Passwords do not match. Please try again.", "danger")
-            return redirect(url_for('register'))
+            return redirect(url_for('register_admin'))
+
+        existing_user = login_collection.find_one({'username': username})
+        if existing_user:
+            flash("This username is already registered. Please use a different username.", "danger")
+            return redirect(url_for('register_admin'))
+
 
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
@@ -366,7 +378,7 @@ def register_admin():
         
         flash("User registered successfully!", "success")
         log_activity(session["username"],"added user : " +str(username),logs_collection)
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('register_admin'))
 
     return render_template('register-admin.html')
 
@@ -430,7 +442,7 @@ def reports():
     if 'username' in session:
         # Pagination parameters
         page = int(request.args.get('page', 1))  # Current page (default: 1)
-        limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+        limit = int(request.args.get('limit', 20))  # Entries per page (default: 10)
 
 
         # Get filter parameters
@@ -692,16 +704,16 @@ def pack_list():
     if 'username' in session:
         # Pagination parameters
         page = int(request.args.get('page', 1))  # Current page (default: 1)
-        limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+        limit = int(request.args.get('limit', 20))  # Entries per page (default: 10)
 
         device_page = int(request.args.get('device_page', 1))  # Current page (default: 1)
-        device_limit = int(request.args.get('device_limit', 10))  # Entries per page (default: 10)
+        device_limit = int(request.args.get('device_limit', 20))  # Entries per page (default: 10)
 
         bottle_page = int(request.args.get('bottle_page', 1))  # Current page (default: 1)
-        bottle_limit = int(request.args.get('bottle_limit', 10))  # Entries per page (default: 10)
+        bottle_limit = int(request.args.get('bottle_limit', 20))  # Entries per page (default: 10)
 
         straw_page = int(request.args.get('straw_page', 1))  # Current page (default: 1)
-        straw_limit = int(request.args.get('straw_limit', 10))  # Entries per page (default: 10)
+        straw_limit = int(request.args.get('straw_limit', 20))  # Entries per page (default: 10)
 
         # Get filter parameters
         month = request.args.get('month','').strip()
@@ -935,10 +947,10 @@ def eo_list():
     if 'username' in session:
         # Pagination parameters
         page = int(request.args.get('page', 1))  # Current page (default: 1)
-        limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+        limit = int(request.args.get('limit', 20))  # Entries per page (default: 10)
 
         model_page = int(request.args.get('model_page', 1))  # Current page (default: 1)
-        model_limit = int(request.args.get('model_limit', 10))  # Entries per page (default: 10)
+        model_limit = int(request.args.get('model_limit', 20))  # Entries per page (default: 10)
 
         # Get filter parameters
         month = request.args.get('month','').strip()
@@ -1571,7 +1583,7 @@ def view_users():
     users = list(login_cust_collection.find({}, {'username': 1,'email':1}))
 
     page = int(request.args.get('page', 1))  # Current page (default: 1)
-    limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+    limit = int(request.args.get('limit', 20))  # Entries per page (default: 10)
 
     username = request.args.get('username')
     email = request.args.get('email')
@@ -1624,7 +1636,7 @@ def view_admins():
 
 
     page = int(request.args.get('page', 1))  # Current page (default: 1)
-    limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+    limit = int(request.args.get('limit', 20))  # Entries per page (default: 10)
 
     username = request.args.get('username')
 
@@ -1690,7 +1702,7 @@ def get_logs():
         })
 
     page = int(request.args.get('page', 1))  # Current page (default: 1)
-    limit = int(request.args.get('limit', 10))  # Entries per page (default: 10)
+    limit = int(request.args.get('limit', 20))  # Entries per page (default: 10)
 
     date = request.args.get('date','').strip()
     time = request.args.get('time','').strip()
@@ -1767,7 +1779,7 @@ def profile():
     
     # Pagination parameters
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 10))
+    limit = int(request.args.get('limit', 20))
 
     # Filters
     company = request.args.get('company', '').strip()
@@ -1872,7 +1884,7 @@ def view_device():
 
     # Pagination parameters
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 10))
+    limit = int(request.args.get('limit', 20))
 
     # Filters
     company = request.args.get('company', '').strip()
@@ -2093,7 +2105,7 @@ def route_table():
     
     # Pagination parameters
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 10))
+    limit = int(request.args.get('limit', 20))
 
     # Filters
     company = request.args.get('company', '').strip()
@@ -2101,6 +2113,9 @@ def route_table():
     day = request.args.get('day', '').strip()
     month = request.args.get('month', '').strip()
     year = request.args.get('year', '').strip()
+    sort_order = request.args.get("sort_order", "desc")  # Default: latest
+    # day_of_week = request.args.get('day_of_week', '').strip().capitalize()  # Capitalize for consistency
+
 
     # MongoDB query filter
     query = {}
@@ -2108,6 +2123,15 @@ def route_table():
         query["company"] = {'$regex': company, '$options': 'i'}
     if premise:
         query["premise"] = {'$regex': premise, '$options': 'i'}
+    # Mapping weekdays to MongoDB's day-of-week format (Sunday = 1, Monday = 2, ..., Saturday = 7)
+    # day_mapping = {
+    #     "Sunday": 1, "Monday": 2, "Tuesday": 3, "Wednesday": 4,
+    #     "Thursday": 5, "Friday": 6, "Saturday": 7
+    # }
+
+    # if day_of_week in day_mapping:
+    #     query['$expr'] = {'$eq': [{'$dayOfWeek': '$created_at'}, day_mapping[day_of_week]]}
+
 
     # Filter by date fields
     if day or month or year:
@@ -2127,7 +2151,11 @@ def route_table():
         query['$expr'] = {'$and': expr_conditions} if expr_conditions else {}
 
     # Fetch records from MongoDB
-    records = list(route_list_collection.find(query))
+    # Sorting order (latest first or oldest first)
+    sort_order = -1 if sort_order == "desc" else 1
+
+    # Fetch records from MongoDB and sort by date
+    records = list(route_list_collection.find(query).sort("date", sort_order))
 
     # Dictionary to store grouped data
     grouped_data = defaultdict(lambda: {
