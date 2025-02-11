@@ -88,7 +88,7 @@
 
             <!-- Contact Details -->
 
-            <div class="form-section" id="contactDetails">
+            <div class="form-section" id="contactDetails" >
                 <h5>Contact Details</h5>
                 <div id="contactContainer">
                     <!-- Contact Fields -->
@@ -109,6 +109,7 @@
                         <select class="form-select"  id="contactPremise1" name="contactPremise1"  required>
                             <option selected disabled>Tie contact to:</option>
                             <option>Premise 1</option>
+                            <!-- <option value="all">All Premises</option> -->
                         </select>
                         <div class="invalid-feedback"> Field is required.</div>
 
@@ -416,7 +417,13 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                         <option selected disabled>Tie contact to:</option>
                         ${getPremiseOptions()}
                     </select>
+          
                     <div class="invalid-feedback"> Field is required.</div>
+
+                    <div class="form-check mt-2">
+                <input class="form-check-input same-as-above" type="checkbox" id="sameAsAbove${contactCount}" data-target="${contactCount}">
+                <label class="form-check-label" for="sameAsAbove${contactCount}">Same as Above</label>
+            </div>
 
 
                     <button type="button" class="remove-btn mt-2">Remove</button>
@@ -425,6 +432,21 @@ document.getElementById('premiseContainer').addEventListener('input', function (
             contactContainer.insertAdjacentHTML('beforeend', newContact);
             updateContactNumbers();
         });
+
+        document.getElementById('contactContainer').addEventListener('change', function (event) {
+    if (event.target.classList.contains('same-as-above')) {
+        const contactIndex = event.target.getAttribute('data-target');
+        const prevIndex = contactIndex - 1;
+
+        if (event.target.checked && prevIndex > 0) {
+            document.getElementById(`picName${contactIndex}`).value = document.getElementById(`picName${prevIndex}`).value;
+            document.getElementById(`picDesignation${contactIndex}`).value = document.getElementById(`picDesignation${prevIndex}`).value;
+            document.getElementById(`picContact${contactIndex}`).value = document.getElementById(`picContact${prevIndex}`).value;
+            document.getElementById(`picEmail${contactIndex}`).value = document.getElementById(`picEmail${prevIndex}`).value;
+            document.getElementById(`contactPremise${contactIndex}`).value = document.getElementById(`contactPremise${prevIndex}`).value;
+        }
+    }
+});
 
      document.getElementById('addDeviceBtn').addEventListener('click', () => {
             deviceCount++;
