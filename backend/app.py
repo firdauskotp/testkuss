@@ -112,8 +112,8 @@ def customer_form():
         })
 
         # Send emails to the customer and admin
-        send_email_to_customer(case_no, user_email,app.config['MAIL_USERNAME'],mail)
-        send_email_to_admin(case_no,app.config['MAIL_USERNAME'],mail)
+        # send_email_to_customer(case_no, user_email,app.config['MAIL_USERNAME'],mail)
+        # send_email_to_admin(case_no,app.config['MAIL_USERNAME'],mail)
         
 
         # Redirect to success page
@@ -207,13 +207,21 @@ def staff_form(case_no):
         revisit_date = request.form.get("appointment_date")
         revisit_time = request.form.get("appointment_time")
         staff_name = request.form.get("staff_name")
-
-        # Handle signature file upload (Use GridFS instead of local storage)
-        signature_id = None
-        if "signature" in request.files:
-            file = request.files["signature"]
+        signature_data = request.form.get("signature")
+        image_id = case_data.get("image_id")  # Keep existing image if not changed
+        if "image" in request.files:
+            file = request.files["image"]
             if file and file.filename:
-                signature_id = fs.put(file.read(), filename=file.filename, content_type=file.content_type)
+                # Save new image to GridFS
+                image_id = fs.put(file.read(), filename=file.filename, content_type=file.content_type)
+
+
+        # # Handle signature file upload (Use GridFS instead of local storage)
+        # signature_id = None
+        # if "signature" in request.files:
+        #     file = request.files["signature"]
+        #     if file and file.filename:
+        #         signature_id = fs.put(file.read(), filename=file.filename, content_type=file.content_type)
 
         # If case is closed, remove it from MongoDB
         if case_closed == "Yes":
@@ -233,6 +241,8 @@ def staff_form(case_no):
                 "staff_name": staff_name,
                 "signature_id": signature_id,  # Store GridFS ID instead of local file path
                 "updated_at": datetime.now(),
+                "image_id": image_id,
+                 "signature": signature_data
             }}
         )
 
@@ -2335,6 +2345,23 @@ def add_no_cache_headers(response):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
-
+# @app.route("/device-image/<image_id>")
+# def get_device_image(image_id):
+#     """Retrieve and return device image stored in GridFS."""
+#     try:
+#         image = fs.get(ObjectId(image_id))
+#         return send_file(image, mimetype=image.content_type)
+#     except:
+#         return "Image not found", 404
+    
+@app.route("/device-image/<image_id>")
+def get_device_image(image_id):
+    """Retrieve and return device image stored in GridFS."""
+    try:
+        image = fs.get(ObjectId(image_id))
+        return Response(image.read(), mimetype=image.content_type)  # Ensure proper content type
+    except Exception as e:
+        print(f"Error fetching image: {str(e)}")
+        return "Image not found", 404
 if __name__ == "__main__":
     app.run(debug=True)
