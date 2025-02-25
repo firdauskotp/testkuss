@@ -1,0 +1,9 @@
+<div class="mb-3">
+    <label class="form-label">Select Devices</label>
+    {% for device in devices %}
+    <div class="form-check">
+        <input class="form-check-input device-checkbox" type="checkbox" value="{{ device }}" name="devices">
+        <label class="form-check-label">{{ device }}</label>
+    </div>
+    {% endfor %}
+</div>

@@ -24,11 +24,11 @@ def send_email_to_customer(case_no, user_email, from_email, mail):
     send_email(user_email, from_email, subject, body, mail)
 
 
-def send_email_to_admin(case_no, from_email, mail):
+def send_email_to_admin(case_no, user_email, from_email, mail):
     """Notify admin about a new case creation."""
     subject = f"New Case #{case_no} Created"
     body = f"A new case with case number #{case_no} has been created. Please check the system for details."
-    send_email('medoroyalrma@gmail.com', from_email, subject, body, mail)
+    send_email(user_email, from_email, subject, body, mail)
 
 
 # def send_email(to_email, subject, body):

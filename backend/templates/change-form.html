@@ -132,7 +132,7 @@
             <div class="form-section">
                 <div class="mb-3">
                     <label for="premises" class="form-label">Select Premise Name(s)</label>
-                    <div id="premises">
+                    <!-- <div id="premises">
                         {% for premise in premises %}
                         <div class="form-check">
                             <input 
@@ -144,12 +144,13 @@
                             <label class="form-check-label" for="premise_{{ loop.index }}">{{ premise }}</label>
                         </div>
                         {% endfor %}
-                    </div>
+                    </div> -->
+                    <div id="premises-container"></div>
                 </div>
                 
                 <div class="mb-3">
                     <label for="devices" class="form-label">Select Device Name(s)</label>
-                    <div id="devices">
+                    <!-- <div id="devices">
                         {% for device in devices %}
                         <div class="form-check">
                             <input 
@@ -161,7 +162,8 @@
                             <label class="form-check-label" for="device_{{ loop.index }}">{{ device }}</label>
                         </div>
                         {% endfor %}
-                    </div>
+                    </div> -->
+                    <div id="devices-container"></div>
                 </div>
                 
             </div>
@@ -388,6 +390,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
     </script>
-    
+    <script>
+        document.getElementById("companyName").addEventListener("change", function() {
+            fetch(`/get-premises/${encodeURIComponent(this.value)}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("premises-container").innerHTML = html;
+                    addPremiseListeners();
+                });
+        });
+        
+        function addPremiseListeners() {
+            document.querySelectorAll(".premise-checkbox").forEach(checkbox => {
+                checkbox.addEventListener("change", function() {
+                    if (this.checked) {
+                        fetch(`/get-devices/${encodeURIComponent(this.value)}`)
+                            .then(response => response.text())
+                            .then(html => {
+                                document.getElementById("devices-container").innerHTML += html;
+                            });
+                    }
+                });
+            });
+        }
+        </script>
 </body>
 </html>

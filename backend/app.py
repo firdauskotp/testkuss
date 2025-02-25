@@ -24,7 +24,7 @@ fs = gridfs.GridFS(db)
 
 app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
 app.config['MAIL_PORT'] = 587
-# app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_TEST_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
@@ -73,8 +73,8 @@ def update_querystring(querystring, key, value):
 @app.route("/customer-help", methods=["GET", "POST"])
 def customer_form():
     # """Form for customers to create new cases."""
-    # if "customer_email" not in session:
-    #     return redirect(url_for("client_login"))  # Redirect to login if not logged in
+    if "customer_email" not in session:
+        return redirect(url_for("client_login"))  # Redirect to login if not logged in
 
     # user_email = session["customer_email"] 
     if request.method == "POST":
@@ -82,7 +82,7 @@ def customer_form():
         case_no = collection.count_documents({}) + 1
 
         # Extract customer form data
-        user_email = request.form.get("email")
+        user_email = session["customer_email"]
         premise_name = request.form.get("premise_name")
         location = request.form.get("location")
         model = request.form.get("model")
@@ -112,8 +112,8 @@ def customer_form():
         })
 
         # Send emails to the customer and admin
-        # send_email_to_customer(case_no, user_email,app.config['MAIL_USERNAME'],mail)
-        # send_email_to_admin(case_no,app.config['MAIL_USERNAME'],mail)
+        send_email_to_customer(case_no, user_email,app.config['MAIL_USERNAME'],mail)
+        send_email_to_admin(case_no,user_email,app.config['MAIL_USERNAME'],mail)
         
 
         # Redirect to success page
@@ -1113,10 +1113,10 @@ def change_form():
         return redirect(url_for("dashboard"))
 
     companies = services_collection.distinct('company')
-    premises = services_collection.distinct('Premise Name')
-    devices = services_collection.distinct('Model')
+    # premises = services_collection.distinct('Premise Name')
+    # devices = services_collection.distinct('Model')
 
-    # premises = services_collection.distinct('Premise Name', {'company': company_name})
+    premises = services_collection.distinct('Premise Name', {'company': request.form.get("companyName")})
 
 
     return render_template(
@@ -1124,7 +1124,7 @@ def change_form():
         username=session.get('username'),
         companies=companies,
         premises=premises,
-        devices=devices,
+        # devices=devices,
         current_date=datetime.now().strftime('%Y-%m-%d')
     )
 
@@ -1451,8 +1451,8 @@ def remark():
 
 #     return jsonify({"devices": devices}), 200
 
-@app.route("/get-devices")
-def get_devices():
+@app.route("/get-devices1")
+def get_devices1():
     premise_name = request.args.get("premiseName")
     devices = services_collection.find({"Premise Name": premise_name})
     devices_list = [device["Model"] for device in devices]
