@@ -1407,14 +1407,7 @@ def get_eo(model, premise, color):
     unique_eos = list(set(e.get('Current EO') for e in eos if e.get('Current EO')))  # Ensure no NaN
     return jsonify(unique_eos)
 
-@app.route('/service')
-def service():
-    if "username" in session:
-        # log_activity(session["username"],"service : " +str(remarks),logs_collection)
 
-        return render_template('service.html')
-    else:
-        return redirect(url_for('admin_login'))
 
 
 @app.route('/remark', methods=['GET', 'POST'])
@@ -2258,13 +2251,14 @@ def get_device_details(premise_name):
     devices = list(device_list_collection.find({"tied_to_premise": premise_name}))
     return jsonify(html=render_template("partials/device-details.html", devices=devices))
 
-@app.route('/field-service', methods=['GET', 'POST'])
-def field_service():
+@app.route('/service', methods=['GET', 'POST'])
+def service():
     if 'username' not in session:
         return redirect(url_for('login'))
 
     technician_name = session["username"]
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    companies = services_collection.distinct('company')
 
     if request.method == 'POST':
         premise_name = request.form.get("premiseName")
@@ -2332,12 +2326,12 @@ def field_service():
         change_collection.insert_one(field_service_record)
 
         flash("Field service report submitted successfully!", "success")
-        return redirect(url_for("field_service"))
+        return redirect(url_for("field_service", companies=companies))
 
     # Fetch all premises for dropdown
     premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
 
-    return render_template("service.html", premises=premises, technician_name=technician_name, current_time=current_time)
+    return render_template("service.html", companies=companies, technician_name=technician_name, current_time=current_time)
 
 @app.after_request
 def add_no_cache_headers(response):

@@ -9,6 +9,21 @@
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .signature-container {
+        border: 2px solid #ccc;
+        border-radius: 5px;
+        width: 100%;
+        height: 200px;
+        position: relative;
+        touch-action: none;
+    }
+
+    .signature-pad {
+        width: 100%;
+        height: 100%;
+    }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container mt-5">
@@ -32,15 +47,48 @@
                         <input type="text" class="form-control" value="{{ current_time }}" readonly>
                     </div>
         
-                    <div class="mb-3">
-                        <label class="form-label">Premise Name:</label>
-                        <select class="form-control" id="premiseName" name="premiseName" required>
-                            <option value="">Select Premise</option>
-                            {% for premise in premises %}
-                            <option value="{{ premise.premise_name }}">{{ premise.premise_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                    <!-- Company Dropdown -->
+                <div class="mb-3">
+                    <label for="company" class="form-label">Company</label>
+                    <select class="form-select" id="company" name="company" required>
+                        <option value="" selected disabled>Select a company</option>
+                        {% for company in companies %}
+                        <option value="{{ company }}">{{ company }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Premise Dropdown -->
+                <div class="mb-3">
+                    <label for="premise" class="form-label">Premise</label>
+                    <select class="form-select" id="premise" name="premise" required disabled>
+                        <option value="" selected disabled>Select a premise</option>
+                    </select>
+                </div>
+
+                <!-- Model Dropdown -->
+                <div class="mb-3">
+                    <label for="model" class="form-label">Model</label>
+                    <select class="form-select" id="model" name="model" required disabled>
+                        <option value="" selected disabled>Select a model</option>
+                    </select>
+                </div>
+
+                <!-- Color Dropdown -->
+                <div class="mb-3">
+                    <label for="color" class="form-label">Color</label>
+                    <select class="form-select" id="color" name="color" required disabled>
+                        <option value="" selected disabled>Select a color</option>
+                    </select>
+                </div>
+
+                <!-- EO Dropdown -->
+                <div class="mb-3">
+                    <label for="eo" class="form-label">EO</label>
+                    <select class="form-select" id="eo" name="eo" required disabled>
+                        <option value="" selected disabled>Select an EO</option>
+                    </select>
+                </div>
         
                     <div id="client-details"></div>
                     <div id="device-details"></div>
@@ -64,9 +112,13 @@
                         <input type="text" class="form-control" name="staffName" required>
                     </div>
         
-                    <div class="mb-3">
-                        <label class="form-label">Signature:</label>
-                        <input type="text" class="form-control" name="signature" required>
+                    <div class="mb3">
+                        <label for="signature">Signature:</label>
+                        <div class="signature-container">
+                            <canvas id="signature-pad" class="signature-pad"></canvas>
+                        </div>
+                        <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
+                        <input type="hidden" name="signature" id="signature-input">
                     </div>
         
                     <button type="submit" class="btn btn-primary">Submit</button>
@@ -78,18 +130,99 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $(document).ready(function(){
-            $("#premiseName").change(function(){
-                var premiseName = $(this).val();
-                if(premiseName){
-                    $.getJSON('/get-client-details/' + premiseName, function(data){
-                        $("#client-details").html(data.html);
-                    });
-                    $.getJSON('/get-device-details/' + premiseName, function(data){
-                        $("#device-details").html(data.html);
-                    });
-                }
-            });
+        document.getElementById('company').addEventListener('change', function() {
+            let company = this.value;
+            axios.get(`/get-premises/${company}`)
+                .then(response => {
+                    let premiseDropdown = document.getElementById('premise');
+                    premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
+                    response.data.forEach(p => premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`);
+                    premiseDropdown.disabled = false;
+                });
+        });
+
+        document.getElementById('premise').addEventListener('change', function() {
+            let premise = this.value;
+            axios.get(`/get-models/${premise}`)
+                .then(response => {
+                    let modelDropdown = document.getElementById('model');
+                    modelDropdown.innerHTML = '<option value="" selected disabled>Select a model</option>';
+                    response.data.forEach(m => modelDropdown.innerHTML += `<option value="${m}">${m}</option>`);
+                    modelDropdown.disabled = false;
+                });
+        });
+
+        document.getElementById('model').addEventListener('change', function() {
+    let model = this.value;
+    let premise = document.getElementById('premise').value;
+    
+    axios.get(`/get-colors/${model}/${premise}`)
+        .then(response => {
+            let colorDropdown = document.getElementById('color');
+            colorDropdown.innerHTML = '<option value="" selected disabled>Select a color</option>';
+            if (Array.isArray(response.data)) {
+                response.data.forEach(c => colorDropdown.innerHTML += `<option value="${c}">${c}</option>`);
+            }
+            colorDropdown.disabled = false;
+        })
+        .catch(error => console.error('Error fetching colors:', error));
+});
+
+document.getElementById('color').addEventListener('change', function() {
+    let color = this.value;
+    let model = document.getElementById('model').value;
+    let premise = document.getElementById('premise').value;
+    
+    axios.get(`/get-eo/${model}/${premise}/${color}`)
+        .then(response => {
+            let eoDropdown = document.getElementById('eo');
+            eoDropdown.innerHTML = '<option value="" selected disabled>Select an EO</option>';
+            if (Array.isArray(response.data)) {
+                response.data.forEach(e => eoDropdown.innerHTML += `<option value="${e}">${e}</option>`);
+            }
+            eoDropdown.disabled = false;
+        })
+        .catch(error => console.error('Error fetching EO:', error));
+});
+
+    </script>
+
+
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
+
+    <script>
+        // Initialize Signature Pad
+        const canvas = document.getElementById("signature-pad");
+        const signaturePad = new SignaturePad(canvas, {
+            minWidth: 1,
+            maxWidth: 3,
+            penColor: "black"
+        });
+    
+        // Adjust canvas size on load
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear(); // Clear after resize
+        }
+        
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+    
+        // Clear signature button
+        document.getElementById("clear-signature").addEventListener("click", function() {
+            signaturePad.clear();
+        });
+    
+        // Save signature as Base64 before submitting
+        document.querySelector("form").addEventListener("submit", function(event) {
+            if (!signaturePad.isEmpty()) {
+                document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+            }
         });
     </script>
 </body>
