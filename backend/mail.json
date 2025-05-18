@@ -1,0 +1,71 @@
+{
+    "name": "monthly_servicing_upcoming_servicing_date",
+    "subject": "Upcoming Service Date for {{ premise_name }}",
+    "body": "Hello from Kuss Essentials! This email is sent to let you know that our technician will be coming over to {{ premise_name }} on {{ service_date }} to carry out monthly servicing for the devices. Should you wish to reschedule, please feel free to let us know in advance. \n\n Thank you very much, \n Kuss Essentials",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "monthly_service_completed",
+    "subject": "Monthly Servicing Completed for {{ premise_name }}",
+    "body": "Hello from Kuss Essentials! This email is sent to let you know that the monthly servicing session for {{ premise_name }} has been successfully completed and acknowledged by your staff. To view the record, please open the attached PDF file in this email.    \n\n Thank you very much and have a great day ahead, \n Kuss Essentials",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "monthly_service_rescheduled",
+    "subject": "Monthly Servicing Rescheduled for {{ premise_name }}",
+    "body": "Hello from Kuss Essentials! \n\n Due to unforeseen circumstances, we’re sorry to inform you that we would need to reschedule our monthly servicing session for {{ premise_name }} which was supposed to be carried out on {{ service_date }}.  Rest assured that our team is doing the best in working out the next possible date. We’ll get in touch with you again once the date has been finalised.    \n\n We apologise for the inconvenience and thank you for your understanding and patience. Have a great day ahead. Sincerely by, \n Kuss Essentials",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "team_monthly_service_rescheduled",
+    "subject": "Service Date Rescheduled for {{ premise_name }}",
+    "body": "Dear team, \n\n {{ premise_name }} would like to reschedule their service date which is supposed to be on {{ service_date }}. Please discuss internally on when the nearest possible date would be and communicate with the client about it the soonest.",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "team_help_request_new_case_received",
+    "subject": "New Case Received {{ case_id }}",
+    "body": "Dear team, \n\n A new help request {{ case_id }} is received from {{ premise_name }}. \n\n Location : {{ device_location }} \n Issues : {{ issues }} \n Remarks : {{ remarks }}. Attached in the email is the photo of the device. Please assign someone to attend to the case the soonest and communicate with the client about the appointment date.",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "help_request_new_case_created",
+    "subject": "New Case Created {{ case_id }}",
+    "body": "Hello from Kuss Essentials! \n\n Your help request has been successfully created and here’s your Case ID: {{ case_id }}. \n\n Our team shall get back to you the soonest on the appointment date and thank you for notifying us. \n\nSincerely, \n Kuss Essentials",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "help_request_new_case_assign_technician_reminder",
+    "subject": "Pending Case Assignment : {{ case_id }}",
+    "body": "Dear team, please assign a a technician to attend this case the soonest: \n\n Case ID : {{ case_id }} \n Premise : {{ premise_name }}. \n\n Also get the staff to contact the customer about the upcoming appointment date set.",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "help_request_case_assigned",
+    "subject": "Case Assigned : {{ case_id }}",
+    "body": "Dear {{ staff_name }}, \n\n The case {{ case_id }} at {{ premise_name }} is assigned to you. Please attend at the soonest. \n\n Please contact the customer about the upcoming appointment date set.",
+    "type": "plain",
+    "active": true
+  }
+
+  {
+    "name": "help_request_case_reminder_client",
+    "subject": "Upcoming Appointment for {{ case_id }} on {{ appointment_date }}",
+    "body": "Hello from Kuss Essentials! \n\n We would like to inform that our technician will be coming over to {{ premise_name }} on {{ appointment_date }} to attend to the help request. \n\n Should you wish to reschedule, please feel free to let us know in advance. \n\nSincerely, \n Kuss Essentials",
+    "type": "plain",
+    "active": true
+  }

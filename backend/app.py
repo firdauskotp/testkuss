@@ -2357,5 +2357,98 @@ def get_device_image(image_id):
     except Exception as e:
         print(f"Error fetching image: {str(e)}")
         return "Image not found", 404
+
+
+
+@app.route('/eo-global')
+def eo_global():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    eos = list(eo_pack_collection.find().sort("order", 1))
+    return render_template('eo-global.html', eos=eos)
+
+@app.route('/save_all_eo_global_changes', methods=['POST'])
+def save_all():
+    data = request.json
+    added = data.get('added', [])
+    edited = data.get('edited', [])
+    deleted = data.get('deleted', [])
+    order = data.get('order', [])
+
+    # Handle added EOs
+    for eo in added:
+        existing = eo_pack_collection.find_one({'eo_name': eo['eo_name']})
+        if existing:
+            return jsonify({'status': 'error', 'message': f"EO name '{eo['eo_name']}' already exists."}), 400
+        last = eo_pack_collection.find_one(sort=[("order", -1)])
+        last_order = last['order'] + 1 if last else 0
+        eo_pack_collection.insert_one({"eo_name": eo['eo_name'], "order": last_order})
+
+    # Handle edited EOs
+    for eo in edited:
+        existing = eo_pack_collection.find_one({
+            'eo_name': eo['eo_name'],
+            '_id': {'$ne': ObjectId(eo['_id'])}
+        })
+        if existing:
+            return jsonify({'status': 'error', 'message': f"EO name '{eo['eo_name']}' already exists."}), 400
+        eo_pack_collection.update_one({'_id': ObjectId(eo['_id'])}, {'$set': {'eo_name': eo['eo_name']}})
+
+    # Handle deleted EOs
+    for _id in deleted:
+        eo_pack_collection.delete_one({'_id': ObjectId(_id)})
+
+    # Handle reordering
+    for idx, _id in enumerate(order):
+        eo_pack_collection.update_one({'_id': ObjectId(_id)}, {'$set': {'order': idx}})
+
+    return jsonify({'status': 'success'})
+
+# @app.route('/eo-form')
+# def form():
+#     eos = eo_collection.find().sort("order", 1)
+#     return render_template("form.html", eos=eos)
+
+@app.route('/device-global-list')
+def device_global():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    models = list(model_list_collection.find().sort("order", 1))
+    return render_template('device-global.html', models=models)
+
+@app.route('/save_model1_changes', methods=['POST'])
+def save_model1_changes():
+    data = request.json
+    added = data.get('added', [])
+    edited = data.get('edited', [])
+    deleted = data.get('deleted', [])
+    order = data.get('order', [])
+
+    for model in added:
+        existing = model_list_collection.find_one({'model1': model['model1']})
+        if existing:
+            return jsonify({'status': 'error', 'message': f"Model1 '{model['model1']}' already exists."}), 400
+        last = model_list_collection.find_one(sort=[("order", -1)])
+        last_order = last['order'] + 1 if last else 0
+        model_list_collection.insert_one({"model1": model['model1'], "order": last_order})
+
+    for model in edited:
+        existing = model_list_collection.find_one({
+            'model1': model['model1'],
+            '_id': {'$ne': ObjectId(model['_id'])}
+        })
+        if existing:
+            return jsonify({'status': 'error', 'message': f"Model1 '{model['model1']}' already exists."}), 400
+        model_list_collection.update_one({'_id': ObjectId(model['_id'])}, {'$set': {'model1': model['model1']}})
+
+    for _id in deleted:
+        model_list_collection.delete_one({'_id': ObjectId(_id)})
+
+    for idx, _id in enumerate(order):
+        model_list_collection.update_one({'_id': ObjectId(_id)}, {'$set': {'order': idx}})
+
+    return jsonify({'status': 'success'})
+
+
 if __name__ == "__main__":
     app.run(debug=True)

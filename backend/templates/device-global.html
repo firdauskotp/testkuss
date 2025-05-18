@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+
+  <title>Global Device List</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5 position-relative">
+        <!-- Button Positioned Top Right -->
+        <p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+        </p>
+
+        <h1>Devices Global List</h1>
+    </div>
+
+<div class="container mt-5">
+  
+
+  <div class="mb-3">
+    <!-- <input type="text" id="newModel1" placeholder="New Model1" class="form-control d-inline w-50">
+    <button class="btn btn-success" onclick="addModel()">Add</button> -->
+    <strong>Legend:</strong><br>
+    <i class="bi bi-plus text-success"></i> Add Below<br>
+    <i class="bi bi-trash text-danger"></i> Delete
+  </div>
+
+  <ul id="modelList" class="list-group mb-3">
+    {% for model in models %}
+      <li class="list-group-item d-flex justify-content-between align-items-center" data-id="{{ model._id }}">
+        <input type="text" class="form-control me-2 model1-name" value="{{ model.model1 }}">
+        <div class="btn-group">
+            <button class="btn btn-outline-success btn-sm" onclick="addBelowModel(this)" title="Add Below (➕)">
+              <i class="bi bi-plus"></i>
+            </button><button class="btn btn-outline-danger btn-sm" onclick="deleteModel(this)" title="Delete (🗑)">
+              <i class="bi bi-trash"></i>
+            </button>
+            
+          </div>
+        
+      </li>
+    {% endfor %}
+  </ul>
+
+  <button class="btn btn-primary" onclick="confirmSave()">Save Changes</button>
+
+
+  <h5> Model Dropdown (Simulated View)</h5>
+  <p class="text-muted">*This dropdown shows the current saved order from the database. Changes appear here only after you press <strong>"Save Changes"</strong>.</p>
+
+  <select class="form-select mb-3" disabled>
+    {% for model in models %}
+      <option>{{ model.model1 }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Confirm Save</h5></div>
+    <div class="modal-body">Save all changes?</div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAllChanges()">Save</button>
+    </div>
+  </div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let added = [];
+  let deleted = [];
+
+  new Sortable(modelList, { animation: 150 });
+
+  function addModel() {
+    const name = document.getElementById('newModel1').value.trim();
+    if (!name) return;
+
+    const li = document.createElement('li');
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.setAttribute('data-id', 'new-' + Date.now());
+    li.innerHTML = `
+      <input type="text" class="form-control me-2 model1-name" value="${name}">
+      <div class="btn-group">
+        <button class="btn btn-danger btn-sm" onclick="deleteModel(this)">Delete</button>
+        <button class="btn btn-secondary btn-sm" onclick="addBelowModel(this)">Add Below</button>
+      </div>
+    `;
+    document.getElementById('modelList').appendChild(li);
+    added.push({ model1: name });
+
+    document.getElementById('newModel1').value = '';
+  }
+
+  function addBelowModel(button) {
+    const currentLi = button.closest('li');
+    const newLi = document.createElement('li');
+    newLi.className = "list-group-item d-flex justify-content-between align-items-center";
+    newLi.setAttribute('data-id', 'new-' + Date.now());
+    newLi.innerHTML = `
+      <input type="text" class="form-control me-2 model1-name" value="">
+      <div class="btn-group">
+        <button class="btn btn-danger btn-sm" onclick="deleteModel(this)">Delete</button>
+        <button class="btn btn-secondary btn-sm" onclick="addBelowModel(this)">Add Below</button>
+      </div>
+    `;
+    currentLi.after(newLi);
+  }
+
+  function deleteModel(btn) {
+    const li = btn.closest('li');
+    const id = li.getAttribute('data-id');
+    if (!id.startsWith('new-')) {
+      deleted.push(id);
+    }
+    li.remove();
+  }
+
+  function confirmSave() {
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+  }
+
+  function saveAllChanges() {
+    const lis = document.querySelectorAll('#modelList li');
+    const edited = [];
+    const order = [];
+    const seenNames = new Set();
+    let duplicate = false;
+
+    lis.forEach((li, index) => {
+      const id = li.getAttribute('data-id');
+      const name = li.querySelector('.model1-name').value.trim();
+
+      if (seenNames.has(name.toLowerCase())) {
+        duplicate = true;
+      }
+      seenNames.add(name.toLowerCase());
+
+      if (id.startsWith('new-')) {
+        added.push({ model1: name });
+      } else {
+        edited.push({ _id: id, model1: name });
+        order.push(id);
+      }
+    });
+
+    if (duplicate) {
+      alert("Duplicate Model1 values found.");
+      return;
+    }
+
+    fetch('/save_model1_changes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ added, edited, deleted, order })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert('Changes saved!');
+        location.reload();
+      } else {
+        alert(data.message || 'Error saving.');
+      }
+    });
+  }
+</script>
+</body>
+</html>
