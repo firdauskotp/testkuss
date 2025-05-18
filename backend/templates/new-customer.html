@@ -117,6 +117,10 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-secondary w-100 mt-3" id="addContactBtn">+ Add New Contact and Device</button>
+                <div class="form-check mt-2">
+                    <input class="form-check-input tie-all-checkbox" type="checkbox" id="tieAllPremises${contactCount}" data-target="${contactCount}">
+                    <label class="form-check-label" for="tieAllPremises${contactCount}">Apply to All Premises</label>
+                  </div>
             </div>
 
             <div class="form-section" id="deviceDetails">
@@ -327,11 +331,11 @@ function updatePremiseDropdowns() {
 // Get all premise options with names for dropdowns
 function getPremiseOptions() {
     const premiseItems = document.querySelectorAll('.premise-item');
-    let options = '';
+    let options = '<option value="all">All Premises</option>';  // <-- add this line first
 
     premiseItems.forEach((premiseItem, index) => {
         const premiseNameInput = premiseItem.querySelector('input[type="text"]');
-        const premiseName = premiseNameInput?.value || `Premise ${index + 1}`; // Fallback to default name if input is empty
+        const premiseName = premiseNameInput?.value || `Premise ${index + 1}`;
         options += `<option>${premiseName}</option>`;
     });
 
@@ -355,6 +359,18 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                 
             }
         });
+
+        document.getElementById('contactContainer').addEventListener('change', function (event) {
+    if (event.target.classList.contains('tie-all-checkbox')) {
+        const contactIndex = event.target.getAttribute('data-target');
+        const select = document.getElementById(`contactPremise${contactIndex}`);
+        if (event.target.checked) {
+            select.value = "all";
+        } else {
+            select.value = "";  // Reset to default
+        }
+    }
+});
 
         // Event delegation for dynamic device removal
         document.getElementById('deviceContainer').addEventListener('click', function(event) {

@@ -1249,10 +1249,15 @@ def new_customer():
                 pic_records.append(picdata)
 
                 if contact_premise:
-                    if contact_premise not in pic_map:
-                        pic_map[contact_premise] = []
-                    pic_map[contact_premise].append(picdata)  # Store PICs linked to premises
-
+                    if contact_premise == "all":
+                        for pname in premise_map.keys():
+                            if pname not in pic_map:
+                                pic_map[pname] = []
+                            pic_map[pname].append(picdata)
+                    else:
+                        if contact_premise not in pic_map:
+                            pic_map[contact_premise] = []
+                        pic_map[contact_premise].append(picdata)
                 i += 1  # Move to the next PIC
 
             # Step 3: Extract Devices and Build Master List
