@@ -2378,18 +2378,16 @@ def save_all():
     added = data.get('added', [])
     edited = data.get('edited', [])
     deleted = data.get('deleted', [])
-    order = data.get('order', [])
+    visual_order = data.get('visual_order', [])
 
-    # Handle added EOs
+    # 1. Handle added EOs
     for eo in added:
         existing = eo_pack_collection.find_one({'eo_name': eo['eo_name']})
         if existing:
             return jsonify({'status': 'error', 'message': f"EO name '{eo['eo_name']}' already exists."}), 400
-        last = eo_pack_collection.find_one(sort=[("order", -1)])
-        last_order = last['order'] + 1 if last else 0
-        eo_pack_collection.insert_one({"eo_name": eo['eo_name'], "order": last_order})
+        eo_pack_collection.insert_one({"eo_name": eo['eo_name']})  # No order yet
 
-    # Handle edited EOs
+    # 2. Handle edited EOs
     for eo in edited:
         existing = eo_pack_collection.find_one({
             'eo_name': eo['eo_name'],
@@ -2399,15 +2397,23 @@ def save_all():
             return jsonify({'status': 'error', 'message': f"EO name '{eo['eo_name']}' already exists."}), 400
         eo_pack_collection.update_one({'_id': ObjectId(eo['_id'])}, {'$set': {'eo_name': eo['eo_name']}})
 
-    # Handle deleted EOs
+    # 3. Handle deleted EOs
     for _id in deleted:
         eo_pack_collection.delete_one({'_id': ObjectId(_id)})
 
-    # Handle reordering
-    for idx, _id in enumerate(order):
-        eo_pack_collection.update_one({'_id': ObjectId(_id)}, {'$set': {'order': idx}})
+    # 4. Assign order based on visual list
+    index = 0
+    for item in visual_order:
+        if '_id' in item:
+            eo_pack_collection.update_one({'_id': ObjectId(item['_id'])}, {'$set': {'order': index}})
+        elif 'eo_name' in item:
+            eo = eo_pack_collection.find_one({'eo_name': item['eo_name']})
+            if eo:
+                eo_pack_collection.update_one({'_id': eo['_id']}, {'$set': {'order': index}})
+        index += 1
 
     return jsonify({'status': 'success'})
+
 
 # @app.route('/eo-form')
 # def form():

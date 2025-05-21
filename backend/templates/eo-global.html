@@ -135,50 +135,109 @@
       new bootstrap.Modal(document.getElementById('confirmModal')).show();
     }
   
+
     function saveAllChanges() {
-      const lis = document.querySelectorAll('#eoList li');
-      const edited = [];
-      const order = [];
-      const seenNames = new Set();
-      let duplicateFound = false;
-  
-      lis.forEach((li, index) => {
-        const id = li.getAttribute('data-id');
-        const name = li.querySelector('.eo-name').value.trim();
-  
-        if (seenNames.has(name.toLowerCase())) {
-          duplicateFound = true;
-        }
-        seenNames.add(name.toLowerCase());
-  
-        if (id.startsWith('new-')) {
-          added.push({ eo_name: name });
-        } else {
-          edited.push({ _id: id, eo_name: name });
-          order.push(id);
-        }
-      });
-  
-      if (duplicateFound) {
-        alert("Duplicate EO names found. Please ensure all names are unique.");
-        return;
-      }
-  
-      fetch('/save_all_eo_global_changes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ added, edited, deleted, order })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'success') {
-          alert('Changes saved!');
-          window.location.reload();
-        } else {
-          alert(data.message || 'Error saving changes.');
-        }
-      });
+  const lis = document.querySelectorAll('#eoList li');
+  const allItems = [];
+  const seenNames = new Set();
+  let duplicateFound = false;
+  added = [];
+  edited = [];
+
+  lis.forEach((li, index) => {
+    const id = li.getAttribute('data-id');
+    const name = li.querySelector('.eo-name').value.trim();
+
+    if (!name) return;
+
+    if (seenNames.has(name.toLowerCase())) {
+      duplicateFound = true;
     }
+    seenNames.add(name.toLowerCase());
+
+    if (id.startsWith('new-')) {
+      added.push({ eo_name: name });
+      allItems.push({ temp_id: id, eo_name: name });  // Store for ordering
+    } else {
+      edited.push({ _id: id, eo_name: name });
+      allItems.push({ _id: id });  // Store for ordering
+    }
+  });
+
+  if (duplicateFound) {
+    alert("Duplicate EO names found.");
+    return;
+  }
+
+  document.querySelector('button.btn-primary').innerHTML = 'Saving...';
+  document.body.style.cursor = 'wait';
+
+  fetch('/save_all_eo_global_changes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ added, edited, deleted, visual_order: allItems })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.body.style.cursor = 'default';
+    if (data.status === 'success') {
+      alert('Changes saved!');
+      window.location.reload();
+    } else {
+      alert(data.message || 'Error saving changes.');
+    }
+  });
+}
+
+//     function saveAllChanges() {
+//       const lis = document.querySelectorAll('#eoList li');
+//       const edited = [];
+//       const order = [];
+//       const seenNames = new Set();
+//       let duplicateFound = false;
+  
+//       lis.forEach((li, index) => {
+//         const id = li.getAttribute('data-id');
+//         const name = li.querySelector('.eo-name').value.trim();
+  
+//         if (seenNames.has(name.toLowerCase())) {
+//           duplicateFound = true;
+//         }
+//         seenNames.add(name.toLowerCase());
+  
+//         if (id.startsWith('new-')) {
+//           added.push({ eo_name: name });
+//         } else {
+//           edited.push({ _id: id, eo_name: name });
+//           order.push(id);
+//         }
+//       });
+  
+//       if (duplicateFound) {
+//         alert("Duplicate EO names found. Please ensure all names are unique.");
+//         return;
+//       }
+
+//       document.querySelector('button.btn-primary').innerHTML = 'Saving...';
+// document.body.style.cursor = 'wait';
+  
+//       fetch('/save_all_eo_global_changes', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ added, edited, deleted, order })
+//       })
+//       .then(res => res.json())
+//       .then(data => {
+//         if (data.status === 'success') {
+//           alert('Changes saved!');
+//           window.location.reload();
+//         } else {
+//           alert(data.message || 'Error saving changes.');
+//         }
+//       });
+//       document.body.style.cursor = 'default';
+
+//     }
 
 //   let eoList = document.getElementById('eo-list');
 //   new Sortable(eoList, { animation: 150 });
@@ -205,14 +264,17 @@
     newLi.innerHTML = `
       <input type="text" class="form-control me-2 eo-name" value="">
       <div class="btn-group">
-        <button class="btn btn-danger btn-sm" onclick="deleteEO(this)">Delete</button>
-        <button class="btn btn-secondary btn-sm" onclick="addBelow(this)">Add Below</button>
+        <button class="btn btn-outline-success btn-sm" onclick="addBelow(this)" title="Add Below (➕)">
+              <i class="bi bi-plus"></i>
+            </button><button class="btn btn-outline-danger btn-sm" onclick="deleteEO(this)" title="Delete (🗑)">
+              <i class="bi bi-trash"></i>
+            </button>
       </div>
     `;
     currentLi.after(newLi);
 
     // Optionally push to `added` list if you want to auto-track
-    added.push({ eo_name: '' });
+    // added.push({ eo_name: '' });
   }
 </script>
 </body>

@@ -106,8 +106,11 @@
     newLi.innerHTML = `
       <input type="text" class="form-control me-2 model1-name" value="">
       <div class="btn-group">
-        <button class="btn btn-danger btn-sm" onclick="deleteModel(this)">Delete</button>
-        <button class="btn btn-secondary btn-sm" onclick="addBelowModel(this)">Add Below</button>
+        <button class="btn btn-outline-success btn-sm" onclick="addBelowModel(this)" title="Add Below (➕)">
+              <i class="bi bi-plus"></i>
+            </button><button class="btn btn-outline-danger btn-sm" onclick="deleteModel(this)" title="Delete (🗑)">
+              <i class="bi bi-trash"></i>
+            </button>
       </div>
     `;
     currentLi.after(newLi);
@@ -154,6 +157,8 @@
       alert("Duplicate Model1 values found.");
       return;
     }
+    document.querySelector('button.btn-primary').innerHTML = 'Saving...';
+document.body.style.cursor = 'wait';
 
     fetch('/save_model1_changes', {
       method: 'POST',
@@ -169,6 +174,8 @@
         alert(data.message || 'Error saving.');
       }
     });
+    document.body.style.cursor = 'default';
+
   }
 </script>
 </body>
