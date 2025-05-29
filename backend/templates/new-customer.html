@@ -139,7 +139,12 @@
 
 
                         <label class="form-label">#1 Model</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter model" name="deviceModel1" id="deviceModel1"  required>
+                        <select class="form-select mb-2" name="deviceModel1" id="deviceModel1" required>
+                            <option selected disabled>Select a model</option>
+                            {% for model in models %}
+                                <option>{{ model.model1 }}</option>
+                            {% endfor %}
+                        </select>
                         <div class="invalid-feedback"> Field is required.</div>
 
 
@@ -154,7 +159,12 @@
                         
 
                         <label class="form-label">#1 Scent</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter scent" name="deviceScent1" id="deviceScent1"  required>
+                        <select class="form-select mb-2" name="deviceScent1" id="deviceScent1" required>
+                            <option selected disabled>Select a scent</option>
+                            {% for eo in essential_oils %}
+                                <option>{{ eo.eo_name }}</option>
+                            {% endfor %}
+                        </select>
                         <div class="invalid-feedback"> Field is required.</div>
                        
 
@@ -465,6 +475,10 @@ document.getElementById('premiseContainer').addEventListener('input', function (
 });
 
      document.getElementById('addDeviceBtn').addEventListener('click', () => {
+        const modelData = JSON.parse(document.getElementById("modelListData").textContent);
+const modelOptions = modelData.map(m => `<option>${m.model1}</option>`).join("");
+const eoData = JSON.parse(document.getElementById("eoListData").textContent);
+const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  // <-- assuming EO field is 'name'
             deviceCount++;
             const deviceContainer = document.getElementById('deviceContainer');
             const newDevice = `
@@ -479,7 +493,10 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                     <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} Model</label>
-                    <input type="text" class="form-control mb-2" name="deviceModel${deviceCount}" id="deviceModel${deviceCount}" placeholder="Enter model" required>
+                    <select class="form-select mb-2" name="deviceModel${deviceCount}" id="deviceModel${deviceCount}" required>
+    <option selected disabled>Select a model</option>
+    ${modelOptions}
+</select>
                     <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} Colour</label>
@@ -491,7 +508,10 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                     <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">#${deviceCount} Scent</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter scent" name="deviceScent${deviceCount}" id="deviceScent${deviceCount}"  required>
+                    <select class="form-select mb-2" name="deviceScent${deviceCount}" id="deviceScent${deviceCount}" required>
+    <option selected disabled>Select a scent</option>
+    ${eoOptions}
+</select>
                     <div class="invalid-feedback"> Field is required.</div>
 
                     <label class="form-label">Tie Device to Premise:</label>
@@ -614,5 +634,13 @@ document.getElementById('premiseContainer').addEventListener('input', function (
 });
 
     </script>
+
+<script id="eoListData" type="application/json">
+    {{ essential_oils | tojson }}
+</script>
+
+<script id="modelListData" type="application/json">
+    {{ models | tojson }}
+</script>
 </body>
 </html>

@@ -1182,6 +1182,14 @@ def get_image2(image_id):
 def new_customer():
     if 'username' not in session:
         return redirect(url_for('admin_login'))
+
+    raw_models = list(model_list_collection.find().sort("order", 1))
+    models = [{k: v for k, v in model.items() if k != '_id'} for model in raw_models]
+
+    eo_raw = list(eo_pack_collection.find().sort("order", 1))
+    essential_oils = [{k: v for k, v in eo.items() if k != '_id'} for eo in eo_raw]
+
+
     
     if request.method == "POST":
         # Extract and format date
@@ -1343,7 +1351,7 @@ def new_customer():
         flash(f"Company {companyName} added successfully!", "success")
 
         return redirect(url_for("new_customer"))
-    return render_template('new-customer.html')
+    return render_template('new-customer.html', models=models, essential_oils=essential_oils)
 
 
 
