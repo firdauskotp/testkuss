@@ -227,7 +227,7 @@ def staff_form(case_no):
         if case_closed == "Yes":
             collection.delete_one({"case_no": case_no})
             flash(f"Case #{case_no} has been closed and removed.", "success")
-            return redirect(url_for("customer_form"))  # Redirect to another page after deletion
+            return render_template("view-complaint.html")
 
         # Update case in MongoDB
         collection.update_one(
@@ -239,7 +239,7 @@ def staff_form(case_no):
                 "revisit_date": revisit_date,
                 "revisit_time": revisit_time,
                 "staff_name": staff_name,
-                "signature_id": signature_id,  # Store GridFS ID instead of local file path
+                # "signature_id": signature_id,  # Store GridFS ID instead of local file path
                 "updated_at": datetime.now(),
                 "image_id": image_id,
                  "signature": signature_data
@@ -258,7 +258,7 @@ def staff_form(case_no):
         # mail.send(msg)
 
         flash(f"Case #{case_no} updated successfully!", "success")
-        return redirect(url_for("staff_form", case_no=case_no))
+        return redirect(url_for("dashboard", case_no=case_no))
 
     return render_template("staff-complaint-form.html", case_no=case_no, case_data=case_data)
 

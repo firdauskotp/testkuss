@@ -1,417 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Change Form</title>
-    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .form-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .back-btn {
-            margin-bottom: 20px;
-        }
-        .disabled-checkbox ~ .form-check-input {
-            pointer-events: none;
-            background-color: #e9ecef;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Change Form</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .form-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container my-5">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
-        <h3 class="text-center mb-4">CHANGE FORM</h3>
+  <div class="container my-5">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">Back to Dashboard</a>
+    <h3 class="text-center mb-4">Change Form</h3>
 
-        <form id="changeForm" action="/change-form" method="POST">
-            <!-- User and Company -->
-            <div class="form-section">
-                <div class="mb-3">
-                    <label for="user" class="form-label">User</label>
-                    <input disabled type="text" id="user" class="form-control" value="{{ username }}" readonly>
-                </div>
-                <div class="mb-3">
-                    <label for="companyName" class="form-label">Company Name</label>
-                    <select id="companyName" class="form-select" required>
-                        <option value="" disabled selected>Select Company</option>
-                        {% for company in companies %}
-                            <option value="{{ company }}">{{ company }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="date" class="form-label">Date</label>
-                    <input disabled type="date" id="date" class="form-control" value="{{ current_date }}" readonly>
-                </div>
-            </div>
+    <form id="changeForm" method="POST" action="/change-form">
+      <!-- User and Company -->
+      <div class="form-section">
+        <div class="mb-3">
+          <label class="form-label">User</label>
+          <input type="text" class="form-control" value="{{ username }}" disabled />
+        </div>
+        <div class="mb-3">
+          <label for="companyName" class="form-label">Company Name</label>
+          <select id="companyName" name="companyName" class="form-select" required>
+            <option disabled selected>Select Company</option>
+            {% for company in companies %}
+              <option value="{{ company }}">{{ company }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-control" value="{{ current_date }}" disabled />
+        </div>
+      </div>
 
-            <!-- Checkboxes -->
-            <div class="form-section">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="changeScent">
-                    <label class="form-check-label" for="changeScent">Change scent to</label>
-                    <input type="text" id="changeScentText" class="form-control mt-2" placeholder="Enter new scent" disabled>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="redoSettings">
-                    <label class="form-check-label" for="redoSettings">Redo settings</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="reduceIntensity">
-                    <label class="form-check-label" for="reduceIntensity">Reduce scent intensity</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="increaseIntensity">
-                    <label class="form-check-label" for="increaseIntensity">Increase scent intensity</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="moveDevice">
-                    <label class="form-check-label" for="moveDevice">Move device to</label>
-                    <input type="text" id="moveDeviceText" class="form-control mt-2" placeholder="Enter location" disabled>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="relocateDevice">
-                    <label class="form-check-label" for="relocateDevice">Relocate device to</label>
-                    <select id="relocateDeviceDropdown" class="form-select mt-2" disabled>
-                        <option value="" disabled selected>Select Premise</option>
-                        {% for premise in premises %}
-                            <option value="{{ premise }}">{{ premise }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+      <!-- Change Options -->
+      <div class="form-section">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="changeScent" name="changeScent">
+          <label class="form-check-label" for="changeScent">Change scent to</label>
+          <input type="text" name="changeScentText" id="changeScentText" class="form-control mt-2" placeholder="New scent" disabled>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="redoSettings" name="redoSettings">
+          <label class="form-check-label" for="redoSettings">Redo settings</label>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="reduceIntensity" name="reduceIntensity">
+          <label class="form-check-label" for="reduceIntensity">Reduce scent intensity</label>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="increaseIntensity" name="increaseIntensity">
+          <label class="form-check-label" for="increaseIntensity">Increase scent intensity</label>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="moveDevice" name="moveDevice">
+          <label class="form-check-label" for="moveDevice">Move device to</label>
+          <input type="text" name="moveDeviceText" id="moveDeviceText" class="form-control mt-2" placeholder="New location" disabled>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="relocateDevice" name="relocateDevice">
+          <label class="form-check-label" for="relocateDevice">Relocate device to</label>
+          <select id="relocateDeviceDropdown" name="relocateDeviceDropdown" class="form-select mt-2" disabled>
+            <option disabled selected>Select Premise</option>
+            {% for premise in premises %}
+              <option value="{{ premise }}">{{ premise }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="collectBack" name="collectBack">
+          <label class="form-check-label" for="collectBack">Collect back machine</label>
+        </div>
+        <div class="mt-3">
+          <label for="remark" class="form-label">Remark</label>
+          <textarea name="remark" id="remark" class="form-control" rows="3" required></textarea>
+        </div>
+      </div>
 
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="collectBack" class="disabled-checkbox">
-                    <label class="form-check-label" for="collectBack">Collect back machine</label>
-                </div>
+      <!-- Month/Year -->
+      <div class="form-section">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="month" class="form-label">Month</label>
+            <select name="month" id="month" class="form-select">
+              {% for m in ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'] %}
+                <option value="{{ m }}">{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="year" class="form-label">Year</label>
+            <select name="year" id="year" class="form-select">
+              {% for y in range(2025, 2031) %}
+                <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
 
-                <div class="form-check">
-                    <label for="remark" class="form-label">Remark</label>
-                    <textarea class="form-control" id="remark" name="remark" rows="5" required></textarea>
-                  </div>
-                
-            </div>
+      <!-- Premises and Devices -->
+      <div class="form-section">
+        <div class="mb-3">
+          <label class="form-label">Premises</label>
+          <div id="premises-container"></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Devices</label>
+          <div id="devices-container"></div>
+        </div>
+        <div id="eo-container"></div>
+      </div>
 
-            <!-- Month and Year -->
-            <div class="form-section">
-                <div class="mb-3">
-                    <label for="month" class="form-label">Month</label>
-                    <select id="month" class="form-select">
-                        <option value="JAN">JAN</option>
-                        <option value="FEB">FEB</option>
-                        <option value="MAR">MAR</option>
-                        <option value="APR">APR</option>
-                        <option value="MAY">MAY</option>
-                        <option value="JUN">JUN</option>
-                        <option value="JUL">JUL</option>
-                        <option value="AUG">AUG</option>
-                        <option value="SEP">SEP</option>
-                        <option value="OCT">OCT</option>
-                        <option value="NOV">NOV</option>
-                        <option value="DEC">DEC</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="year" class="form-label">Year</label>
-                    <select id="year" class="form-select">
-                        {% for year in range(2025, 2031) %}
-                            <option value="{{ year }}">{{ year }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
+      <button type="submit" class="btn btn-primary w-100">Submit</button>
+    </form>
+  </div>
 
-            <!-- Premise and Device -->
-            <div class="form-section">
-                <div class="mb-3">
-                    <label for="premises" class="form-label">Select Premise Name(s)</label>
-                    <!-- <div id="premises">
-                        {% for premise in premises %}
-                        <div class="form-check">
-                            <input 
-                                class="form-check-input premise-checkbox" 
-                                type="checkbox" 
-                                id="premise_{{ loop.index }}" 
-                                name="premises" 
-                                value="{{ premise }}">
-                            <label class="form-check-label" for="premise_{{ loop.index }}">{{ premise }}</label>
-                        </div>
-                        {% endfor %}
-                    </div> -->
-                    <div id="premises-container"></div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="devices" class="form-label">Select Device Name(s)</label>
-                    <!-- <div id="devices">
-                        {% for device in devices %}
-                        <div class="form-check">
-                            <input 
-                                class="form-check-input device-checkbox" 
-                                type="checkbox" 
-                                id="device_{{ loop.index }}" 
-                                name="devices" 
-                                value="{{ device }}">
-                            <label class="form-check-label" for="device_{{ loop.index }}">{{ device }}</label>
-                        </div>
-                        {% endfor %}
-                    </div> -->
-                    <div id="devices-container"></div>
-                </div>
-                
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100 mt-4">Submit</button>
-        </form>
-    </div>
-
-    <script>
-
-document.addEventListener('DOMContentLoaded', () => {
-        // Enable/disable "Change Scent" textbox
-        const changeScentCheckbox = document.getElementById('changeScent');
-        const changeScentTextbox = document.getElementById('changeScentText');
-        changeScentCheckbox.addEventListener('change', () => {
-            changeScentTextbox.disabled = !changeScentCheckbox.checked;
-        });
-        // Enable/disable "Move Device" textbox
-        const moveDeviceCheckbox = document.getElementById('moveDevice');
-        const moveDeviceTextbox = document.getElementById('moveDeviceText');
-        moveDeviceCheckbox.addEventListener('change', () => {
-            moveDeviceTextbox.disabled = !moveDeviceCheckbox.checked;
-        });
-
-        // Enable/disable "Relocate Device" dropdown
-        const relocateDeviceCheckbox = document.getElementById('relocateDevice');
-        const relocateDeviceDropdown = document.getElementById('relocateDeviceDropdown');
-        relocateDeviceCheckbox.addEventListener('change', () => {
-            relocateDeviceDropdown.disabled = !relocateDeviceCheckbox.checked;
-        });
-    });
-
-
-    //     document.addEventListener('DOMContentLoaded', () => {
-    //         const companyNameSelect = document.getElementById('companyName');
-    //         const devicesContainer = document.getElementById('devices');
-    
-    //         companyNameSelect.addEventListener('change', () => {
-    //             const selectedCompany = companyNameSelect.value;
-    
-    //             if (selectedCompany) {
-    //                 fetch(`/get-devices?companyName=${encodeURIComponent(selectedCompany)}`)
-    //                     .then(response => response.json())
-    //                     .then(data => {
-    //                         devicesContainer.innerHTML = ''; // Clear current checkboxes
-    
-    //                         data.devices.forEach((device, index) => {
-    //                             const checkboxDiv = document.createElement('div');
-    //                             checkboxDiv.className = 'form-check';
-    
-    //                             const checkbox = document.createElement('input');
-    //                             checkbox.type = 'checkbox';
-    //                             checkbox.className = 'form-check-input device-checkbox';
-    //                             checkbox.id = `device_${index}`;
-    //                             checkbox.name = 'devices';
-    //                             checkbox.value = device;
-    
-    //                             const label = document.createElement('label');
-    //                             label.className = 'form-check-label';
-    //                             label.htmlFor = `device_${index}`;
-    //                             label.textContent = device;
-    
-    //                             checkboxDiv.appendChild(checkbox);
-    //                             checkboxDiv.appendChild(label);
-    //                             devicesContainer.appendChild(checkboxDiv);
-    //                         });
-    //                     })
-    //                     .catch(error => console.error('Error fetching devices:', error));
-    //             }
-    //         });
-    //     });
-
-    //     document.addEventListener('DOMContentLoaded', () => {
-    //     const companyNameSelect = document.getElementById('companyName');
-    //     const premisesContainer = document.getElementById('premises'); // Target the premises container
-    
-    //     companyNameSelect.addEventListener('change', () => {
-    //         const selectedCompany = companyNameSelect.value; // Get the selected company
-    
-    //         if (selectedCompany) {
-    //             fetch(`/get-premises?companyName=${encodeURIComponent(selectedCompany)}`)
-    //                 .then(response => response.json())
-    //                 .then(data => {
-    //                     premisesContainer.innerHTML = ''; // Clear existing options
-
-    //                     // Populate premises dropdown
-    //                     data.premises.forEach((premise, index) => {
-    //                         const checkboxDiv = document.createElement('div');
-    //                         checkboxDiv.className = 'form-check';
-
-    //                         const checkbox = document.createElement('input');
-    //                         checkbox.type = 'checkbox';
-    //                         checkbox.className = 'form-check-input premise-checkbox';
-    //                         checkbox.id = `premise_${index}`;
-    //                         checkbox.name = 'premises';
-    //                         checkbox.value = premise;
-
-    //                         const label = document.createElement('label');
-    //                         label.className = 'form-check-label';
-    //                         label.htmlFor = `premise_${index}`;
-    //                         label.textContent = premise;
-
-    //                         checkboxDiv.appendChild(checkbox);
-    //                         checkboxDiv.appendChild(label);
-    //                         premisesContainer.appendChild(checkboxDiv);
-    //                     });
-    //                 })
-    //                 .catch(error => console.error('Error fetching premises:', error));
-    //         }
-    //     });
-    // });
-
-
-    document.addEventListener("DOMContentLoaded", () => {
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
     const companySelect = document.getElementById("companyName");
-    const premiseContainer = document.getElementById("premises");
-    const deviceContainer = document.getElementById("devices");
+    const premisesContainer = document.getElementById("premises-container");
+    const devicesContainer = document.getElementById("devices-container");
 
-    // Fetch premises when a company is selected
+    const eoContainer = document.getElementById("eo-container");
+
     companySelect.addEventListener("change", () => {
-        const selectedCompany = companySelect.value;
-        if (!selectedCompany) return;
+      const company = companySelect.value;
+      if (!company) return;
 
-        fetch(`/get-premises?companyName=${encodeURIComponent(selectedCompany)}`)
-            .then(response => response.json())
-            .then(data => {
-                premiseContainer.innerHTML = ""; // Clear existing premises
-
-                data.premises.forEach((premise, index) => {
-                    const checkboxDiv = document.createElement("div");
-                    checkboxDiv.className = "form-check";
-
-                    const checkbox = document.createElement("input");
-                    checkbox.type = "checkbox";
-                    checkbox.className = "form-check-input premise-checkbox";
-                    checkbox.id = `premise_${index}`;
-                    checkbox.name = "premises";
-                    checkbox.value = premise;
-
-                    const label = document.createElement("label");
-                    label.className = "form-check-label";
-                    label.htmlFor = `premise_${index}`;
-                    label.textContent = premise;
-
-                    checkboxDiv.appendChild(checkbox);
-                    checkboxDiv.appendChild(label);
-                    premiseContainer.appendChild(checkboxDiv);
-
-                    // Fetch devices when a premise is selected
-                    checkbox.addEventListener("change", () => {
-                        if (checkbox.checked) {
-                            fetch(`/get-devices?premiseName=${encodeURIComponent(premise)}`)
-                                .then(response => response.json())
-                                .then(deviceData => {
-                                    deviceContainer.innerHTML = ""; // Clear devices
-
-                                    deviceData.devices.forEach((device, dIndex) => {
-                                        const deviceDiv = document.createElement("div");
-                                        deviceDiv.className = "form-check";
-
-                                        const deviceCheckbox = document.createElement("input");
-                                        deviceCheckbox.type = "checkbox";
-                                        deviceCheckbox.className = "form-check-input device-checkbox";
-                                        deviceCheckbox.id = `device_${dIndex}`;
-                                        deviceCheckbox.name = "devices";
-                                        deviceCheckbox.value = device;
-
-                                        const deviceLabel = document.createElement("label");
-                                        deviceLabel.className = "form-check-label";
-                                        deviceLabel.htmlFor = `device_${dIndex}`;
-                                        deviceLabel.textContent = device;
-
-                                        deviceDiv.appendChild(deviceCheckbox);
-                                        deviceDiv.appendChild(deviceLabel);
-                                        deviceContainer.appendChild(deviceDiv);
-                                    });
-                                })
-                                .catch(error => console.error("Error fetching devices:", error));
-                        }
-                    });
-                });
-            })
-            .catch(error => console.error("Error fetching premises:", error));
-    });
-});
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-    // Enable/disable "Change Scent" textbox
-    const changeScentCheckbox = document.getElementById('changeScent');
-    const changeScentTextbox = document.getElementById('changeScentText');
-    changeScentCheckbox.addEventListener('change', () => {
-        changeScentTextbox.disabled = !changeScentCheckbox.checked;
-    });
-
-    // Enable/disable "Move Device" textbox
-    const moveDeviceCheckbox = document.getElementById('moveDevice');
-    const moveDeviceTextbox = document.getElementById('moveDeviceText');
-    moveDeviceCheckbox.addEventListener('change', () => {
-        moveDeviceTextbox.disabled = !moveDeviceCheckbox.checked;
-    });
-
-    // Enable/disable "Relocate Device" dropdown
-    const relocateDeviceCheckbox = document.getElementById('relocateDevice');
-    const relocateDeviceDropdown = document.getElementById('relocateDeviceDropdown');
-    relocateDeviceCheckbox.addEventListener('change', () => {
-        relocateDeviceDropdown.disabled = !relocateDeviceCheckbox.checked;
-    });
-
-    // Disable other checkboxes if "Collect Back Machine" is checked
-    const collectBackCheckbox = document.getElementById('collectBack');
-    const allCheckboxes = document.querySelectorAll('.form-check-input');
-    const premiseCheckboxes = document.querySelectorAll('.premise-checkbox');
-
-    collectBackCheckbox.addEventListener('change', () => {
-        allCheckboxes.forEach(checkbox => {
-            // Skip the "Collect Back Machine" and premise checkboxes
-            if (checkbox !== collectBackCheckbox && !checkbox.classList.contains('premise-checkbox')) {
-                checkbox.disabled = collectBackCheckbox.checked;
-            }
+      fetch(`/get-premises/${encodeURIComponent(company)}`)
+        .then(res => res.text())
+        .then(html => {
+          premisesContainer.innerHTML = html;
+          hookPremiseListeners();
         });
     });
-});
 
-    </script>
-    <script>
-        document.getElementById("companyName").addEventListener("change", function() {
-            fetch(`/get-premises/${encodeURIComponent(this.value)}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById("premises-container").innerHTML = html;
-                    addPremiseListeners();
+    function hookPremiseListeners() {
+      document.querySelectorAll(".premise-checkbox").forEach(premiseCheckbox => {
+        premiseCheckbox.addEventListener("change", () => {
+          const premise = premiseCheckbox.value;
+
+          if (premiseCheckbox.checked) {
+            fetch(`/get-devices/${encodeURIComponent(premise)}`)
+              .then(res => res.json())
+              .then(data => {
+                data.devices.forEach((device, i) => {
+                  const div = document.createElement("div");
+                  div.className = "form-check";
+
+                  const input = document.createElement("input");
+                  input.type = "checkbox";
+                  input.className = "form-check-input device-checkbox";
+                  input.name = "devices";
+                  input.id = `device_${i}_${premise}`;
+                  input.value = device;
+
+                  const label = document.createElement("label");
+                  label.className = "form-check-label";
+                  label.htmlFor = input.id;
+                  label.textContent = device;
+
+                  div.appendChild(input);
+                  div.appendChild(label);
+                  devicesContainer.appendChild(div);
                 });
+
+                hookDeviceEOListener();
+              });
+          } else {
+            // Remove devices from this premise
+            document.querySelectorAll(`[id^="device_"][id$="_${premise}"]`).forEach(e => e.closest('.form-check').remove());
+          }
         });
-        
-        function addPremiseListeners() {
-            document.querySelectorAll(".premise-checkbox").forEach(checkbox => {
-                checkbox.addEventListener("change", function() {
-                    if (this.checked) {
-                        fetch(`/get-devices/${encodeURIComponent(this.value)}`)
-                            .then(response => response.text())
-                            .then(html => {
-                                document.getElementById("devices-container").innerHTML += html;
-                            });
-                    }
-                });
-            });
+      });
+    }
+
+    function hookDeviceEOListener() {
+      devicesContainer.addEventListener("change", () => {
+        const selectedDevices = Array.from(document.querySelectorAll(".device-checkbox:checked")).map(cb => cb.value);
+
+        fetch("/get-eos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ devices: selectedDevices })
+        })
+          .then(res => res.json())
+          .then(data => {
+            eoContainer.innerHTML = `<strong>Detected Essential Oils:</strong><ul>` +
+              data.eos.map(eo => `<li>${eo}</li>`).join('') + `</ul>`;
+          });
+      });
+    }
+
+    // Enable/disable scent and move inputs
+    document.getElementById("changeScent").addEventListener("change", function () {
+      document.getElementById("changeScentText").disabled = !this.checked;
+    });
+    document.getElementById("moveDevice").addEventListener("change", function () {
+      document.getElementById("moveDeviceText").disabled = !this.checked;
+    });
+    document.getElementById("relocateDevice").addEventListener("change", function () {
+      document.getElementById("relocateDeviceDropdown").disabled = !this.checked;
+    });
+
+    // Disable other checkboxes if "collect back" is ticked
+    const collectBack = document.getElementById("collectBack");
+    const allCheckboxes = document.querySelectorAll(".form-check-input");
+    collectBack.addEventListener("change", () => {
+      allCheckboxes.forEach(cb => {
+        if (cb !== collectBack && !cb.classList.contains("premise-checkbox")) {
+          cb.disabled = collectBack.checked;
         }
-        </script>
+      });
+    });
+  });
+  </script>
 </body>
 </html>

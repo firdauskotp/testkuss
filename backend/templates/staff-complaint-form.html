@@ -66,7 +66,7 @@
   </p>
   
     <h2 class="text-center mb-4">Case {{ case_no }}</h2>
-    <form method="POST" action="/" enctype="multipart/form-data">
+    <form method="POST"  action="{{ url_for('staff_form', case_no=case_no) }}" enctype="multipart/form-data">
 
       <div class="form-group">
         <label for="case_no">Case Number:</label>
@@ -122,7 +122,7 @@
         <textarea class="form-control" id="remarks-issues" name="remarks-issues" rows="3" value=" {{ case_data['renarks'] }}"  disabled></textarea>
       </div>
 
-      <h5 style="text-align: center;">ACTIONS DONE</h5>
+      <!-- <h5 style="text-align: center;">ACTIONS DONE</h5>
             <div class="form-check">
               <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="alcoholCleaning">
               <label class="form-check-label" for="alcoholCleaning">Alcohol Cleaning</label>
@@ -154,23 +154,41 @@
             <div class="form-check">
               <input class="form-check-input" type="checkbox" name="actions" value="Replaced Faulty Power Adapter" id="replaceAdapter">
               <label class="form-check-label" for="replaceAdapter">Replaced Faulty Power Adapter</label>
-            </div>
+            </div> -->
+
+            <h5 style="text-align: center;">ACTIONS DONE</h5>
+{% set action_list = [
+  "Alcohol Cleaning", "Oil Refill", "Timer Settings",
+  "Replaced Straw / Mist Head", "Replaced Batteries",
+  "Replaced Faulty Machine (Same Model)", "Changed Machine (Different Model)",
+  "Replaced Faulty Power Adapter"
+] %}
+{% for action in action_list %}
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" name="actions" value="{{ action }}" id="{{ action|replace(' ', '') }}"
+      {% if case_data.get("actions_done") and action in case_data["actions_done"] %}checked{% endif %}>
+    <label class="form-check-label" for="{{ action|replace(' ', '') }}">{{ action }}</label>
+  </div>
+{% endfor %}
 
             <!-- Acknowledgement -->
             <h5 class="acknowledgement-title">ACKNOWLEDGEMENT</h5>
             <div class="form-group">
               <label for="remarks-acknowledgement">Remarks (if any):</label>
-              <textarea class="form-control" id="remarks-acknowledgement" name="remarks-acknowledgement" rows="3"></textarea>
+              <textarea class="form-control" id="remarks-acknowledgement" name="remarks" rows="3"></textarea>
+
             </div>
             <div class="form-check">
               <label class="form-check-label" for="caseClosedOrOpen">Case Closed? </label></div>
             <div class="form-check">
 
-              <input class="form-check-input" type="radio" name="case-closed" value="Yes" id="caseClosedYes">
+              <input class="form-check-input" type="radio" name="case_closed" value="Yes" id="caseClosedYes">
+
               <label class="form-check-label" for="caseClosedYes"> Yes</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="case-closed" value="No" id="caseClosedNo">
+              <input class="form-check-input" type="radio" name="case_closed" value="No" id="caseClosedNo">
+
               <label class="form-check-label" for="caseClosedNo">No, revisit on:</label>
             </div>
             
@@ -183,10 +201,12 @@
                   </tr>
                   <tr>
                     <td>
-                      <input type="date" class="form-control" name="appointment-date">
+                      <input type="date" class="form-control" name="appointment_date" value="{{ case_data.get('revisit_date', '') }}">
+
                     </td>
                     <td>
-                      <input type="time" class="form-control" name="appointment-time">
+                      <input type="time" class="form-control" name="appointment_time" value="{{ case_data.get('revisit_time', '') }}">
+
                     </td>
                   </tr>
                 </tbody>
@@ -196,7 +216,7 @@
             <!-- Staff Name -->
             <div class="form-group">
               <label for="staffName">Staff Name:</label>
-              <input type="text" class="form-control" id="staffName" name="staff-name">
+              <input type="text" class="form-control" id="staffName" name="staff_name">
             </div>
 
             <!-- Signature -->
@@ -310,7 +330,17 @@
         maxWidth: 3,
         penColor: "black"
     });
+    const savedSignature = "{{ case_data.get('signature', '') }}";
 
+if (savedSignature && savedSignature.startsWith("data:image")) {
+  const img = new Image();
+  img.onload = () => {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  };
+  img.src = savedSignature;
+}
     // Adjust canvas size on load
     function resizeCanvas() {
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
