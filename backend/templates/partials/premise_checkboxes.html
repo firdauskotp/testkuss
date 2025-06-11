@@ -1,9 +1,6 @@
-<div class="mb-3">
-    <label class="form-label">Select Premises</label>
-    {% for premise in premises %}
-    <div class="form-check">
-        <input class="form-check-input premise-checkbox" type="checkbox" value="{{ premise }}" name="premises">
-        <label class="form-check-label">{{ premise }}</label>
-    </div>
-    {% endfor %}
-</div>
+{% for premise in premises %}
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input premise-checkbox" value="{{ premise }}" id="premise_{{ loop.index }}">
+    <label class="form-check-label" for="premise_{{ loop.index }}">{{ premise }}</label>
+  </div>
+{% endfor %}

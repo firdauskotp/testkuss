@@ -1392,10 +1392,10 @@ def pre_service():
     return render_template('pre-service.html', companies=companies)
     
 
-@app.route('/get-premises/<company>')
-def get_premises(company):
-    premises = services_collection.find({"company": company}, {"Premise Name": 1, "_id": 0})
-    return jsonify([p['Premise Name'] for p in premises])
+# @app.route('/get-premises/<company>')
+# def get_premises(company):
+#     premises = services_collection.find({"company": company}, {"Premise Name": 1, "_id": 0})
+#     return jsonify([p['Premise Name'] for p in premises])
 
 @app.route('/get-models/<premise>')
 def get_models(premise):
@@ -2468,6 +2468,25 @@ def save_model1_changes():
 
     return jsonify({'status': 'success'})
 
+@app.route('/get-premises/<company>')
+def get_premises(company):
+    premises = services_collection.distinct('Premise Name', {'company': company})
+    return render_template('partials/premise_checkboxes.html', premises=premises)
+
+@app.route('/get-devices/<premise>')
+def get_devices(premise):
+    devices = device_list_collection.find({'tied_to_premise': premise})
+    return jsonify({
+        'devices': [d['location'] for d in devices]
+    })
+@app.route('/get-eos', methods=['POST'])
+def get_eos():
+    devices = request.json.get('devices', [])
+    eos = set()
+    for d in device_list_collection.find({'location': {'$in': devices}}):
+        if 'Current EO' in d:
+            eos.add(d['Current EO'])
+    return jsonify({'eos': list(eos)})
 
 if __name__ == "__main__":
     app.run(debug=True)
