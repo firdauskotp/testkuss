@@ -1232,7 +1232,15 @@ def change_form():
         return redirect(url_for("dashboard"))
 
     companies = services_collection.distinct('company')
-    premises_for_template = services_collection.distinct('Premise Name', {'company': request.form.get("companyName")})
+
+    # For the initial GET request, the "Relocate device to" dropdown will be empty.
+    # It's populated by JavaScript once a company is selected.
+    # So, initialize premises_for_template (which becomes 'premises' in the template) to [].
+    premises_for_template = []
+
+    # The line below was attempting to pre-populate based on request.form,
+    # which is not suitable for a GET request for this dynamic dropdown.
+    # premises_for_template = services_collection.distinct('Premise Name', {'company': request.form.get("companyName")})
 
 
     return render_template(
