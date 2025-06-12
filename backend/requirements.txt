@@ -9,3 +9,5 @@ python-dotenv
 gunicorn
 Flask-CORS
 flask-apscheduler
+pytest
+pytest-mock
