@@ -1,25 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Case Created</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <div class="container d-flex justify-content-center align-items-center vh-100">
-    <div class="text-center">
-      <h1 class="display-4">Case #{{ case_no }}</h1>
-      <p class="lead">Your case has been successfully created.</p>
-      <p>Our staff shall get in touch with you the soonest.</p>
-      <a href="/" class="btn btn-primary mt-3">Go Back to Home</a>
-      <a href="/customer-help" class="btn btn-primary mt-3">Submit another case</a>
+{% extends "base.html" %}
+
+{% block title %}Case Created Successfully{% endblock %}
+{% block page_title %}Case Submission Successful{% endblock %}
+
+{% block head_extra %}
+    {# Any page-specific CSS or JS links for this page #}
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 text-center min-h-[calc(100vh-16rem)]"> {# Adjust min-height based on header/footer actual height #}
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900 dark:text-gray-100">
+                Case #{{ case_no }} Successfully Created!
+            </h2>
+            <p class="mt-2 text-md text-gray-600 dark:text-gray-400">
+                Thank you for submitting your request.
+            </p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-500">
+                Our staff will get in touch with you the soonest.
+            </p>
+        </div>
+
+        <div class="mt-8 space-y-4 sm:space-y-0 sm:flex sm:gap-4 sm:justify-center">
+            <a href="{{ url_for('index') }}"  {# Assuming '/' is client login or a general home page #}
+               class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                Go Back to Home
+            </a>
+            <a href="{{ url_for('customer_form') }}" {# Assuming 'customer_form' is the route for customer-help #}
+               class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                Submit Another Case
+            </a>
+        </div>
     </div>
-  </div>
-  <!-- Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# No specific JavaScript for this page from the original #}
+{% endblock %}

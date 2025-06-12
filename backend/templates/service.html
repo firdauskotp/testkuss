@@ -1,322 +1,425 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Service Form</title>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .signature-container {
-      border: 2px solid #ccc;
-      border-radius: 5px;
-      width: 100%;
-      height: 200px;
-      position: relative;
-      touch-action: none;
-    }
-    .signature-pad {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-</head>
-<body class="bg-light">
-<div class="container mt-5">
-  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">Back to Dashboard</a>
-  <h1 class="text-center">SERVICE FORM</h1>
-  <form method="POST" action="/field-service">
-    <div class="mb-3">
-      <label class="form-label">Technician Name:</label>
-      <input type="text" class="form-control" value="{{ technician_name }}" readonly>
-    </div>
+{% extends "base.html" %}
 
-    <div class="mb-3">
-      <label class="form-label">Date and Time:</label>
-      <input type="text" class="form-control" value="{{ current_time }}" readonly>
-    </div>
+{% block title %}Field Service Report{% endblock %}
+{% block page_title %}Field Service Report{% endblock %}
 
-    <!-- New: Service Time Dropdowns -->
-    <div class="row mb-3">
-      <label class="form-label">Service Time:</label>
-      <div class="col-md-4">
-        <select class="form-select" name="service_month" required>
-          <option value="" disabled selected>Month</option>
-          {% for month in ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'] %}
-            <option value="{{ month }}">{{ month }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <select class="form-select" name="service_year" required>
-          <option value="" disabled selected>Year</option>
-          {% for y in range(2025, 2030) %}
-            <option value="{{ y }}">{{ y }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <select class="form-select" name="service_day" required>
-          <option value="" disabled selected>Day</option>
-          {% for d in range(1, 32) %}
-            <option value="{{ d }}">{{ d }}</option>
-          {% endfor %}
-        </select>
-      </div>
+{% block head_extra %}
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
+    <style>
+      .signature-pad-container { /* Renamed from .signature-container to avoid conflict if any global style exists */
+        border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+        width: 100%;
+        height: 200px;
+        position: relative;
+        touch-action: none;
+      }
+      .dark .signature-pad-container {
+        border-color: #4b5563; /* Tailwind dark:border-gray-600 */
+      }
+      canvas.signature-pad { /* Explicitly target canvas */
+        width: 100%;
+        height: 100%;
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+      }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-8">
+
+        <div class="text-left mb-6">
+            <a href="{{ url_for('dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('service') }}" class="space-y-8"> {# Assuming 'service' is the correct endpoint name #}
+
+            <!-- Technician, Date, Service Time -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Service Meta Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Technician Name</label>
+                        <input type="text" value="{{ technician_name }}" readonly
+                               class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date and Time (Submission)</label>
+                        <input type="text" value="{{ current_time }}" readonly
+                               class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Time (Actual)</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <select name="service_month" required class="tailwind-input-class">
+                            <option value="" disabled selected>Month</option>
+                            {% for month_num, month_name in [(1,'JAN'),(2,'FEB'),(3,'MAR'),(4,'APR'),(5,'MAY'),(6,'JUN'),(7,'JUL'),(8,'AUG'),(9,'SEP'),(10,'OCT'),(11,'NOV'),(12,'DEC')] %}
+                                <option value="{{ month_num }}">{{ month_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="service_year" required class="tailwind-input-class">
+                            <option value="" disabled selected>Year</option>
+                            {% set current_year = namespace(value=0) %} {# Workaround for getting current year if not directly passed from Flask #}
+                            <script>document.addEventListener('DOMContentLoaded', function() { document.getElementById('service_year_placeholder_script_tag_data').innerHTML = new Date().getFullYear(); });</script>
+                            <span id="service_year_placeholder_script_tag_data" style="display:none;"></span>
+                            {% for y in range( (current_year.value if current_year.value else 2024) -1, (current_year.value if current_year.value else 2024) + 5) %}
+                                <option value="{{ y }}">{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="service_day" required class="tailwind-input-class">
+                            <option value="" disabled selected>Day</option>
+                            {% for d in range(1, 32) %}
+                                <option value="{{ d }}">{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Company, Premise, PIC, Notes -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Client Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
+                        <select id="company" name="company" required class="tailwind-input-class">
+                            <option value="" selected disabled>Select a company</option>
+                            {% for c in companies %} <option value="{{ c }}">{{ c }}</option> {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="premise" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise</label>
+                        <select id="premise" name="premise" required disabled class="tailwind-input-class disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-500 cursor-not-allowed">
+                            <option value="" selected disabled>Select a premise</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="pic_contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIC Contact</label>
+                        <input type="text" id="pic_contact" name="pic_contact" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="change_notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Notes (Overview from System)</label>
+                        <textarea id="change_notes" name="change_notes" disabled class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400" rows="3" placeholder="System will auto-fill notes based on device changes"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Details Section Placeholder -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Device Details</h3>
+                <div id="device-section" class="space-y-6">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Device details will load here once a premise is selected. Or, if this is a static template for one device, style the elements below.</p>
+                    {# --- Start of example for ONE device card (to be dynamically populated or repeated) --- #}
+                    <div class="device-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device [Device Loop Index/ID]</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                            <div>
+                                <label for="model_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                                <select name="model_idx" id="model_idx" required class="tailwind-input-class">
+                                    <option selected disabled value="">Select a model</option>
+                                    {# {% for model_item in models %} <option value="{{ model_item }}">{{ model_item }}</option> {% endfor %} #}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="color_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                                <select name="color_idx" id="color_idx" required class="tailwind-input-class">
+                                     <option selected disabled value="">Select a color</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="eo_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
+                                <select name="eo_idx" id="eo_idx" required class="tailwind-input-class">
+                                    <option selected disabled value="">Select an EO</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="location_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                <input type="text" name="location_idx" required class="tailwind-input-class">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="scent_change_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
+                                <select name="scent_change_idx" class="tailwind-input-class">
+                                    <option value="">No Change</option>
+                                    {# {% for eo_item in eo_list %} <option value="{{ eo_item }}">{{ eo_item }}</option> {% endfor %} #}
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="relocate_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
+                                <select name="relocate_idx" class="tailwind-input-class">
+                                    <option value="">Do not relocate</option>
+                                    {# {% for p_item in premises_list_for_relocation %} <option value="{{ p_item.premise_name }}">{{ p_item.premise_name }}</option> {% endfor %} #}
+                                </select>
+                            </div>
+                            <div class="md:col-span-2 flex items-center mt-2">
+                                <input id="inactive_idx" name="inactive_idx" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
+                                <label for="inactive_idx" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive (remove from system on selected date)</label>
+                            </div>
+                        </div>
+                        <!-- Events (E1–E4) -->
+                        {% for e_num in range(1, 5) %}
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <h6 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Event {{ e_num }} Settings</h6>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-3">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Current E{{ e_num }} Days: <span class="font-normal text-gray-900 dark:text-gray-100">{ device['E' ~ e_num ~ ' - DAYS'] | default('N/A') }</span></label>
+                                    <input type="text" name="event_idx_days{{ e_num }}" placeholder="New Days (Mon-Fri)" class="tailwind-input-class text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Start: <span class="font-normal">{ device['E' ~ e_num ~ ' - START'] | default('N/A') }</span></label>
+                                    <input type="time" name="event_idx_start{{ e_num }}" class="tailwind-input-class text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">End: <span class="font-normal">{ device['E' ~ e_num ~ ' - END'] | default('N/A') }</span></label>
+                                    <input type="time" name="event_idx_end{{ e_num }}" class="tailwind-input-class text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Work: <span class="font-normal">{ device['E' ~ e_num ~ ' - WORK'] | default('N/A') }</span></label>
+                                    <input type="number" name="event_idx_work{{ e_num }}" placeholder="New Work (s)" class="tailwind-input-class text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Pause: <span class="font-normal">{ device['E' ~ e_num ~ ' - PAUSE'] | default('N/A') }</span></label>
+                                    <input type="number" name="event_idx_pause{{ e_num }}" placeholder="New Pause (s)" class="tailwind-input-class text-xs mt-1">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {# --- End of example for ONE device card --- #}
+                </div>
+            </div>
+
+            <!-- Acknowledgement -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Acknowledgement</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Actions Done:</label>
+                        <div class="space-y-2">
+                            {% for action_val, action_text in [('Alcohol Cleaning', 'Alcohol Cleaning'), ('Oil Refill', 'Oil Refill')] %} {# Add more actions as needed #}
+                            <div class="flex items-center">
+                                <input id="action_{{ loop.index }}" name="actions" value="{{ action_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                                <label for="action_{{ loop.index }}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ action_text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div>
+                        <label for="remarks" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks:</label>
+                        <textarea name="remarks" id="remarks" rows="3" class="tailwind-input-class"></textarea>
+                    </div>
+                    <div>
+                        <label for="staffName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Staff Name:</label>
+                        <input type="text" name="staffName" id="staffName" required class="tailwind-input-class">
+                    </div>
+                    <div>
+                        <label for="signature" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Signature:</label>
+                        <div class="signature-pad-container">
+                            <canvas id="signature-pad" class="signature-pad"></canvas>
+                        </div>
+                        <input type="hidden" name="signature" id="signature-input">
+                        <button type="button" id="clear-signature"
+                                class="mt-2 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                            Clear Signature
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button type="submit"
+                        class="py-2.5 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white
+                               bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900">
+                    Submit Service Report
+                </button>
+            </div>
+        </form>
     </div>
-        <!-- Company Dropdown -->
-        <div class="mb-3">
-            <label for="company" class="form-label">Company</label>
-            <select class="form-select" id="company" name="company" required>
-              <option value="" selected disabled>Select a company</option>
-              {% for company in companies %}
-              <option value="{{ company }}">{{ company }}</option>
-              {% endfor %}
-            </select>
-          </div>
-      
-          <!-- Premise Dropdown -->
-          <div class="mb-3">
-            <label for="premise" class="form-label">Premise</label>
-            <select class="form-select" id="premise" name="premise" required disabled>
-              <option value="" selected disabled>Select a premise</option>
-            </select>
-          </div>
-      
-          <!-- New: Change Notes (Overview) -->
-          <div class="mb-3">
-            <label for="change_notes" class="form-label">Change Notes (Overview)</label>
-            <textarea class="form-control" id="change_notes" name="change_notes" disabled placeholder="System will auto-fill notes based on device changes"></textarea>
-          </div>
-      
-          <!-- New: PIC Contact Info -->
-          <div class="mb-3">
-            <label class="form-label">PIC Contact</label>
-            <input type="text" class="form-control" id="pic_contact" name="pic_contact" readonly>
-          </div>
-      
-          <hr>
-          <h4 class="text-primary">Device Details</h4>
-          <div id="device-section">
-            <!-- This part will be dynamically filled for each device by backend or AJAX -->
-            <!-- Template shown below for ONE device -->
-            <div class="card mb-4 p-3 bg-white border rounded device-card">
-                <h5 class="text-secondary">Device {{ loop.index }}</h5>
-              
-                <!-- Model -->
-                <div class="mb-3">
-                  <label for="model{{ loop.index }}" class="form-label">Model</label>
-                  <select class="form-select" id="model{{ loop.index }}" name="model{{ loop.index }}" required>
-                    <option selected disabled>Select a model</option>
-                    {% for model in models %}
-                    <option value="{{ model }}">{{ model }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              
-                <!-- Colour -->
-                <div class="mb-3">
-                  <label for="color{{ loop.index }}" class="form-label">Color</label>
-                  <select class="form-select" id="color{{ loop.index }}" name="color{{ loop.index }}" required>
-                    <option selected disabled>Select a color</option>
-                  </select>
-                </div>
-              
-                <!-- EO -->
-                <div class="mb-3">
-                  <label for="eo{{ loop.index }}" class="form-label">EO</label>
-                  <select class="form-select" id="eo{{ loop.index }}" name="eo{{ loop.index }}" required>
-                    <option selected disabled>Select an EO</option>
-                  </select>
-                </div>
-              
-                <!-- Location -->
-                <div class="mb-3">
-                  <label for="location{{ loop.index }}" class="form-label">Location</label>
-                  <input type="text" class="form-control" name="location{{ loop.index }}" required>
-                </div>
-              
-                <!-- Special Controls -->
-                <div class="mb-3">
-                  <label class="form-label">Change Scent</label>
-                  <select class="form-select" name="scent_change{{ loop.index }}">
-                    <option value="">No Change</option>
-                    {% for eo in eo_list %}
-                    <option value="{{ eo }}">{{ eo }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              
-                <!-- Device Inactive -->
-                <div class="form-check mb-3">
-                  <input class="form-check-input device-inactive" type="checkbox" value="1" id="inactive{{ loop.index }}" name="inactive{{ loop.index }}">
-                  <label class="form-check-label text-danger" for="inactive{{ loop.index }}">
-                    Mark Device as Inactive (remove from system on selected date)
-                  </label>
-                </div>
-              
-                <!-- Relocate Device -->
-                <div class="mb-3">
-                  <label for="relocate{{ loop.index }}" class="form-label">Relocate Device To:</label>
-                  <select class="form-select" name="relocate{{ loop.index }}">
-                    <option value="">Do not relocate</option>
-                    {% for p in premises %}
-                    <option value="{{ p.premise_name }}">{{ p.premise_name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              
-                <!-- Events (E1–E4) -->
-                {% for e in range(1, 5) %}
-                <div class="border p-2 mb-2">
-                  <strong>Event {{ e }}</strong>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <label>Current E{{ e }} Days:</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - DAYS'] }}" readonly>
-                    </div>
-                    <div class="col-md-6">
-                      <label>New E{{ e }} Days:</label>
-                      <input type="text" class="form-control" name="event{{ loop.index }}_days{{ e }}">
-                    </div>
-                  </div>
-                  <div class="row mt-2">
-                    <div class="col"><label>Start</label>
-                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - START'] }}" readonly>
-                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_start{{ e }}">
-                    </div>
-                    <div class="col"><label>End</label>
-                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - END'] }}" readonly>
-                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_end{{ e }}">
-                    </div>
-                    <div class="col"><label>Work</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - WORK'] }}" readonly>
-                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_work{{ e }}">
-                    </div>
-                    <div class="col"><label>Pause</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - PAUSE'] }}" readonly>
-                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_pause{{ e }}">
-                    </div>
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-              <hr>
-              <h4>Acknowledgement</h4>
-              <label>Actions Done:</label><br>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="action1">
-                <label class="form-check-label" for="action1">Alcohol Cleaning</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="actions" value="Oil Refill" id="action2">
-                <label class="form-check-label" for="action2">Oil Refill</label>
-              </div>
-              <!-- Add more checkboxes as needed -->
-              
-              <div class="mb-3 mt-3">
-                <label class="form-label">Remarks:</label>
-                <textarea class="form-control" name="remarks"></textarea>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">Staff Name:</label>
-                <input type="text" class="form-control" name="staffName" required>
-              </div>
-              
-              <!-- Signature Pad -->
-              <div class="mb-3">
-                <label for="signature">Signature:</label>
-                <div class="signature-container">
-                  <canvas id="signature-pad" class="signature-pad"></canvas>
-                </div>
-                <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
-                <input type="hidden" name="signature" id="signature-input">
-              </div>
-              
-              <button type="submit" class="btn btn-primary">Submit</button>
-              </form>
-              </div> <!-- .container -->
-              
-              <!-- Bootstrap Bundle -->
-              <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-              <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-              <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
-              
-              <!-- ✅ Script Section -->
-              <script>
-                // SignaturePad logic
-                const canvas = document.getElementById("signature-pad");
-                const signaturePad = new SignaturePad(canvas, {
-                  minWidth: 1,
-                  maxWidth: 3,
-                  penColor: "black"
-                });
-              
-                function resizeCanvas() {
-                  const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                  canvas.width = canvas.offsetWidth * ratio;
-                  canvas.height = canvas.offsetHeight * ratio;
-                  canvas.getContext("2d").scale(ratio, ratio);
-                  signaturePad.clear();
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Common Tailwind input class for JS
+    const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
+
+    // SignaturePad logic
+    const canvas = document.getElementById("signature-pad");
+    const signaturePad = new SignaturePad(canvas, {
+        minWidth: 1,
+        maxWidth: 2.5, // Adjusted for better appearance
+        penColor: document.documentElement.getAttribute('data-theme') === 'dark' ? "white" : "black" // Theme aware
+    });
+
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear(); // Clear after resize to avoid issues
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas(); // Initial resize
+
+    document.getElementById("clear-signature").addEventListener("click", () => {
+        signaturePad.clear();
+    });
+
+    document.querySelector("form").addEventListener("submit", function (event) {
+        if (!signaturePad.isEmpty()) {
+            document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+        } else {
+            // Optional: require signature
+            // alert("Please provide a signature.");
+            // event.preventDefault();
+        }
+    });
+
+    // Update signature pad color on theme change (if possible, by listening to theme-toggle.js event or overriding its applyTheme)
+    // For now, this is a simple approach. A more robust way is needed if theme can change while page is open.
+    if (window.matchMedia) {
+      const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQueryList.addEventListener('change', event => {
+        signaturePad.penColor = event.matches ? "white" : "black";
+        signaturePad.clear(); // Clear to apply new color if needed
+      });
+    }
+
+
+    // JS for dependent dropdowns and device inactive state (from original file, needs class/ID checks)
+    document.querySelectorAll('.device-inactive').forEach((checkbox) => {
+        checkbox.addEventListener('change', function () {
+            const card = this.closest('.device-card'); // Ensure this class is on the device card
+            const inputs = card.querySelectorAll('input:not(.device-inactive), select, textarea');
+            inputs.forEach(input => {
+                input.disabled = this.checked;
+                if (this.checked) {
+                    input.classList.add('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed');
+                } else {
+                    input.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed');
                 }
-              
-                window.addEventListener("resize", resizeCanvas);
-                resizeCanvas();
-              
-                document.getElementById("clear-signature").addEventListener("click", function () {
-                  signaturePad.clear();
+            });
+        });
+    });
+
+    const companyDropdown = document.getElementById('company');
+    const premiseDropdown = document.getElementById('premise');
+    const picContactInput = document.getElementById('pic_contact');
+    const changeNotesTextarea = document.getElementById('change_notes');
+    // Add other device related dropdowns if they are part of the dynamic logic
+    // const modelDeviceDropdown = document.getElementById('model_idx'); // Example
+
+    if (companyDropdown) {
+        companyDropdown.addEventListener('change', function () {
+            const companyId = this.value;
+            premiseDropdown.innerHTML = '<option value="" selected disabled>Loading...</option>';
+            premiseDropdown.disabled = true;
+            // Reset subsequent fields if any
+            if(picContactInput) picContactInput.value = '';
+            if(changeNotesTextarea) changeNotesTextarea.value = '';
+
+            if (!companyId) {
+                premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
+                return;
+            }
+
+            axios.get(`/get-premises/${encodeURIComponent(companyId)}`)
+                .then(response => {
+                    premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
+                    // Assuming response.data is a list of premise names or objects
+                    // If it's HTML for checkboxes like in change-form, this needs adjustment.
+                    // For service form, it's likely just premise names for a select.
+                    if (response.data && Array.isArray(response.data.premises)) { // Adjusted based on previous knowledge
+                         response.data.premises.forEach(p_name => { // Assuming p is just a name string
+                            premiseDropdown.innerHTML += `<option value="${p_name}">${p_name}</option>`;
+                        });
+                    } else if (response.data && Array.isArray(response.data)) { // Fallback
+                         response.data.forEach(p_name => {
+                            premiseDropdown.innerHTML += `<option value="${p_name}">${p_name}</option>`;
+                        });
+                    }
+                    premiseDropdown.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching premises:', error);
+                    premiseDropdown.innerHTML = '<option value="" selected disabled>Error loading</option>';
                 });
-              
-                document.querySelector("form").addEventListener("submit", function () {
-                  if (!signaturePad.isEmpty()) {
-                    document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
-                  }
-                });
-              
-                // Disable all inputs in a device block if 'Device Inactive' is checked
-                document.querySelectorAll('.device-inactive').forEach((checkbox) => {
-                  checkbox.addEventListener('change', function () {
-                    const card = this.closest('.device-card');
-                    const inputs = card.querySelectorAll('input, select, textarea');
-                    inputs.forEach(input => {
-                      if (input !== this && input.name.includes('inactive') === false) {
-                        input.disabled = this.checked;
-                      }
-                    });
-                  });
-                });
-              
-                // Company → Premises
-                document.getElementById('company').addEventListener('change', function () {
-                  let company = this.value;
-                  axios.get(`/get-premises/${company}`)
+        });
+    }
+
+    if (premiseDropdown) {
+        premiseDropdown.addEventListener('change', function () {
+            const premiseId = this.value;
+            if (!premiseId) return;
+
+            // Fetch PIC Contact
+            if (picContactInput) {
+                axios.get(`/get-pic/${encodeURIComponent(premiseId)}`) // Assuming this endpoint exists
                     .then(response => {
-                      let premiseDropdown = document.getElementById('premise');
-                      premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
-                      response.data.forEach(p => {
-                        premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`;
-                      });
-                      premiseDropdown.disabled = false;
+                        // Assuming response.data is an object like { name: "PIC Name", contact: "PIC Contact" }
+                        if (response.data && response.data.name && response.data.contact) {
+                             picContactInput.value = `${response.data.name} (${response.data.contact})`;
+                        } else {
+                            picContactInput.value = 'N/A';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching PIC contact:', error);
+                        picContactInput.value = 'Error';
                     });
-                });
-              
-                // Premise → PIC Contact + Change Notes
-                document.getElementById('premise').addEventListener('change', function () {
-                  const premise = this.value;
-                  axios.get(`/get-pic/${premise}`)
+            }
+
+            // Fetch Change Notes
+            if (changeNotesTextarea) {
+                 axios.get(`/get-change-notes/${encodeURIComponent(premiseId)}`) // Assuming this endpoint exists
                     .then(response => {
-                      const pic = response.data;
-                      document.getElementById("pic_contact").value = `${pic.name} (${pic.contact})`;
+                         // Assuming response.data is an object like { notes: "Some notes" }
+                        if (response.data && response.data.notes) {
+                            changeNotesTextarea.value = response.data.notes;
+                        } else {
+                            changeNotesTextarea.value = 'No specific change notes found.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching change notes:', error);
+                        changeNotesTextarea.value = 'Error loading notes.';
                     });
-              
-                  axios.get(`/get-change-notes/${premise}`)
-                    .then(response => {
-                      document.getElementById("change_notes").value = response.data.notes;
-                    });
-                });
-              
-              </script>
-              </body>
-              </html>
-              
+            }
+            // Potentially load device details for this premise here if required by the form logic
+            // For now, the device card is a template. If devices are dynamically loaded,
+            // that JS logic would go here, similar to new-customer.html.
+        });
+    }
+
+    // Script for dynamic year in service_year dropdown
+    const serviceYearDropdown = document.querySelector('select[name="service_year"]');
+    if (serviceYearDropdown) {
+        const currentActualYear = new Date().getFullYear();
+        let yearOptions = `<option value="" disabled ${serviceYearDropdown.value === "" ? "selected" : ""}>Year</option>`;
+        for (let y = currentActualYear - 1; y <= currentActualYear + 5; y++) {
+            yearOptions += `<option value="${y}" ${parseInt(serviceYearDropdown.value) === y ? "selected" : ""}>${y}</option>`;
+        }
+        serviceYearDropdown.innerHTML = yearOptions;
+    }
+    // Helper to apply common input class
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="time"], input[type="date"], select, textarea').forEach(el => {
+        if (!el.classList.contains('tailwind-input-class') && !el.id.includes('signature') && !el.classList.contains('device-inactive') && !el.type.includes('checkbox')) {
+             if(el.closest && !el.closest('.signature-pad-container')) { // don't style signature pad related things
+                el.classList.add(...tailwindInputClass.split(' '));
+                if (el.disabled || el.readOnly) {
+                    el.classList.add('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed', 'text-gray-500', 'dark:text-gray-400');
+                }
+             }
+        }
+    });
+
+
+});
+</script>
+{% endblock %}

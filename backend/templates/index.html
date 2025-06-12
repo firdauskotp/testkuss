@@ -1,104 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Login | Kuss Essentials</title>
-  <!-- Bootstrap CSS -->
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+{% extends "base.html" %}
 
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f8f9fa;
-    }
-    .login-container {
-      width: 100%;
-      max-width: 400px;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .form-group {
-      position: relative;
-      margin-bottom: 20px;
-    }
-    .form-group input {
-      padding-left: 2.5rem;
-    }
-    .form-group .input-icon {
-      position: absolute;
-      top: 50%;
-      left: 0.75rem;
-      transform: translateY(-50%);
-      color: #6c757d;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    header img {
-      max-width: 100%;
-      height: auto;
-      max-height: 200px; /* Limit height for larger screens */
-    }
-    .btn {
-      width: 100%;
-    }
-    .alert {
-      margin-bottom: 20px;
-    }
-  </style>
-</head>
-<body>
-  <!-- Login Container -->
-  <div class="login-container">
-    <header>
-      <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Kuss Essentials Logo" class="img-fluid rounded">
-    </header>
-    <h2 class="mb-4">Client Login</h2>
-    
-    <!-- Display Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }}" role="alert">
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-    <!-- Login Form -->
-    <form method="POST" action="{{ url_for('client_login') }}">
-      <div class="form-group">
-        <span class="input-icon">
-          <i class="fas fa-user"></i>
-        </span>
-        <input type="email" class="form-control" name="email" placeholder="Email" required>
-      </div>
-      <div class="form-group">
-        <span class="input-icon">
-          <i class="fas fa-lock"></i>
-        </span>
-        <input type="password" class="form-control" name="password" placeholder="Password" required>
-      </div>
-      <button type="submit" class="btn btn-primary">Login</button>
-    </form>
-  </div>
+{% block title %}Client Login{% endblock %}
 
-  <!-- Bootstrap JS and dependencies -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
-</body>
-</html>
+{% block page_title %}Client Login{% endblock %}
+
+{% block head_extra %}
+    {# Any client-login-page specific head content, if necessary, would go here #}
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-12rem)]"> {# Adjusted min-height if header/footer are taller #}
+    <div class="w-full max-w-md space-y-8">
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Kuss Essentials Logo" class="mx-auto h-20 w-auto rounded-md mb-4">
+            {# The page_title block in base.html already handles the "Client Login" title #}
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 text-sm rounded-md border
+                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                            {% if category == 'warning' %} bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-500/50 {% endif %}
+                            " role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
+            <form method="POST" action="{{ url_for('client_login') }}" class="space-y-6">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email address</label>
+                    <input type="email" name="email" id="email"
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
+                           placeholder="you@example.com" required>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <input type="password" name="password" id="password"
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
+                           placeholder="••••••••" required>
+                </div>
+
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-2.5 px-4 border border-transparent
+                                   rounded-md shadow-sm text-sm font-medium text-white
+                                   bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                        Sign in
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {# Original Bootstrap JS and Font Awesome JS links are removed. #}
+{% endblock %}

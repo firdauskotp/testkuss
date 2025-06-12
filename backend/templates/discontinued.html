@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Discontinued Clients/Services{% endblock %}
+{% block page_title %}Discontinued Clients/Services Information{% endblock %}
+
+{% block head_extra %}
+    {# Any page-specific CSS or JS links for this page #}
+{% endblock %}
+
+{% block content %}
+<div class="py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+
+        <div class="text-left mb-6">
+            <a href="{{ url_for('dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8 text-center">
+            <svg class="mx-auto h-12 w-12 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+            <h2 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Discontinued Clients/Services</h2>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">
+                This page is intended for managing or viewing information about discontinued clients or services.
+            </p>
+            <p class="mt-1 text-gray-600 dark:text-gray-400">
+                The specific content or functionality for this section is currently under development. Please check back later.
+            </p>
+            {#
+            <div class="mt-6 text-left">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Recently Discontinued:</h3>
+                <ul class="mt-2 list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400">
+                    <li>Client A - Service X (Reason: End of contract)</li>
+                    <li>Client B - Service Y (Reason: Non-payment)</li>
+                </ul>
+            </div>
+            #}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // No specific JS for this placeholder page yet
+</script>
+{% endblock %}

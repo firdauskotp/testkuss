@@ -1,297 +1,225 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EO / Model List</title>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-5">
-        <div class="container mt-5 position-relative">
-            <!-- Button Positioned Top Right -->
-            <p>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
-            </p>
-    
-            <h1>EO List - Data</h1>
-        </div>
-    
-        <!-- Filter Form -->
-        <form class="mb-4" method="get" action="/eo-list">
-            <div class="accordion" id="responsiveAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="formHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#formContent" aria-expanded="false" aria-controls="formContent">
+{% extends "base.html" %}
 
-                            Filter
-                        </button>
-                    </h2>
-                    <div id="formContent" class="accordion-collapse collapse " aria-labelledby="formHeader" data-bs-parent="#responsiveAccordion">
-                        <div class="accordion-body">
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="month" class="form-label">Month (Fill in the year too)</label>
-                    <input type="text" id="month" name="month" class="form-control" placeholder="10">
+{% block title %}EO & Model Lists{% endblock %}
+{% block page_title %}Essential Oil & Device Model Lists{% endblock %}
+
+{% block head_extra %}
+    {# Any page-specific CSS or JS links for this page #}
+{% endblock %}
+
+{% block content %}
+<div class="py-8 px-4 sm:px-6 lg:px-8 space-y-12">
+
+    <div class="text-left mb-6">
+        <a href="{{ url_for('dashboard') }}"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Section 1: EO List - Data -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">EO List - Data</h2>
+        <button id="eoFilterToggleButton" class="w-full flex justify-between items-center py-3 px-4 text-left text-lg font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <span>Show/Hide Filters</span><svg id="eoFilterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+        <div id="eoFilterFormContainer" class="hidden mb-6">
+            <form method="get" action="{{ url_for('eo_list') }}" class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4">
+                    {% for name, label, placeholder, type in [
+                        ('month', 'Month', '10', 'text'),
+                        ('year', 'Year', '2024', 'number'),
+                        ('EO', 'EO Name', 'Black Opium', 'text'),
+                        ('Volume', 'Volume', '10', 'number')
+                    ] %}
+                    <div>
+                        <label for="eo_filter_{{ name }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ label }}</label>
+                        <input type="{{ type }}" id="eo_filter_{{ name }}" name="{{ name }}" value="{{ request.args.get(name, '') }}" placeholder="{{ placeholder }}" class="tailwind-input-class">
+                    </div>
+                    {% endfor %}
                 </div>
-                <div class="col-md-3">
-                    <label for="year" class="form-label">Year (Fill in the month too)</label>
-                    <input type="number" id="year" name="year" class="form-control" placeholder="2024">
-                </div>
-                <div class="col-md-3">
-                    <label for="EO" class="form-label">EO</label>
-                    <input type="text" id="EO" name="EO" class="form-control" placeholder="Black Opium">
-                </div>
-                <div class="col-md-3">
-                    <label for="Volume" class="form-label">Volume</label>
-                    <input type="number" id="Volume" name="Volume" class="form-control" placeholder="10">
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+                <div class="pt-4 flex justify-end"><button type="submit" class="tailwind-button-blue">Filter EO List</button></div>
+            </form>
         </div>
-    </div>
-    </div>
-    </div>
-        </form>
-    
-        <!-- Data Table -->
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <thead class="table-dark">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th></th>
-                        <th>EO</th>
-                        <th>Volume</th>
-                        <th>Month</th>
-                        <th>Year</th>
+                        {% for header in ['', 'EO', 'Volume', 'Month', 'Year'] %}
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">{{ header }}</th>
+                        {% endfor %}
                     </tr>
                 </thead>
-                <tbody>
-                    {% for user in data %}
-                    <tr>
-                      <td>{{ user['EO1'] }}</td>
-    
-                        <td>{{ user['EO2'] }}</td>
-                        <td>{{ user['Volume'] }}</td>
-                        <td>{{ user['month'] }}</td>
-                        <td>{{ user['year'] }}</td>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {% for row in data %} {# Assuming 'data' is for EO List #}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['EO1'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['EO2'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['Volume'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['month'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['year'] }}</td>
                     </tr>
-                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">No EO data available.</td></tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
-    
-        <!-- Pagination Controls -->
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center mt-4">
-                <!-- Previous Button -->
-                <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}" 
-                       aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-        
-                <!-- First Page and Ellipsis -->
-                {% if page > 3 %}
-                <li class="page-item">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}">1</a>
-                </li>
-                <li class="page-item disabled d-none d-sm-inline">
-<span class="page-link">...</span>                </li>
-                {% endif %}
-
-                <!-- Dynamic Page Numbers -->
+        {% if data and total_pages > 1 %}
+        <nav aria-label="Page navigation" class="mt-6 flex justify-center">
+            <ul class="inline-flex items-center -space-x-px">
+                <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}" class="tailwind-pagination-button rounded-l-lg {% if page == 1 %}tailwind-pagination-disabled{% endif %}">&laquo; Prev</a></li>
                 {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
-                <li class="page-item {% if p == page %}active{% endif %} d-none d-sm-inline">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}">
-                        {{ p }}
-                    </a>
-                </li>
+                <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}" class="tailwind-pagination-button {% if p == page %}tailwind-pagination-active{% endif %}">{{p}}</a></li>
                 {% endfor %}
-
-                <!-- Ellipsis and Last Page -->
-                {% if page < total_pages - 3 %}
-                <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', total_pages) }}">
-                        {{ total_pages }}
-                    </a>
-                </li>
-                {% endif %}
-        
-                <!-- Next Button -->
-                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}" 
-                       aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
+                <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}" class="tailwind-pagination-button rounded-r-lg {% if page == total_pages %}tailwind-pagination-disabled{% endif %}">Next &raquo;</a></li>
             </ul>
         </nav>
+        {% endif %}
     </div>
 
-    <div class="container mt-5">
-        <div class="container mt-5 position-relative">
-    
-            <h1>Model List - Data</h1>
+    <!-- Section 2: Model List - Data -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Model List - Data</h2>
+        <button id="modelFilterToggleButton" class="w-full flex justify-between items-center py-3 px-4 text-left text-lg font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <span>Show/Hide Filters</span><svg id="modelFilterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        </button>
+        <div id="modelFilterFormContainer" class="hidden mb-6">
+            <form method="get" action="{{ url_for('eo_list') }}" class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                    {% for name, label, placeholder, type in [
+                        ('model_month', 'Month', '10', 'text'),
+                        ('model_year', 'Year', '2024', 'number'),
+                        ('Quantity', 'Quantity', '10', 'number'),
+                        ('total_batteries', 'Total Batteries', '10', 'number'),
+                        ('model_type', 'Model', 'ASH', 'text'),
+                        ('battery_type', 'Battery Type', 'Panasonic', 'text'),
+                        ('Remark', 'Remark', 'Every Month', 'text')
+                    ] %}
+                    <div>
+                        <label for="model_filter_{{ name }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ label }}</label>
+                        <input type="{{ type }}" id="model_filter_{{ name }}" name="{{ name }}" value="{{ request.args.get(name, '') }}" placeholder="{{ placeholder }}" class="tailwind-input-class">
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="pt-4 flex justify-end"><button type="submit" class="tailwind-button-blue">Filter Model List</button></div>
+            </form>
         </div>
-    
-        <!-- Filter Form -->
-        <form class="mb-4" method="get" action="/eo-list">
-            <div class="accordion" id="responsiveAccordion2">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="formHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#formContent2" aria-expanded="false" aria-controls="formContent2">
-
-                            Filter
-                        </button>
-                    </h2>
-                    <div id="formContent2" class="accordion-collapse collapse " aria-labelledby="formHeader" data-bs-parent="#responsiveAccordion2">
-                        <div class="accordion-body">
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="model_month" class="form-label">Month (Fill in the year too)</label>
-                    <input type="text" id="model_month" name="model_month" class="form-control" placeholder="10">
-                </div>
-                <div class="col-md-3">
-                    <label for="model_year" class="form-label">Year (Fill in the month too)</label>
-                    <input type="number" id="model_year" name="model_year" class="form-control" placeholder="2024">
-                </div>
-                <div class="col-md-3">
-                    <label for="Quantity" class="form-label">Quantity</label>
-                    <input type="number" id="Quantity" name="Quantity" class="form-control" placeholder="10">
-                </div>
-                <div class="col-md-3">
-                    <label for="total_batteries" class="form-label">Total Batteries</label>
-                    <input type="number" id="total_batteries" name="total_batteries" class="form-control" placeholder="10">
-                </div>
-                
-            </div>
-
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="model_type" class="form-label">Model</label>
-                    <input type="text" id="model_type" name="model_type" class="form-control" placeholder="ASH">
-                </div>
-                <div class="col-md-3">
-                    <label for="battery_type" class="form-label">Battery Type</label>
-                    <input type="text" id="battery_type" name="battery_type" class="form-control" placeholder="Panasonic">
-                </div>
-                <div class="col-md-3">
-                    <label for="Remark" class="form-label">Remark</label>
-                    <input type="text" id="Remark" name="Remark" class="form-control" placeholder="Every Month">
-                </div>
-                
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Filter</button>
-        </div>
-    </div>
-    </div>
-    </div>
-        </form>
-    
-        <!-- Data Table -->
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <thead class="table-dark">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th></th>
-                        <th>Model</th>
-                        <th>Quantity</th>
-                        <th>Total Batteries</th>
-                        <th>Battery Type</th>
-                        <th>Remark</th>
-                        <th>Month</th>
-                        <th>Year</th>
+                        {% for header in ['', 'Model', 'Quantity', 'Total Batteries', 'Battery Type', 'Remark', 'Month', 'Year'] %}
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">{{ header }}</th>
+                        {% endfor %}
                     </tr>
                 </thead>
-                <tbody>
-                    {% for user in model_data %}
-                    <tr>
-                      <td>{{ user['model1'] }}</td>
-    
-                        <td>{{ user['model2'] }}</td>
-                        <td>{{ user['quantity'] }}</td>
-                        <td>{{ user['total_batteries'] }}</td>
-                        <td>{{ user['battery_type'] }}</td>
-                        <td>{{ user['remark'] }}</td>
-                        <td>{{ user['month'] }}</td>
-                        <td>{{ user['year'] }}</td>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {% for row in model_data %} {# Assuming 'model_data' is for Model List #}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['model1'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['model2'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['quantity'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['total_batteries'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['battery_type'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['remark'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['month'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row['year'] }}</td>
                     </tr>
-                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">No model data available.</td></tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
-    
-        
-
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center mt-4">
-                <!-- Previous Button -->
-                <li class="page-item {% if model_page == 1 %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', model_page - 1) }}" 
-                       aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-        
-                <!-- First Page and Ellipsis -->
-                {% if model_page > 3 %}
-                <li class="page-item">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', 1) }}">1</a>
-                </li>
-                <li class="page-item disabled d-none d-sm-inline">
-<span class="page-link">...</span>                </li>
-                {% endif %}
-
-                <!-- Dynamic Page Numbers -->
+        {% if model_data and total_model_pages > 1 %}
+        <nav aria-label="Page navigation" class="mt-6 flex justify-center">
+            <ul class="inline-flex items-center -space-x-px">
+                <li><a href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', model_page - 1) }}" class="tailwind-pagination-button rounded-l-lg {% if model_page == 1 %}tailwind-pagination-disabled{% endif %}">&laquo; Prev</a></li>
                 {% for p in range(max(1, model_page - 2), min(total_model_pages + 1, model_page + 3)) %}
-                <li class="page-item {% if p == model_page %}active{% endif %} d-none d-sm-inline">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', p) }}">
-                        {{ p }}
-                    </a>
-                </li>
+                <li><a href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', p) }}" class="tailwind-pagination-button {% if p == model_page %}tailwind-pagination-active{% endif %}">{{p}}</a></li>
                 {% endfor %}
-
-                <!-- Ellipsis and Last Page -->
-                {% if model_page < total_model_pages - 3 %}
-                <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', total_model_pages) }}">
-                        {{ total_model_pages }}
-                    </a>
-                </li>
-                {% endif %}
-        
-                <!-- Next Button -->
-                <li class="page-item {% if model_page == total_model_pages %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', model_page + 1) }}" 
-                       aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
+                <li><a href="{{ pagination_base_url_model }}{{ query_params_model | to_querystring | update_querystring('model_page', model_page + 1) }}" class="tailwind-pagination-button rounded-r-lg {% if model_page == total_model_pages %}tailwind-pagination-disabled{% endif %}">Next &raquo;</a></li>
             </ul>
         </nav>
+        {% endif %}
     </div>
 
-    
+</div>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% block scripts %}
+<script>
+    // Common Tailwind classes (already defined in base.html or can be redefined if needed)
+    const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
+    const tailwindButtonBlue = "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900";
+    const tailwindPaginationButton = "py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white";
+    const tailwindPaginationActive = "text-blue-600 bg-blue-50 border-blue-300 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white";
+    const tailwindPaginationDisabled = "opacity-50 cursor-not-allowed";
+
+    document.addEventListener('DOMContentLoaded', function () {
+        function setupFilterToggle(buttonId, formContainerId, iconId) {
+            const toggleButton = document.getElementById(buttonId);
+            const formContainer = document.getElementById(formContainerId);
+            const toggleIcon = document.getElementById(iconId);
+
+            if (toggleButton && formContainer && toggleIcon) {
+                 // Set initial state based on whether any filters are active (optional)
+                let params = new URLSearchParams(window.location.search);
+                let filterActive = false;
+                formContainer.querySelectorAll('input, select').forEach(input => {
+                    // Check if the input's name corresponds to a query parameter for its specific section
+                    // This requires knowing which query params belong to which filter form.
+                    // For simplicity, just check if ANY filter is active for now to open all.
+                    // A more refined approach would be to pass section-specific query params to check.
+                    if (params.has(input.name) && params.get(input.name) !== '') {
+                        filterActive = true;
+                    }
+                });
+                // If any filter is active on the page, open this specific filter section.
+                // This is a broad check; specific check would be better if params are unique per form.
+                if (filterActive && formContainer.querySelector(`input[name='${Array.from(params.keys())[0]}']`)) { // A bit of a heuristic
+                    formContainer.classList.remove('hidden');
+                    toggleIcon.classList.add('rotate-180');
+                }
+
+
+                toggleButton.addEventListener('click', () => {
+                    formContainer.classList.toggle('hidden');
+                    toggleIcon.classList.toggle('rotate-180');
+                });
+            }
+        }
+
+        setupFilterToggle('eoFilterToggleButton', 'eoFilterFormContainer', 'eoFilterToggleIcon');
+        setupFilterToggle('modelFilterToggleButton', 'modelFilterFormContainer', 'modelFilterToggleIcon');
+
+        document.querySelectorAll('form input, form select').forEach(el => {
+             if (!el.classList.contains('tailwind-input-class') && el.type !== 'submit' && el.type !== 'button') {
+                el.classList.add(...tailwindInputClass.split(' '));
+            }
+        });
+        document.querySelectorAll('form button[type="submit"]').forEach(el => {
+            if (!el.classList.contains('tailwind-button-blue')) {
+                el.classList.add(...tailwindButtonBlue.split(' '));
+            }
+        });
+
+        document.querySelectorAll('nav[aria-label="Page navigation"] ul.pagination a, nav[aria-label="Page navigation"] ul.pagination span').forEach(el => {
+            el.classList.remove('page-link');
+            if(el.parentNode.classList.contains('disabled')) {
+                 el.classList.add(...tailwindPaginationDisabled.split(' '));
+            }
+            if(el.parentNode.classList.contains('active')) {
+                 el.classList.add(...tailwindPaginationActive.split(' '));
+            }
+            el.classList.add(...tailwindPaginationButton.split(' '));
+             if (el.innerHTML.includes('&laquo;')) { // Previous
+                el.classList.add('rounded-l-lg');
+            } else if (el.innerHTML.includes('&raquo;')) { // Next
+                el.classList.add('rounded-r-lg');
+            }
+        });
+    });
+</script>
+{% endblock %}

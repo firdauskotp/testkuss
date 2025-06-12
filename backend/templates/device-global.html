@@ -1,182 +1,300 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+{% extends "base.html" %}
 
-  <title>Global Device List</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-</head>
-<body>
-    <div class="container mt-5 position-relative">
-        <!-- Button Positioned Top Right -->
-        <p>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
-        </p>
+{% block title %}Global Device Model List{% endblock %}
+{% block page_title %}Manage Global Device Model List{% endblock %}
 
-        <h1>Devices Global List</h1>
+{% block head_extra %}
+    {# <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> #}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #eef2ff; /* Tailwind indigo-50 */
+        }
+        .sortable-drag {
+            /* Classes for the item being dragged - if needed */
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="py-8 px-4 sm:px-6 lg:px-8 space-y-8">
+
+    <div class="flex justify-start mb-6">
+        <a href="{{ url_for('dashboard') }}"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+            &larr; Back to Dashboard
+        </a>
     </div>
 
-<div class="container mt-5">
-  
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <div class="mb-4 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/30">
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Legend:</h4>
+            <div class="flex items-center space-x-4 text-xs text-gray-600 dark:text-gray-400">
+                <span><span class="text-green-500 font-bold text-lg">+</span> Add Below</span>
+                <span><span class="text-red-500 font-bold text-lg">🗑</span> Delete</span>
+                <span><span class="text-gray-500 font-bold text-lg">↕️</span> Drag to Reorder</span>
+            </div>
+        </div>
 
-  <div class="mb-3">
-    <!-- <input type="text" id="newModel1" placeholder="New Model1" class="form-control d-inline w-50">
-    <button class="btn btn-success" onclick="addModel()">Add</button> -->
-    <strong>Legend:</strong><br>
-    <i class="bi bi-plus text-success"></i> Add Below<br>
-    <i class="bi bi-trash text-danger"></i> Delete
-  </div>
+        {# The input for newModel1 was removed from original prompt, but addBelowModel implies it, or one can edit new rows #}
+        {# For simplicity, new rows are added blank and then edited. #}
 
-  <ul id="modelList" class="list-group mb-3">
-    {% for model in models %}
-      <li class="list-group-item d-flex justify-content-between align-items-center" data-id="{{ model._id }}">
-        <input type="text" class="form-control me-2 model1-name" value="{{ model.model1 }}">
-        <div class="btn-group">
-            <button class="btn btn-outline-success btn-sm" onclick="addBelowModel(this)" title="Add Below (➕)">
-              <i class="bi bi-plus"></i>
-            </button><button class="btn btn-outline-danger btn-sm" onclick="deleteModel(this)" title="Delete (🗑)">
-              <i class="bi bi-trash"></i>
-            </button>
-            
-          </div>
-        
-      </li>
-    {% endfor %}
-  </ul>
+        <ul id="modelList" class="space-y-2 mb-6">
+            {% for model in models %}
+            <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" data-id="{{ model._id }}">
+                <span class="text-gray-500 dark:text-gray-400 cursor-grab pr-2">↕️</span>
+                <input type="text" class="flex-grow px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-50 model1-name" value="{{ model.model1 }}">
+                <div class="ml-3 flex space-x-2">
+                    <button type="button" class="p-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" onclick="addBelowModel(this)" title="Add Below">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <button type="button" class="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300" onclick="deleteModel(this)" title="Delete">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="flex justify-between items-center">
+            <button type="button" class="tailwind-button-green" onclick="addNewModelEntry()">+ Add New Model Entry</button>
+            <button type="button" class="tailwind-button-blue" onclick="confirmSave()">Save All Changes</button>
+        </div>
 
-  <button class="btn btn-primary" onclick="confirmSave()">Save Changes</button>
-
-
-  <h5> Model Dropdown (Simulated View)</h5>
-  <p class="text-muted">*This dropdown shows the current saved order from the database. Changes appear here only after you press <strong>"Save Changes"</strong>.</p>
-
-  <select class="form-select mb-3" disabled>
-    {% for model in models %}
-      <option>{{ model.model1 }}</option>
-    {% endfor %}
-  </select>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title">Confirm Save</h5></div>
-    <div class="modal-body">Save all changes?</div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-      <button class="btn btn-primary" onclick="saveAllChanges()">Save</button>
+        <div class="mt-8 pt-6 border-t border-gray-300 dark:border-gray-700">
+            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Simulated Dropdown View (Current Saved Order)</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">*This dropdown shows the current saved order from the database. Changes made above appear here only after you press "Save All Changes" and the page reloads.</p>
+            <select class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed" disabled>
+                <option value="" disabled selected>Current Models in Order</option>
+                {% for model in models %}
+                <option>{{ model.model1 }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-  </div></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Confirmation Modal -->
+<div id="confirmSaveModal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+    <div class="relative p-4 w-full max-w-md h-full md:h-auto mx-auto flex items-center">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full">
+            <div class="flex justify-between items-center p-5 border-b border-gray-300 dark:border-gray-700 rounded-t">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Confirm Save</h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="confirmSaveModal">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+            <div class="p-6"><p class="text-base leading-relaxed text-gray-600 dark:text-gray-400">Are you sure you want to save all changes to the device model list?</p></div>
+            <div class="flex items-center justify-end p-6 space-x-2 border-t border-gray-300 dark:border-gray-700 rounded-b">
+                <button data-modal-hide="confirmSaveModal" type="button" class="tailwind-button-gray">Cancel</button>
+                <button id="executeSaveBtn" type="button" class="tailwind-button-green">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-  let added = [];
-  let deleted = [];
+    const tailwindInputClass = "flex-grow px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-50";
+    const tailwindButtonBlue = "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900";
+    const tailwindButtonGreen = "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 dark:focus:ring-offset-gray-900";
+    const tailwindButtonGray = "py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900";
 
-  new Sortable(modelList, { animation: 150 });
+    let addedToSave = []; // Use a different name to avoid conflict if 'added' is global from other scripts
+    let deletedToSave = []; // Same here for 'deleted'
 
-  function addModel() {
-    const name = document.getElementById('newModel1').value.trim();
-    if (!name) return;
+    document.addEventListener('DOMContentLoaded', function() {
+        const modelListEl = document.getElementById('modelList');
+        if (modelListEl) {
+            new Sortable(modelListEl, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                handle: '.cursor-grab' // Use a specific handle if you add one
+            });
+        }
 
-    const li = document.createElement('li');
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
-    li.setAttribute('data-id', 'new-' + Date.now());
-    li.innerHTML = `
-      <input type="text" class="form-control me-2 model1-name" value="${name}">
-      <div class="btn-group">
-        <button class="btn btn-danger btn-sm" onclick="deleteModel(this)">Delete</button>
-        <button class="btn btn-secondary btn-sm" onclick="addBelowModel(this)">Add Below</button>
-      </div>
-    `;
-    document.getElementById('modelList').appendChild(li);
-    added.push({ model1: name });
+        // Apply common classes to inputs
+        document.querySelectorAll('input.model1-name').forEach(el => el.classList.add(...tailwindInputClass.split(' ')));
+        document.querySelectorAll('button.tailwind-button-blue, button.tailwind-button-green, button.tailwind-button-gray').forEach(el => { /* Already styled */ });
+        document.querySelectorAll('select.tailwind-input-class').forEach(el => el.classList.add(...tailwindInputClass.split(' ')));
 
-    document.getElementById('newModel1').value = '';
-  }
 
-  function addBelowModel(button) {
-    const currentLi = button.closest('li');
-    const newLi = document.createElement('li');
-    newLi.className = "list-group-item d-flex justify-content-between align-items-center";
-    newLi.setAttribute('data-id', 'new-' + Date.now());
-    newLi.innerHTML = `
-      <input type="text" class="form-control me-2 model1-name" value="">
-      <div class="btn-group">
-        <button class="btn btn-outline-success btn-sm" onclick="addBelowModel(this)" title="Add Below (➕)">
-              <i class="bi bi-plus"></i>
-            </button><button class="btn btn-outline-danger btn-sm" onclick="deleteModel(this)" title="Delete (🗑)">
-              <i class="bi bi-trash"></i>
-            </button>
-      </div>
-    `;
-    currentLi.after(newLi);
-  }
+        // Modal helpers
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+        document.querySelectorAll('[data-modal-hide]').forEach(button => {
+            button.addEventListener('click', () => {
+                const modalId = button.getAttribute('data-modal-hide');
+                hideModal(modalId);
+            });
+        });
 
-  function deleteModel(btn) {
-    const li = btn.closest('li');
-    const id = li.getAttribute('data-id');
-    if (!id.startsWith('new-')) {
-      deleted.push(id);
-    }
-    li.remove();
-  }
-
-  function confirmSave() {
-    new bootstrap.Modal(document.getElementById('confirmModal')).show();
-  }
-
-  function saveAllChanges() {
-    const lis = document.querySelectorAll('#modelList li');
-    const edited = [];
-    const order = [];
-    const seenNames = new Set();
-    let duplicate = false;
-
-    lis.forEach((li, index) => {
-      const id = li.getAttribute('data-id');
-      const name = li.querySelector('.model1-name').value.trim();
-
-      if (seenNames.has(name.toLowerCase())) {
-        duplicate = true;
-      }
-      seenNames.add(name.toLowerCase());
-
-      if (id.startsWith('new-')) {
-        added.push({ model1: name });
-      } else {
-        edited.push({ _id: id, model1: name });
-        order.push(id);
-      }
+        const executeSaveBtn = document.getElementById('executeSaveBtn');
+        if(executeSaveBtn) {
+            executeSaveBtn.addEventListener('click', saveAllChanges);
+        }
     });
 
-    if (duplicate) {
-      alert("Duplicate Model1 values found.");
-      return;
+    function createModelListItem(id, value = "") {
+        const li = document.createElement('li');
+        li.className = "flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm";
+        li.setAttribute('data-id', id);
+        li.innerHTML = `
+            <span class="text-gray-500 dark:text-gray-400 cursor-grab pr-2">↕️</span>
+            <input type="text" class="flex-grow px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-50 model1-name" value="${value}">
+            <div class="ml-3 flex space-x-2">
+                <button type="button" class="p-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" onclick="addBelowModel(this)" title="Add Below">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                </button>
+                <button type="button" class="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300" onclick="deleteModel(this)" title="Delete">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+        `;
+        return li;
     }
-    document.querySelector('button.btn-primary').innerHTML = 'Saving...';
-document.body.style.cursor = 'wait';
 
-    fetch('/save_model1_changes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ added, edited, deleted, order })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'success') {
-        alert('Changes saved!');
-        location.reload();
-      } else {
-        alert(data.message || 'Error saving.');
-      }
-    });
-    document.body.style.cursor = 'default';
+    function addNewModelEntry() {
+        const modelListEl = document.getElementById('modelList');
+        const newLi = createModelListItem('new-' + Date.now());
+        modelListEl.appendChild(newLi);
+    }
 
-  }
+    function addBelowModel(button) {
+        const currentLi = button.closest('li');
+        const newLi = createModelListItem('new-' + Date.now());
+        currentLi.after(newLi);
+    }
+
+    function deleteModel(btn) {
+        const li = btn.closest('li');
+        const id = li.getAttribute('data-id');
+        if (!id.startsWith('new-')) {
+            deletedToSave.push(id);
+        }
+        // Remove from addedToSave if it was a newly added item that's now deleted
+        addedToSave = addedToSave.filter(item => `new-${item.tempId}` !== id && item.model1 !== li.querySelector('.model1-name').value);
+        li.remove();
+    }
+
+    function confirmSave() {
+        const modal = document.getElementById('confirmSaveModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function saveAllChanges() {
+        const lis = document.querySelectorAll('#modelList li');
+        const editedToSave = [];
+        const orderToSave = [];
+        const currentAddedToSave = []; // For items that are new in this session
+        const seenNames = new Set();
+        let duplicateFound = false;
+        let savingButton = document.getElementById('executeSaveBtn');
+
+        lis.forEach((li) => {
+            const id = li.getAttribute('data-id');
+            const nameInput = li.querySelector('.model1-name');
+            const name = nameInput.value.trim();
+
+            if (!name) { // Prevent saving empty names
+                nameInput.classList.add('border-red-500');
+                nameInput.focus();
+                alert("Model name cannot be empty.");
+                duplicateFound = true; // Use duplicateFound to halt saving
+                return;
+            }
+            nameInput.classList.remove('border-red-500');
+
+            if (seenNames.has(name.toLowerCase())) {
+                duplicateFound = true;
+                nameInput.classList.add('border-red-500'); // Highlight duplicate
+            } else {
+                nameInput.classList.remove('border-red-500');
+            }
+            seenNames.add(name.toLowerCase());
+
+            if (id.startsWith('new-')) {
+                // Check if it's already in addedToSave from a previous add (e.g. if user clicks save multiple times without reload)
+                // This simple check won't handle edits to newly added items perfectly without more complex temp ID tracking
+                if (!addedToSave.find(item => item.model1 === name && item.tempId === id)) {
+                     currentAddedToSave.push({ model1: name, tempId: id }); // Track with tempId for this session
+                }
+            } else {
+                editedToSave.push({ _id: id, model1: name });
+            }
+            orderToSave.push(id.startsWith('new-') ? name : id); // For new items, order might be based on name until saved
+        });
+
+        if (duplicateFound) {
+            alert("Duplicate or empty model names found. Please correct them.");
+            return;
+        }
+
+        if(savingButton) savingButton.innerHTML = 'Saving...';
+        document.body.style.cursor = 'wait';
+
+        // Filter addedToSave to only include items still in the list
+        const currentListNames = Array.from(lis).map(li => li.querySelector('.model1-name').value.trim().toLowerCase());
+        addedToSave = addedToSave.filter(item => currentListNames.includes(item.model1.toLowerCase()));
+        // Add items from currentAddedToSave ensuring no duplicates by name if logic allows
+        currentAddedToSave.forEach(newItem => {
+            if (!addedToSave.some(existing => existing.model1.toLowerCase() === newItem.model1.toLowerCase())) {
+                addedToSave.push({model1: newItem.model1}); // Send only name for new items
+            }
+        });
+
+
+        // Final order based on current DOM structure
+        const finalOrder = Array.from(document.querySelectorAll('#modelList li')).map(li => {
+            const id = li.getAttribute('data-id');
+            return id.startsWith('new-') ? li.querySelector('.model1-name').value.trim() : id;
+        });
+
+
+        fetch("{{ url_for('save_model1_changes') }}", { // Assuming this is the correct endpoint
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ added: addedToSave, edited: editedToSave, deleted: deletedToSave, order: finalOrder })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Changes saved successfully!');
+                addedToSave = []; // Reset after successful save
+                deletedToSave = [];
+                location.reload();
+            } else {
+                alert('Error saving changes: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving changes:', error);
+            alert('An error occurred while saving.');
+        })
+        .finally(() => {
+            if(savingButton) savingButton.innerHTML = 'Save Changes';
+            document.body.style.cursor = 'default';
+            hideModal('confirmSaveModal');
+        });
+    }
+
 </script>
-</body>
-</html>
+{% endblock %}

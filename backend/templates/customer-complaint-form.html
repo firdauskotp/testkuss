@@ -1,133 +1,136 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Case Form</title>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+{% extends "base.html" %}
 
-  <!-- Bootstrap CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .logout-btn {
-      background-color: #dc3545;
-      color: white !important;
-      border: none;
+{% block title %}New Support Case{% endblock %}
+{% block page_title %}Create a New Support Case{% endblock %}
+
+{% block head_extra %}
+    {# Custom CSS for this page, if any, would go here #}
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-12rem)]">
+    <div class="w-full max-w-2xl space-y-8">
+        {# Flash messages can be added here if this form uses them server-side #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 text-sm rounded-md border
+                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                            " role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
+            <form id="caseForm" method="POST" action="{{ url_for('customer_form') }}" enctype="multipart/form-data" class="space-y-6">
+                <div>
+                    <label for="premise_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Name</label>
+                    <input type="text" id="premise_name" name="premise_name" required
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                </div>
+
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location (e.g., 1st Floor, Toilet)</label>
+                    <input type="text" id="location" name="location" required
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                </div>
+
+                <div>
+                    <label for="image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload Device Image</label>
+                    <input type="file" id="image" name="image" accept="image/*"
+                           class="block w-full text-sm text-gray-900 dark:text-gray-50 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-gray-600 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-gray-500">
+                    <div id="imageError" class="hidden mt-1 text-sm text-red-600 dark:text-red-400">Please upload an image of your device.</div>
+                </div>
+
+                <div>
+                    <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                    <input type="text" id="model" name="model" required
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issues (Select at least one):</label>
+                    <div id="checkboxError" class="hidden mb-2 text-sm text-red-600 dark:text-red-400">Please select at least one issue.</div>
+                    {% for issue_val, issue_text in [
+                        ('Weak Scent', 'Weak Scent'),
+                        ('No Oil', 'No Oil'),
+                        ('No Mist', 'No Mist'),
+                        ('Weak Batteries', 'Weak Batteries'),
+                        ('Faulty Power Adapter', 'Faulty Power Adapter')
+                    ] %}
+                    <div class="flex items-center">
+                        <input id="{{ issue_val.lower().replace(' ', '_') }}" name="issues" value="{{ issue_val }}" type="checkbox"
+                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                        <label for="{{ issue_val.lower().replace(' ', '_') }}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ issue_text }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    <label for="remarks" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks (if any)</label>
+                    <textarea id="remarks" name="remarks" rows="3"
+                              class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                     rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                     focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                     sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"></textarea>
+                </div>
+
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-2.5 px-4 border border-transparent
+                                   rounded-md shadow-sm text-sm font-medium text-white
+                                   bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                        Submit Case
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('caseForm').addEventListener('submit', function(event) {
+    const checkboxes = document.querySelectorAll('input[name="issues"]:checked');
+    const checkboxError = document.getElementById('checkboxError');
+    let isValid = true;
+
+    if (checkboxes.length === 0) {
+      checkboxError.classList.remove('hidden'); // Show error message
+      isValid = false;
+    } else {
+      checkboxError.classList.add('hidden'); // Hide error message
     }
-  </style>
-</head>
-<body>
-  <div class="container mt-5">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-        <div class="container">
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-              <li class="nav-item">
-                <a class="nav-link logout-btn" href="/logout">Logout</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-    <h2 class="text-center mb-4">Create a New Case</h2>
-    
-    <form id="caseForm" method="POST" action="/customer-help" enctype="multipart/form-data">
-      <!-- Premise Name -->
-      <div class="form-group">
-        <label for="premise_name">Premise Name:</label>
-        <input type="text" class="form-control" id="premise_name" name="premise_name" required>
-      </div>
 
-      <!-- Location -->
-      <div class="form-group">
-        <label for="location">Device Location (1st Floor, Toilet, etc):</label>
-        <input type="text" class="form-control" id="location" name="location" required>
-      </div>
+    const imageInput = document.getElementById('image');
+    const imageError = document.getElementById('imageError');
 
-      <div class="form-group">
-      <div id="imageError" class="error-message d-none" style="color:red;">Please upload an image of your device.</div>
+    if (!imageInput.files.length) {
+      imageError.classList.remove('hidden'); // Show error message
+      isValid = false;
+    } else {
+      imageError.classList.add('hidden'); // Hide error message
+    }
 
-        <label for="image">Upload Device Image:</label>
-        <input type="file" class="form-control-file" id="image" name="image" accept="image/*">
-      </div>
-
-
-      <!-- Model -->
-      <div class="form-group">
-        <label for="model">Model:</label>
-        <input type="text" class="form-control" id="model" name="model" required>
-      </div>
-
-      <!-- Issues -->
-      <div class="form-group">
-      <div id="checkboxError" class="error-message d-none" style="color:red;">Please select at least one issue.</div>
-
-        <label for="issues">Issues:</label>
-        <div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="weak_scent" name="issues" value="Weak Scent">
-            <label class="form-check-label" for="weak_scent">Weak Scent</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="no_oil" name="issues" value="No Oil">
-            <label class="form-check-label" for="no_oil">No Oil</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="no_mist" name="issues" value="No Mist">
-            <label class="form-check-label" for="no_mist">No Mist</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="weak_batteries" name="issues" value="Weak Batteries">
-            <label class="form-check-label" for="weak_batteries">Weak Batteries</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="faulty_power_adapter" name="issues" value="Faulty Power Adapter">
-            <label class="form-check-label" for="faulty_power_adapter">Faulty Power Adapter</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Remarks -->
-      <div class="form-group">
-        <label for="remarks">Remarks (if any):</label>
-        <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" class="btn btn-primary btn-block">Submit Case</button>
-    </form>
-  </div>
-
-  <!-- Bootstrap JS and dependencies -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script>
-    document.getElementById('caseForm').addEventListener('submit', function(event) {
-      const checkboxes = document.querySelectorAll('input[name="issues"]:checked');
-      const errorMessage = document.getElementById('checkboxError');
-
-      if (checkboxes.length === 0) {
-        errorMessage.classList.remove('d-none'); // Show error message
-        event.preventDefault(); // Prevent form submission
-      } else {
-        errorMessage.classList.add('d-none'); // Hide error message
-      }
-
-      const imageInput = document.getElementById('image');
-      const imageError = document.getElementById('imageError');
-
-      if (!imageInput.files.length) {
-        imageError.classList.remove('d-none'); // Show error message
-        event.preventDefault(); // Prevent form submission
-      } else {
-        imageError.classList.add('d-none'); // Hide error message
-      }
-
-    });
-  </script>
-</body>
-</html>
+    if (!isValid) {
+      event.preventDefault(); // Prevent form submission
+    }
+  });
+</script>
+{% endblock %}

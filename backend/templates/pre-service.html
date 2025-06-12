@@ -1,166 +1,200 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adding Route</title>
-    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container mt-5">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="alert alert-success mt-3">
-        {{ messages[0][1] }}
-    </div>
-    {% endif %}
-    {% endwith %}
-        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
-        <h1 class="text-center">Add Route</h1>
-        <div class="card-body">
-            <form  method="POST" action="pre-service">
-                <div class="mb-3">
-                    <label for="date" class="form-label">Date (Please click to select date)
-                        )</label>
-                    <input type="date" class="form-control" id="date" name="date"  value="{{ request.form.get('date', '') }}" autocomplete="off" required>
-                    
-                </div>
-                <!-- <input type="date" name="date" id="dateInput" value="{{ request.form.get('date', '') }}" autocomplete="off"> -->
+{% extends "base.html" %}
 
-                <!-- Company Dropdown -->
-                <div class="mb-3">
-                    <label for="company" class="form-label">Company</label>
-                    <select class="form-select" id="company" name="company" required>
+{% block title %}Add Route (Pre-Service){% endblock %}
+{% block page_title %}Add New Service Route{% endblock %}
+
+{% block head_extra %}
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto space-y-8">
+
+        <div class="text-left mb-6">
+            <a href="{{ url_for('dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 text-sm rounded-md border
+                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                            " role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+            <form method="POST" action="{{ url_for('pre_service') }}" class="space-y-6">
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                    <input type="date" id="date" name="date" value="{{ request.form.get('date', '') }}" autocomplete="off" required
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                </div>
+
+                <div>
+                    <label for="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
+                    <select id="company" name="company" required
+                            class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                   rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                   sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                         <option value="" selected disabled>Select a company</option>
-                        {% for company in companies %}
-                        <option value="{{ company }}">{{ company }}</option>
+                        {% for company_item in companies %}  {# Changed loop variable to avoid conflict with 'company' in the outer scope of the template if any #}
+                        <option value="{{ company_item }}">{{ company_item }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <!-- Premise Dropdown -->
-                <div class="mb-3">
-                    <label for="premise" class="form-label">Premise</label>
-                    <select class="form-select" id="premise" name="premise" required disabled>
-                        <option value="" selected disabled>Select a premise</option>
+                {% for field_id, field_label, field_name in [
+                    ('premise', 'Premise', 'premise'),
+                    ('model', 'Model', 'model'),
+                    ('color', 'Color', 'color'),
+                    ('eo', 'EO', 'eo')
+                ] %}
+                <div>
+                    <label for="{{ field_id }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ field_label }}</label>
+                    <select id="{{ field_id }}" name="{{ field_name }}" required disabled
+                            class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                   rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                   sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50
+                                   disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-500 cursor-not-allowed">
+                        <option value="" selected disabled>Select a {{ field_label.lower() }}</option>
                     </select>
                 </div>
+                {% endfor %}
 
-                <!-- Model Dropdown -->
-                <div class="mb-3">
-                    <label for="model" class="form-label">Model</label>
-                    <select class="form-select" id="model" name="model" required disabled>
-                        <option value="" selected disabled>Select a model</option>
-                    </select>
-                </div>
-
-                <!-- Color Dropdown -->
-                <div class="mb-3">
-                    <label for="color" class="form-label">Color</label>
-                    <select class="form-select" id="color" name="color" required disabled>
-                        <option value="" selected disabled>Select a color</option>
-                    </select>
-                </div>
-
-                <!-- EO Dropdown -->
-                <div class="mb-3">
-                    <label for="eo" class="form-label">EO</label>
-                    <select class="form-select" id="eo" name="eo" required disabled>
-                        <option value="" selected disabled>Select an EO</option>
-                    </select>
-                </div>
-
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary w-100">Submit</button>
+                <div class="pt-2">
+                    <button type="submit"
+                            class="w-full flex justify-center py-2.5 px-4 border border-transparent
+                                   rounded-md shadow-sm text-sm font-medium text-white
+                                   bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900">
+                        Submit Route
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-        document.getElementById('company').addEventListener('change', function() {
-            let company = this.value;
-            axios.get(`/get-premises/${company}`)
-                .then(response => {
-                    let premiseDropdown = document.getElementById('premise');
-                    premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
-                    response.data.forEach(p => premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`);
-                    premiseDropdown.disabled = false;
-                });
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const companyDropdown = document.getElementById('company');
+    const premiseDropdown = document.getElementById('premise');
+    const modelDropdown = document.getElementById('model');
+    const colorDropdown = document.getElementById('color');
+    const eoDropdown = document.getElementById('eo');
+
+    const allDropdowns = [premiseDropdown, modelDropdown, colorDropdown, eoDropdown];
+
+    function resetAndDisableDropdowns(dropdowns) {
+        dropdowns.forEach(dd => {
+            dd.innerHTML = `<option value="" selected disabled>Select a ${dd.name}</option>`;
+            dd.disabled = true;
         });
-
-        document.getElementById('premise').addEventListener('change', function() {
-            let premise = this.value;
-            axios.get(`/get-models/${premise}`)
-                .then(response => {
-                    let modelDropdown = document.getElementById('model');
-                    modelDropdown.innerHTML = '<option value="" selected disabled>Select a model</option>';
-                    response.data.forEach(m => modelDropdown.innerHTML += `<option value="${m}">${m}</option>`);
-                    modelDropdown.disabled = false;
-                });
-        });
-
-        document.getElementById('model').addEventListener('change', function() {
-    let model = this.value;
-    let premise = document.getElementById('premise').value;
-    
-    axios.get(`/get-colors/${model}/${premise}`)
-        .then(response => {
-            let colorDropdown = document.getElementById('color');
-            colorDropdown.innerHTML = '<option value="" selected disabled>Select a color</option>';
-            if (Array.isArray(response.data)) {
-                response.data.forEach(c => colorDropdown.innerHTML += `<option value="${c}">${c}</option>`);
-            }
-            colorDropdown.disabled = false;
-        })
-        .catch(error => console.error('Error fetching colors:', error));
-});
-
-document.getElementById('color').addEventListener('change', function() {
-    let color = this.value;
-    let model = document.getElementById('model').value;
-    let premise = document.getElementById('premise').value;
-    
-    axios.get(`/get-eo/${model}/${premise}/${color}`)
-        .then(response => {
-            let eoDropdown = document.getElementById('eo');
-            eoDropdown.innerHTML = '<option value="" selected disabled>Select an EO</option>';
-            if (Array.isArray(response.data)) {
-                response.data.forEach(e => eoDropdown.innerHTML += `<option value="${e}">${e}</option>`);
-            }
-            eoDropdown.disabled = false;
-        })
-        .catch(error => console.error('Error fetching EO:', error));
-});
-
-
-
-        document.getElementById('preServiceForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    let formData = {
-        date: new Date(document.getElementById('date').value),  // Convert to Date object
-        company: document.getElementById('company').value,
-        premise: document.getElementById('premise').value,
-        model: document.getElementById('model').value,
-        color: document.getElementById('color').value,
-        eo: document.getElementById('eo').value
-    };
-
-    axios.post('/pre-service', formData)
-        // .then(response => alert(response.data.message))
-        // .catch(error => alert('Error submitting form'));
-});
-
-document.addEventListener("DOMContentLoaded", function() {
-    let dateInput = document.getElementById("date");
-    if (!dateInput.value) {
-        dateInput.value = ""; // Ensure it's blank
     }
 
-    
+    companyDropdown.addEventListener('change', function() {
+        const companyId = this.value;
+        resetAndDisableDropdowns(allDropdowns);
+        if (!companyId) return;
+
+        axios.get(`/get-premises/${encodeURIComponent(companyId)}`)
+            .then(response => {
+                premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
+                // Assuming response.data is the list of premises for the /get-premises/ endpoint
+                // If it returns HTML for checkboxes, this needs to be handled differently or the endpoint changed.
+                // For now, assuming it's a JSON list of strings as per typical dependent dropdowns.
+                if (response.data && Array.isArray(response.data.premises)) { // Adjusted to check for response.data.premises
+                     response.data.premises.forEach(p => {
+                        premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`;
+                    });
+                } else if (response.data && Array.isArray(response.data)) { // Fallback if data is directly an array
+                     response.data.forEach(p => {
+                        premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`;
+                    });
+                }
+                premiseDropdown.disabled = false;
+            })
+            .catch(error => console.error('Error fetching premises:', error));
+    });
+
+    premiseDropdown.addEventListener('change', function() {
+        const premiseId = this.value;
+        resetAndDisableDropdowns([modelDropdown, colorDropdown, eoDropdown]);
+        if (!premiseId) return;
+
+        axios.get(`/get-models/${encodeURIComponent(premiseId)}`)
+            .then(response => {
+                modelDropdown.innerHTML = '<option value="" selected disabled>Select a model</option>';
+                if (response.data && Array.isArray(response.data)) {
+                    response.data.forEach(m => {
+                        modelDropdown.innerHTML += `<option value="${m}">${m}</option>`;
+                    });
+                }
+                modelDropdown.disabled = false;
+            })
+            .catch(error => console.error('Error fetching models:', error));
+    });
+
+    modelDropdown.addEventListener('change', function() {
+        const modelId = this.value;
+        const premiseId = premiseDropdown.value;
+        resetAndDisableDropdowns([colorDropdown, eoDropdown]);
+        if (!modelId || !premiseId) return;
+
+        axios.get(`/get-colors/${encodeURIComponent(modelId)}/${encodeURIComponent(premiseId)}`)
+            .then(response => {
+                colorDropdown.innerHTML = '<option value="" selected disabled>Select a color</option>';
+                if (response.data && Array.isArray(response.data)) {
+                    response.data.forEach(c => {
+                        colorDropdown.innerHTML += `<option value="${c}">${c}</option>`;
+                    });
+                }
+                colorDropdown.disabled = false;
+            })
+            .catch(error => console.error('Error fetching colors:', error));
+    });
+
+    colorDropdown.addEventListener('change', function() {
+        const colorId = this.value;
+        const modelId = modelDropdown.value;
+        const premiseId = premiseDropdown.value;
+        resetAndDisableDropdowns([eoDropdown]);
+        if (!colorId || !modelId || !premiseId) return;
+
+        axios.get(`/get-eo/${encodeURIComponent(modelId)}/${encodeURIComponent(premiseId)}/${encodeURIComponent(colorId)}`)
+            .then(response => {
+                eoDropdown.innerHTML = '<option value="" selected disabled>Select an EO</option>';
+                if (response.data && Array.isArray(response.data)) {
+                    response.data.forEach(e => {
+                        eoDropdown.innerHTML += `<option value="${e}">${e}</option>`;
+                    });
+                }
+                eoDropdown.disabled = false;
+            })
+            .catch(error => console.error('Error fetching EO:', error));
+    });
+
+    // Set date input to blank if not pre-filled (though 'required' might make this less necessary)
+    const dateInput = document.getElementById("date");
+    if (dateInput && !dateInput.value) {
+        // dateInput.value = ""; // Default behavior for date input is usually fine
+    }
 });
-    </script>
-</body>
-</html>
+</script>
+{% endblock %}
