@@ -15,8 +15,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 scheduler = APScheduler()
 
-
-
+# Make sure datetime is available for the new scheduled task
+from datetime import datetime
 
 fs = gridfs.GridFS(db)
 
@@ -35,6 +35,27 @@ mail = Mail(app)
 @scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
 def scheduled_route_update():
     replicate_monthly_routes(route_list_collection)
+
+@scheduler.task('cron', day='*', hour=0, minute=5) # Run daily at 00:05
+def clear_discontinued_items():
+    """
+    Scheduled task to delete records from discontinue_collection where
+    collect_back_date_dt is less than or equal to the current date.
+    """
+    try:
+        current_datetime = datetime.now()
+        # Query for records to be deleted
+        # Ensure collect_back_date_dt is being compared correctly as a datetime object
+        result = discontinue_collection.delete_many({
+            "collect_back_date_dt": {"$lte": current_datetime}
+        })
+        deleted_count = result.deleted_count
+        if deleted_count > 0:
+            print(f"[{current_datetime}] Clear Discontinued Items: Deleted {deleted_count} records from discontinue_collection.")
+        else:
+            print(f"[{current_datetime}] Clear Discontinued Items: No records found to delete from discontinue_collection.")
+    except Exception as e:
+        print(f"[{datetime.now()}] Error in clear_discontinued_items scheduled task: {e}")
 
 scheduler.init_app(app)
 scheduler.start()
@@ -1099,12 +1120,32 @@ def change_form():
 
         print(data)
 
+        month_str_to_int = {
+            "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
+            "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12
+        }
+
         if data["collect_back"]:
-            refund_collection.insert_one(data)
-            log_activity(session["username"],"collected back : " +str(data['premises']) + str(data['devices']),logs_collection)
+            # Change target collection to discontinue_collection
+            month_name = data.get("month")
+            year_str = data.get("year")
+            if month_name and year_str:
+                try:
+                    month_int = month_str_to_int[month_name.upper()]
+                    year_int = int(year_str)
+                    data["collect_back_date_dt"] = datetime(year_int, month_int, 1)
+                except (ValueError, KeyError) as e:
+                    flash(f"Invalid month or year provided for collect back date: {e}", "danger")
+                    # Decide if you want to proceed without this date or return
+                    # For now, it will proceed and the field might be missing or cause issues later
+                    pass # Or handle more gracefully
+
+            discontinue_collection.insert_one(data)
+            log_activity(session["username"], f"collected back (discontinue_collection): {data.get('premises')} {data.get('devices')}", logs_collection)
         else:
-            change_collection.insert_one(data)
-            log_activity(session["username"],"updated settings : " +str(data['premises']) + str(data['devices']),logs_collection)
+            # Change target collection to changed_models_collection
+            changed_models_collection.insert_one(data)
+            log_activity(session["username"], f"updated settings (changed_models_collection): {data.get('premises')} {data.get('devices')}", logs_collection)
 
 
         # return jsonify({"message": "Form submitted successfully!"}), 200
@@ -2475,10 +2516,17 @@ def get_premises(company):
 
 @app.route('/get-devices/<premise>')
 def get_devices(premise):
-    devices = device_list_collection.find({'tied_to_premise': premise})
-    return jsonify({
-        'devices': [d['location'] for d in devices]
-    })
+    # Query the services_collection for documents that match the given premise_name
+    # Looking for a field like 'Premise Name'
+    device_docs = services_collection.find({'Premise Name': premise})
+
+    # Extract unique device models (e.g., from a field like 'Model')
+    unique_models = set()
+    for doc in device_docs:
+        if 'Model' in doc and doc['Model']:  # Check if 'Model' exists and is not empty
+            unique_models.add(doc['Model'])
+
+    return jsonify({'models': list(unique_models)})
 @app.route('/get-eos', methods=['POST'])
 def get_eos():
     devices = request.json.get('devices', [])

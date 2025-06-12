@@ -158,21 +158,22 @@
             fetch(`/get-devices/${encodeURIComponent(premise)}`)
               .then(res => res.json())
               .then(data => {
-                data.devices.forEach((device, i) => {
+                // data.devices was changed to data.models in the backend
+                data.models.forEach((model, i) => {
                   const div = document.createElement("div");
                   div.className = "form-check";
 
                   const input = document.createElement("input");
                   input.type = "checkbox";
                   input.className = "form-check-input device-checkbox";
-                  input.name = "devices";
-                  input.id = `device_${i}_${premise}`;
-                  input.value = device;
+                  input.name = "devices"; // Name remains "devices" as per instruction
+                  input.id = `device_${i}_${premise}`; // ID generation remains similar
+                  input.value = model; // Use model for value
 
                   const label = document.createElement("label");
                   label.className = "form-check-label";
                   label.htmlFor = input.id;
-                  label.textContent = device;
+                  label.textContent = model; // Use model for display text
 
                   div.appendChild(input);
                   div.appendChild(label);

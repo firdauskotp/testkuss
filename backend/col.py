@@ -33,6 +33,8 @@ route_list_collection = dashboard_db['routes']
 # device_collection = dashboard_db['device']
 change_collection = dashboard_db['change']
 refund_collection = dashboard_db['refund']
+changed_models_collection = dashboard_db["changed_models"]
+discontinue_collection = dashboard_db["discontinue"]
 
 logs_db=mongo['logs']
 logs_collection=logs_db['logs']
