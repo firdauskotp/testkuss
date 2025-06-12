@@ -175,42 +175,80 @@
     });
 
     function hookPremiseListeners() {
-      document.querySelectorAll(".premise-checkbox").forEach(premiseCheckbox => {
+      const premiseCheckboxes = document.querySelectorAll(".premise-checkbox");
+      premiseCheckboxes.forEach(premiseCheckbox => {
         premiseCheckbox.addEventListener("change", () => {
-          const premise = premiseCheckbox.value;
+          let selectedPremises = [];
+          premiseCheckboxes.forEach(cb => {
+            if (cb.checked) {
+              selectedPremises.push(cb.value);
+            }
+          });
 
-          if (premiseCheckbox.checked) {
-            fetch(`/get-devices/${encodeURIComponent(premise)}`)
-              .then(res => res.json())
-              .then(data => {
-                // data.devices was changed to data.models in the backend
-                data.models.forEach((model, i) => {
-                  const div = document.createElement("div");
-                  div.className = "form-check";
+          devicesContainer.innerHTML = ''; // Clear existing devices
+          eoContainer.innerHTML = ''; // Clear existing EOs
 
-                  const input = document.createElement("input");
-                  input.type = "checkbox";
-                  input.className = "form-check-input device-checkbox";
-                  input.name = "devices"; // Name remains "devices" as per instruction
-                  input.id = `device_${i}_${premise}`; // ID generation remains similar
-                  input.value = model; // Use model for value
-
-                  const label = document.createElement("label");
-                  label.className = "form-check-label";
-                  label.htmlFor = input.id;
-                  label.textContent = model; // Use model for display text
-
-                  div.appendChild(input);
-                  div.appendChild(label);
-                  devicesContainer.appendChild(div);
-                });
-
-                hookDeviceEOListener();
-              });
-          } else {
-            // Remove devices from this premise
-            document.querySelectorAll(`[id^="device_"][id$="_${premise}"]`).forEach(e => e.closest('.form-check').remove());
+          if (selectedPremises.length === 0) {
+            return; // No premises selected, do nothing further
           }
+
+          let allDeviceModels = new Set();
+          let fetchPromises = selectedPremises.map(premiseName => {
+            return fetch(`/get-devices/${encodeURIComponent(premiseName)}`)
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`Network response was not ok for premise ${premiseName}`);
+                }
+                return response.json();
+              })
+              .then(data => {
+                if (data.models) {
+                  data.models.forEach(model => allDeviceModels.add(model));
+                }
+              })
+              .catch(error => console.error('Error fetching devices for premise:', premiseName, error));
+          });
+
+          Promise.all(fetchPromises).then(() => {
+            if (allDeviceModels.size === 0) {
+              // devicesContainer.innerHTML = '<p class="text-muted">No devices found for selected premise(s).</p>';
+              // No need to display message if container is just empty
+              return;
+            }
+
+            // Optional: Add a label for the devices section if it's not already there
+            // if (!document.getElementById('devicesContainerLabel')) {
+            //   let titleLabel = document.createElement('label');
+            //   titleLabel.id = 'devicesContainerLabel';
+            //   titleLabel.className = 'form-label';
+            //   titleLabel.textContent = 'Select Devices';
+            //   devicesContainer.appendChild(titleLabel);
+            // }
+
+            allDeviceModels.forEach(model => {
+              const formCheckDiv = document.createElement('div');
+              formCheckDiv.className = 'form-check';
+
+              const input = document.createElement('input');
+              input.className = 'form-check-input device-checkbox';
+              input.type = 'checkbox';
+              input.value = model;
+              // Sanitize model name for ID: replace spaces and special chars
+              const sanitizedModelId = model.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+              input.id = `device_checkbox_${sanitizedModelId}_${Date.now()}`; // Add timestamp for more uniqueness if needed
+              input.name = 'devices';
+
+              const label = document.createElement('label');
+              label.className = 'form-check-label';
+              label.htmlFor = input.id;
+              label.textContent = model;
+
+              formCheckDiv.appendChild(input);
+              formCheckDiv.appendChild(label);
+              devicesContainer.appendChild(formCheckDiv);
+            });
+            hookDeviceEOListener(); // Hook listener for newly added device checkboxes
+          });
         });
       });
     }
