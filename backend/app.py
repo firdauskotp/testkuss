@@ -1,5 +1,7 @@
 from libs import *
 from col import *
+from fpdf import FPDF
+import io
 
 app = Flask(__name__)
 
@@ -44,16 +46,17 @@ def clear_discontinued_items():
     """
     try:
         current_datetime = datetime.now()
-        # Query for records to be deleted
+        # Query for records to be marked as inactive
         # Ensure collect_back_date_dt is being compared correctly as a datetime object
-        result = discontinue_collection.delete_many({
-            "collect_back_date_dt": {"$lte": current_datetime}
-        })
-        deleted_count = result.deleted_count
-        if deleted_count > 0:
-            print(f"[{current_datetime}] Clear Discontinued Items: Deleted {deleted_count} records from discontinue_collection.")
+        result = discontinue_collection.update_many(
+            {"collect_back_date_dt": {"$lte": current_datetime}, "$or": [{"is_active": {"$exists": False}}, {"is_active": True}]},
+            {"$set": {"is_active": False}}
+        )
+        modified_count = result.modified_count
+        if modified_count > 0:
+            print(f"[{current_datetime}] Clear Discontinued Items: Disabled {modified_count} records in discontinue_collection.")
         else:
-            print(f"[{current_datetime}] Clear Discontinued Items: No records found to delete from discontinue_collection.")
+            print(f"[{current_datetime}] Clear Discontinued Items: No records found to disable in discontinue_collection.")
     except Exception as e:
         print(f"[{datetime.now()}] Error in clear_discontinued_items scheduled task: {e}")
 
@@ -1088,76 +1091,148 @@ def change_form():
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        # data = request.json
-        # collection = "refund" if data.get("collectBack") else "change"
-        
-        # dashboard_db[collection].insert_one(data)
+        form_data_dict = {
+            "user": request.form.get("user") or session.get("username"), # Ensure user is captured
+            "companyName": request.form.get("companyName"),
+            "date": request.form.get("date") or datetime.now().strftime('%Y-%m-%d'), # Ensure date is captured
+            "month": request.form.get("month"),
+            "year": request.form.get("year"),
+            "premises": request.form.getlist("premises"),
+            "devices": request.form.getlist("devices"),
+            "changeScent": request.form.get("changeScent") == "on",
+            "changeScentText": request.form.get("changeScentText"),
+            "redoSettings": request.form.get("redoSettings") == "on",
+            "reduceIntensity": request.form.get("reduceIntensity") == "on",
+            "increaseIntensity": request.form.get("increaseIntensity") == "on",
+            "moveDevice": request.form.get("moveDevice") == "on",
+            "moveDeviceText": request.form.get("moveDeviceText"),
+            "relocateDevice": request.form.get("relocateDevice") == "on",
+            "relocateDeviceDropdown": request.form.get("relocateDeviceDropdown"),
+            "collectBack": request.form.get("collectBack") == "on",
+            "remark": request.form.get("remark"),
+            "submitted_at": datetime.now()
+        }
+        # For PDF generation and email, ensure all relevant fields from request.form are in form_data_dict
+        # The 'data' variable used below for DB insertion was already well-structured.
+        # We'll use form_data_dict for PDF and email data to ensure consistency.
 
-        # print(data)
-        # print(dashboard_db[collection])
-
-        data = {
-        "user": request.form.get("user"),
-        "company": request.form.get("companyName"),
-        "date": request.form.get("date"),
-        "month": request.form.get("month"),
-        "year": request.form.get("year"),
-        "premises": request.form.getlist("premises"),
-        "devices": request.form.getlist("devices"),
-        "change_scent": request.form.get("changeScent") == "on",
-        "change_scent_to": request.form.get("changeScentText"),
-        "redo_settings": request.form.get("redoSettings") == "on",
-        "reduce_intensity": request.form.get("reduceIntensity") == "on",
-        "increase_intensity": request.form.get("increaseIntensity") == "on",
-        "move_device": request.form.get("moveDevice") == "on",
-        "move_device_to": request.form.get("moveDeviceText"),
-        "relocate_device": request.form.get("relocateDevice") == "on",
-        "relocate_device_to": request.form.get("relocateDeviceDropdown"),
-        "collect_back": request.form.get("collectBack") == "on",
-        "remark": request.form.get("remark"),
-        "submitted_at": datetime.now()
+        data_for_db = {
+        "user": form_data_dict["user"],
+        "company": form_data_dict["companyName"],
+        "date": form_data_dict["date"],
+        "month": form_data_dict["month"],
+        "year": form_data_dict["year"],
+        "premises": form_data_dict["premises"],
+        "devices": form_data_dict["devices"],
+        "change_scent": form_data_dict["changeScent"],
+        "change_scent_to": form_data_dict["changeScentText"],
+        "redo_settings": form_data_dict["redoSettings"],
+        "reduce_intensity": form_data_dict["reduceIntensity"],
+        "increase_intensity": form_data_dict["increaseIntensity"],
+        "move_device": form_data_dict["moveDevice"],
+        "move_device_to": form_data_dict["moveDeviceText"],
+        "relocate_device": form_data_dict["relocateDevice"],
+        "relocate_device_to": form_data_dict["relocateDeviceDropdown"],
+        "collect_back": form_data_dict["collectBack"],
+        "remark": form_data_dict["remark"],
+        "submitted_at": form_data_dict["submitted_at"]
         }
 
-        print(data)
+        # print(data_for_db) # Use this for debugging if needed
 
         month_str_to_int = {
             "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
             "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12
         }
 
-        if data["collect_back"]:
-            # Change target collection to discontinue_collection
-            month_name = data.get("month")
-            year_str = data.get("year")
+        if data_for_db["collect_back"]:
+            month_name = data_for_db.get("month")
+            year_str = data_for_db.get("year")
             if month_name and year_str:
                 try:
                     month_int = month_str_to_int[month_name.upper()]
                     year_int = int(year_str)
-                    data["collect_back_date_dt"] = datetime(year_int, month_int, 1)
+                    data_for_db["collect_back_date_dt"] = datetime(year_int, month_int, 1)
                 except (ValueError, KeyError) as e:
                     flash(f"Invalid month or year provided for collect back date: {e}", "danger")
-                    # Decide if you want to proceed without this date or return
-                    # For now, it will proceed and the field might be missing or cause issues later
-                    pass # Or handle more gracefully
-
-            discontinue_collection.insert_one(data)
-            log_activity(session["username"], f"collected back (discontinue_collection): {data.get('premises')} {data.get('devices')}", logs_collection)
+                    pass
+            discontinue_collection.insert_one(data_for_db)
+            log_activity(session["username"], f"collected back (discontinue_collection): {data_for_db.get('premises')} {data_for_db.get('devices')}", logs_collection)
         else:
-            # Change target collection to changed_models_collection
-            changed_models_collection.insert_one(data)
-            log_activity(session["username"], f"updated settings (changed_models_collection): {data.get('premises')} {data.get('devices')}", logs_collection)
+            changed_models_collection.insert_one(data_for_db)
+            log_activity(session["username"], f"updated settings (changed_models_collection): {data_for_db.get('premises')} {data_for_db.get('devices')}", logs_collection)
 
+        # Generate PDF
+        try:
+            pdf_bytes = generate_change_form_pdf_bytes(form_data_dict)
 
-        # return jsonify({"message": "Form submitted successfully!"}), 200
-        flash("Data updated", "success")
+            # Fetch client emails
+            client_emails = []
+            company_name_for_email = form_data_dict.get("companyName")
+            if company_name_for_email:
+                # Query profile_list_collection for PICs with an email for the given company
+                # PICs are identified by having an 'email' field and a 'company' field.
+                # 'tied_to_premise' is also a good indicator of a PIC associated with a specific premise of a company.
+                # A simpler approach is to find any profile with that company and an email.
+                pic_records = profile_list_collection.find({
+                    "company": company_name_for_email,
+                    "email": {"$exists": True, "$ne": ""}
+                })
+                for record in pic_records:
+                    if record.get("email") not in client_emails: # Avoid duplicates
+                        client_emails.append(record.get("email"))
+
+            if not client_emails:
+                print(f"No client PIC emails found for company: {company_name_for_email}")
+                # Fallback or decide if an error should be flashed
+
+            admin_email = app.config.get('MAIL_USERNAME') # Or a dedicated ADMIN_EMAIL from config
+
+            email_subject = f"Change Request Summary - {form_data_dict.get('companyName')}"
+            email_body = "Please find attached the summary of the recent change request."
+
+            attachment_details = {
+                'filename': 'Change_Form_Summary.pdf',
+                'content_type': 'application/pdf',
+                'data': pdf_bytes
+            }
+
+            # Send to client(s)
+            if client_emails:
+                for c_email in client_emails:
+                    send_email(
+                        to_email=c_email,
+                        from_email=app.config['MAIL_USERNAME'],
+                        subject=email_subject,
+                        body=email_body,
+                        mail=mail,
+                        attachments=[attachment_details]
+                    )
+                flash(f"Change form submitted and email sent to client(s) at {', '.join(client_emails)}.", "success")
+            else:
+                 flash("Change form submitted. No client email found for notification.", "warning")
+
+            # Send to admin
+            if admin_email:
+                send_email(
+                    to_email=admin_email,
+                    from_email=app.config['MAIL_USERNAME'],
+                    subject=f"Admin Copy: {email_subject}",
+                    body=email_body,
+                    mail=mail,
+                    attachments=[attachment_details]
+                )
+                # Optional: flash message for admin email being sent, or log it.
+
+        except Exception as e:
+            print(f"Error during PDF generation or emailing: {e}")
+            # Use app.logger.error for production
+            flash(f"Data saved, but failed to generate or email PDF: {e}", "danger")
 
         return redirect(url_for("dashboard"))
 
     companies = services_collection.distinct('company')
-    # premises = services_collection.distinct('Premise Name')
-    # devices = services_collection.distinct('Model')
-
-    premises = services_collection.distinct('Premise Name', {'company': request.form.get("companyName")})
+    premises_for_template = services_collection.distinct('Premise Name', {'company': request.form.get("companyName")})
 
 
     return render_template(
@@ -2516,9 +2591,9 @@ def get_premises(company):
 
 @app.route('/get-devices/<premise>')
 def get_devices(premise):
-    # Query the services_collection for documents that match the given premise_name
-    # Looking for a field like 'Premise Name'
-    device_docs = services_collection.find({'Premise Name': premise})
+    # Query the device_list_collection for documents that match the given premise_name
+    # The 'tied_to_premise' field in device_list_collection stores the premise name
+    device_docs = device_list_collection.find({'tied_to_premise': premise})
 
     # Extract unique device models (e.g., from a field like 'Model')
     unique_models = set()
@@ -2535,6 +2610,146 @@ def get_eos():
         if 'Current EO' in d:
             eos.add(d['Current EO'])
     return jsonify({'eos': list(eos)})
+
+@app.route('/get-premises-json/<company>')
+def get_premises_json(company):
+    premises_list = services_collection.distinct('Premise Name', {'company': company})
+    return jsonify({'premises': sorted(list(set(premises_list)))})
+
+@app.route('/generate-change-form-pdf', methods=['POST'])
+def generate_change_form_pdf():
+    data = request.json
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Change Form Summary", ln=1, align="C")
+    pdf.ln(5)
+
+    # Helper to add a key-value pair
+    def add_field(key, value):
+        pdf.set_font("Arial", "B", size=10)
+        pdf.cell(50, 7, txt=key)
+        pdf.set_font("Arial", size=10)
+        if isinstance(value, bool):
+            pdf.multi_cell(0, 7, txt="Yes" if value else "No", ln=1)
+        elif isinstance(value, list):
+            if not value:
+                pdf.multi_cell(0, 7, txt="N/A", ln=1)
+            else:
+                pdf.ln(7) # Start list on new line
+                for item in value:
+                    pdf.cell(5) # Indent
+                    pdf.multi_cell(0, 7, txt=f"- {item}", ln=1)
+        else:
+            pdf.multi_cell(0, 7, txt=str(value) if value else "N/A", ln=1)
+
+    add_field("User:", data.get("user"))
+    add_field("Company Name:", data.get("companyName"))
+    add_field("Date:", data.get("date"))
+    pdf.ln(5)
+
+    pdf.set_font("Arial", "B", size=11)
+    pdf.cell(200, 10, txt="Change Details:", ln=1)
+    pdf.set_font("Arial", size=10)
+
+    if data.get("changeScent"):
+        add_field("Change Scent To:", data.get("changeScentText"))
+    add_field("Redo Settings:", data.get("redoSettings"))
+    add_field("Reduce Scent Intensity:", data.get("reduceIntensity"))
+    add_field("Increase Scent Intensity:", data.get("increaseIntensity"))
+    if data.get("moveDevice"):
+        add_field("Move Device To:", data.get("moveDeviceText"))
+    if data.get("relocateDevice"):
+        add_field("Relocate Device To Premise:", data.get("relocateDeviceDropdown"))
+
+    pdf.ln(2)
+    add_field("Premises Selected:", data.get("premises"))
+    add_field("Devices Selected:", data.get("devices"))
+    pdf.ln(2)
+
+    add_field("Collect Back Machine:", data.get("collectBack"))
+    if data.get("collectBack"):
+        add_field("Month for Collection:", data.get("month"))
+        add_field("Year for Collection:", data.get("year"))
+
+    pdf.ln(5)
+    add_field("Remarks:", data.get("remark"))
+
+    # Save PDF to a BytesIO stream
+    pdf_output = io.BytesIO()
+    pdf.output(pdf_output, "S") # 'S' returns the PDF as a string/bytes
+    pdf_output.seek(0)
+
+    return send_file(
+        pdf_output,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name='change_form_summary.pdf'
+    )
+
+def generate_change_form_pdf_bytes(data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Change Form Summary", ln=1, align="C")
+    pdf.ln(5)
+
+    # Helper to add a key-value pair (copied from generate_change_form_pdf)
+    def add_field(key, value):
+        pdf.set_font("Arial", "B", size=10)
+        pdf.cell(50, 7, txt=key)
+        pdf.set_font("Arial", size=10)
+        if isinstance(value, bool):
+            pdf.multi_cell(0, 7, txt="Yes" if value else "No", ln=1)
+        elif isinstance(value, list):
+            if not value:
+                pdf.multi_cell(0, 7, txt="N/A", ln=1)
+            else:
+                pdf.ln(7) # Start list on new line
+                for item in value:
+                    pdf.cell(5) # Indent
+                    pdf.multi_cell(0, 7, txt=f"- {item}", ln=1)
+        else:
+            pdf.multi_cell(0, 7, txt=str(value) if value else "N/A", ln=1)
+
+    add_field("User:", data.get("user"))
+    add_field("Company Name:", data.get("companyName"))
+    add_field("Date:", data.get("date"))
+    pdf.ln(5)
+
+    pdf.set_font("Arial", "B", size=11)
+    pdf.cell(200, 10, txt="Change Details:", ln=1)
+    pdf.set_font("Arial", size=10)
+
+    if data.get("changeScent"):
+        add_field("Change Scent To:", data.get("changeScentText"))
+    add_field("Redo Settings:", data.get("redoSettings"))
+    add_field("Reduce Scent Intensity:", data.get("reduceIntensity"))
+    add_field("Increase Scent Intensity:", data.get("increaseIntensity"))
+    if data.get("moveDevice"):
+        add_field("Move Device To:", data.get("moveDeviceText"))
+    if data.get("relocateDevice"):
+        add_field("Relocate Device To Premise:", data.get("relocateDeviceDropdown"))
+
+    pdf.ln(2)
+    add_field("Premises Selected:", data.get("premises"))
+    add_field("Devices Selected:", data.get("devices"))
+    pdf.ln(2)
+
+    add_field("Collect Back Machine:", data.get("collectBack"))
+    if data.get("collectBack"):
+        add_field("Month for Collection:", data.get("month"))
+        add_field("Year for Collection:", data.get("year"))
+
+    pdf.ln(5)
+    add_field("Remarks:", data.get("remark"))
+
+    pdf_output_bytes = pdf.output(dest="S").encode('latin-1') # Get PDF as bytes
+    return pdf_output_bytes
+
 
 if __name__ == "__main__":
     app.run(debug=True)

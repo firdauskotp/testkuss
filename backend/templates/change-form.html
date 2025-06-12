@@ -125,7 +125,8 @@
         <div id="eo-container"></div>
       </div>
 
-      <button type="submit" class="btn btn-primary w-100">Submit</button>
+      <button type="submit" class="btn btn-primary w-100 mb-2">Submit</button>
+      <button type="button" id="printButton" class="btn btn-info w-100">Print Form</button>
     </form>
   </div>
 
@@ -134,19 +135,43 @@
     const companySelect = document.getElementById("companyName");
     const premisesContainer = document.getElementById("premises-container");
     const devicesContainer = document.getElementById("devices-container");
+    const relocateDropdown = document.getElementById("relocateDeviceDropdown");
+    const printButton = document.getElementById("printButton");
 
     const eoContainer = document.getElementById("eo-container");
 
     companySelect.addEventListener("change", () => {
       const company = companySelect.value;
-      if (!company) return;
+      if (!company) {
+        premisesContainer.innerHTML = ""; // Clear premise checkboxes
+        devicesContainer.innerHTML = ""; // Clear devices
+        relocateDropdown.innerHTML = '<option disabled selected>Select Premise</option>'; // Clear relocate dropdown
+        return;
+      }
 
+      // Fetch premises for checkboxes
       fetch(`/get-premises/${encodeURIComponent(company)}`)
         .then(res => res.text())
         .then(html => {
           premisesContainer.innerHTML = html;
           hookPremiseListeners();
         });
+
+      // Fetch premises for relocateDeviceDropdown
+      fetch(`/get-premises-json/${encodeURIComponent(company)}`)
+        .then(res => res.json())
+        .then(data => {
+          relocateDropdown.innerHTML = '<option disabled selected>Select Premise</option>'; // Clear existing options
+          if (data.premises) {
+            data.premises.forEach(premise => {
+              const option = document.createElement("option");
+              option.value = premise;
+              option.textContent = premise;
+              relocateDropdown.appendChild(option);
+            });
+          }
+        })
+        .catch(error => console.error('Error fetching premises for dropdown:', error));
     });
 
     function hookPremiseListeners() {
@@ -206,6 +231,58 @@
           });
       });
     }
+
+    printButton.addEventListener("click", () => {
+      const formData = {
+        user: document.querySelector('input[value="{{ username }}"]').value, // This is disabled, so grab directly
+        companyName: companySelect.value,
+        date: document.querySelector('input[type="date"]').value, // This is disabled, so grab directly
+        changeScent: document.getElementById("changeScent").checked,
+        changeScentText: document.getElementById("changeScentText").value,
+        redoSettings: document.getElementById("redoSettings").checked,
+        reduceIntensity: document.getElementById("reduceIntensity").checked,
+        increaseIntensity: document.getElementById("increaseIntensity").checked,
+        moveDevice: document.getElementById("moveDevice").checked,
+        moveDeviceText: document.getElementById("moveDeviceText").value,
+        relocateDevice: document.getElementById("relocateDevice").checked,
+        relocateDeviceDropdown: document.getElementById("relocateDeviceDropdown").value,
+        collectBack: document.getElementById("collectBack").checked,
+        remark: document.getElementById("remark").value,
+        month: document.getElementById("month").value,
+        year: document.getElementById("year").value,
+        premises: Array.from(document.querySelectorAll("#premises-container .premise-checkbox:checked")).map(cb => cb.value),
+        devices: Array.from(document.querySelectorAll("#devices-container .device-checkbox:checked")).map(cb => cb.value)
+      };
+
+      // console.log("Form Data for PDF:", formData);
+
+      fetch("/generate-change-form-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      })
+      .then(res => {
+        if (res.ok) {
+          return res.blob();
+        }
+        throw new Error('Network response was not ok.');
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = "change_form_summary.pdf";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        alert('PDF is being downloaded!');
+      })
+      .catch(error => {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please check console.');
+      });
+    });
 
     // Enable/disable scent and move inputs
     document.getElementById("changeScent").addEventListener("change", function () {

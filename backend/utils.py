@@ -51,15 +51,25 @@ def send_email_to_admin(case_no, user_email, from_email, mail):
 def send_email(to_email, from_email, subject, body, mail):
     """Generic function to send an email using Flask-Mail."""
     try:
-        msg = Message(subject, sender= from_email, recipients=[to_email])
+        msg = Message(subject, sender=from_email, recipients=[to_email])
         msg.body = body
-        print(body)
-        print(to_email)
-        print(from_email)
-        print(subject)
+        if 'attachments' in kwargs and kwargs['attachments']:
+            for attachment in kwargs['attachments']:
+                # Expected attachment format: {'filename': 'file.pdf', 'content_type': 'application/pdf', 'data': b'...' }
+                msg.attach(
+                    filename=attachment['filename'],
+                    content_type=attachment['content_type'],
+                    data=attachment['data']
+                )
+
+        # Basic logging, consider using app.logger for more robust logging
+        print(f"Attempting to send email: To={to_email}, From={from_email}, Subject={subject}")
         mail.send(msg)
+        print(f"Email supposedly sent to {to_email}")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        # Basic error logging
+        print(f"Failed to send email to {to_email}. Error: {e}")
+        # Consider using app.logger.error(f"Failed to send email: {e}") for more formal logging
 
 
 def replicate_monthly_routes(database):
