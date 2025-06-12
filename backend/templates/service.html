@@ -1,229 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Form</title>
-    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .signature-container {
-        border: 2px solid #ccc;
-        border-radius: 5px;
-        width: 100%;
-        height: 200px;
-        position: relative;
-        touch-action: none;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Form</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .signature-container {
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+      height: 200px;
+      position: relative;
+      touch-action: none;
     }
-
     .signature-pad {
-        width: 100%;
-        height: 100%;
+      width: 100%;
+      height: 100%;
     }
-    </style>
+  </style>
 </head>
 <body class="bg-light">
-    <div class="container mt-5">
-        <!-- Main Form Section -->
-        <!-- <div class="card shadow mb-4"> -->
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
-    <h1 class="text-center">SERVICE</h1>
+<div class="container mt-5">
+  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">Back to Dashboard</a>
+  <h1 class="text-center">SERVICE FORM</h1>
+  <form method="POST" action="/field-service">
+    <div class="mb-3">
+      <label class="form-label">Technician Name:</label>
+      <input type="text" class="form-control" value="{{ technician_name }}" readonly>
+    </div>
 
-            <!-- <div class="card-header bg-primary text-white">
-                <h4 class="text-center mb-0">Service Form</h4>
-            </div> -->
-            <div class="card-body">
-                <form method="POST" action="/field-service">
-                    <div class="mb-3">
-                        <label class="form-label">Technician Name:</label>
-                        <input type="text" class="form-control" value="{{ technician_name }}" readonly>
-                    </div>
-        
-                    <div class="mb-3">
-                        <label class="form-label">Date and Time:</label>
-                        <input type="text" class="form-control" value="{{ current_time }}" readonly>
-                    </div>
-        
-                    <!-- Company Dropdown -->
+    <div class="mb-3">
+      <label class="form-label">Date and Time:</label>
+      <input type="text" class="form-control" value="{{ current_time }}" readonly>
+    </div>
+
+    <!-- New: Service Time Dropdowns -->
+    <div class="row mb-3">
+      <label class="form-label">Service Time:</label>
+      <div class="col-md-4">
+        <select class="form-select" name="service_month" required>
+          <option value="" disabled selected>Month</option>
+          {% for month in ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'] %}
+            <option value="{{ month }}">{{ month }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select class="form-select" name="service_year" required>
+          <option value="" disabled selected>Year</option>
+          {% for y in range(2025, 2030) %}
+            <option value="{{ y }}">{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select class="form-select" name="service_day" required>
+          <option value="" disabled selected>Day</option>
+          {% for d in range(1, 32) %}
+            <option value="{{ d }}">{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+        <!-- Company Dropdown -->
+        <div class="mb-3">
+            <label for="company" class="form-label">Company</label>
+            <select class="form-select" id="company" name="company" required>
+              <option value="" selected disabled>Select a company</option>
+              {% for company in companies %}
+              <option value="{{ company }}">{{ company }}</option>
+              {% endfor %}
+            </select>
+          </div>
+      
+          <!-- Premise Dropdown -->
+          <div class="mb-3">
+            <label for="premise" class="form-label">Premise</label>
+            <select class="form-select" id="premise" name="premise" required disabled>
+              <option value="" selected disabled>Select a premise</option>
+            </select>
+          </div>
+      
+          <!-- New: Change Notes (Overview) -->
+          <div class="mb-3">
+            <label for="change_notes" class="form-label">Change Notes (Overview)</label>
+            <textarea class="form-control" id="change_notes" name="change_notes" disabled placeholder="System will auto-fill notes based on device changes"></textarea>
+          </div>
+      
+          <!-- New: PIC Contact Info -->
+          <div class="mb-3">
+            <label class="form-label">PIC Contact</label>
+            <input type="text" class="form-control" id="pic_contact" name="pic_contact" readonly>
+          </div>
+      
+          <hr>
+          <h4 class="text-primary">Device Details</h4>
+          <div id="device-section">
+            <!-- This part will be dynamically filled for each device by backend or AJAX -->
+            <!-- Template shown below for ONE device -->
+            <div class="card mb-4 p-3 bg-white border rounded device-card">
+                <h5 class="text-secondary">Device {{ loop.index }}</h5>
+              
+                <!-- Model -->
                 <div class="mb-3">
-                    <label for="company" class="form-label">Company</label>
-                    <select class="form-select" id="company" name="company" required>
-                        <option value="" selected disabled>Select a company</option>
-                        {% for company in companies %}
-                        <option value="{{ company }}">{{ company }}</option>
-                        {% endfor %}
-                    </select>
+                  <label for="model{{ loop.index }}" class="form-label">Model</label>
+                  <select class="form-select" id="model{{ loop.index }}" name="model{{ loop.index }}" required>
+                    <option selected disabled>Select a model</option>
+                    {% for model in models %}
+                    <option value="{{ model }}">{{ model }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
-
-                <!-- Premise Dropdown -->
+              
+                <!-- Colour -->
                 <div class="mb-3">
-                    <label for="premise" class="form-label">Premise</label>
-                    <select class="form-select" id="premise" name="premise" required disabled>
-                        <option value="" selected disabled>Select a premise</option>
-                    </select>
+                  <label for="color{{ loop.index }}" class="form-label">Color</label>
+                  <select class="form-select" id="color{{ loop.index }}" name="color{{ loop.index }}" required>
+                    <option selected disabled>Select a color</option>
+                  </select>
                 </div>
-
-                <!-- Model Dropdown -->
+              
+                <!-- EO -->
                 <div class="mb-3">
-                    <label for="model" class="form-label">Model</label>
-                    <select class="form-select" id="model" name="model" required disabled>
-                        <option value="" selected disabled>Select a model</option>
-                    </select>
+                  <label for="eo{{ loop.index }}" class="form-label">EO</label>
+                  <select class="form-select" id="eo{{ loop.index }}" name="eo{{ loop.index }}" required>
+                    <option selected disabled>Select an EO</option>
+                  </select>
                 </div>
-
-                <!-- Color Dropdown -->
+              
+                <!-- Location -->
                 <div class="mb-3">
-                    <label for="color" class="form-label">Color</label>
-                    <select class="form-select" id="color" name="color" required disabled>
-                        <option value="" selected disabled>Select a color</option>
-                    </select>
+                  <label for="location{{ loop.index }}" class="form-label">Location</label>
+                  <input type="text" class="form-control" name="location{{ loop.index }}" required>
                 </div>
-
-                <!-- EO Dropdown -->
+              
+                <!-- Special Controls -->
                 <div class="mb-3">
-                    <label for="eo" class="form-label">EO</label>
-                    <select class="form-select" id="eo" name="eo" required disabled>
-                        <option value="" selected disabled>Select an EO</option>
-                    </select>
+                  <label class="form-label">Change Scent</label>
+                  <select class="form-select" name="scent_change{{ loop.index }}">
+                    <option value="">No Change</option>
+                    {% for eo in eo_list %}
+                    <option value="{{ eo }}">{{ eo }}</option>
+                    {% endfor %}
+                  </select>
                 </div>
-        
-                    <div id="client-details"></div>
-                    <div id="device-details"></div>
-        
-                    <h4>Acknowledgement</h4>
-                    <label>Actions Done:</label><br>
-                    <input type="checkbox" name="actions" value="Alcohol Cleaning"> Alcohol Cleaning<br>
-                    <input type="checkbox" name="actions" value="Oil Refill"> Oil Refill<br>
-                    <input type="checkbox" name="actions" value="Checked Timer Settings"> Checked Timer Settings<br>
-                    <input type="checkbox" name="actions" value="Replaced Straw/ Mist Head"> Replaced Straw/ Mist Head<br>
-                    <input type="checkbox" name="actions" value="Replaced Batteries"> Replaced Batteries<br>
-                    <input type="checkbox" name="actions" value="Replaced Faulty Machine"> Replaced Faulty Machine<br>
-        
-                    <div class="mb-3">
-                        <label class="form-label">Remarks:</label>
-                        <textarea class="form-control" name="remarks"></textarea>
+              
+                <!-- Device Inactive -->
+                <div class="form-check mb-3">
+                  <input class="form-check-input device-inactive" type="checkbox" value="1" id="inactive{{ loop.index }}" name="inactive{{ loop.index }}">
+                  <label class="form-check-label text-danger" for="inactive{{ loop.index }}">
+                    Mark Device as Inactive (remove from system on selected date)
+                  </label>
+                </div>
+              
+                <!-- Relocate Device -->
+                <div class="mb-3">
+                  <label for="relocate{{ loop.index }}" class="form-label">Relocate Device To:</label>
+                  <select class="form-select" name="relocate{{ loop.index }}">
+                    <option value="">Do not relocate</option>
+                    {% for p in premises %}
+                    <option value="{{ p.premise_name }}">{{ p.premise_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              
+                <!-- Events (E1–E4) -->
+                {% for e in range(1, 5) %}
+                <div class="border p-2 mb-2">
+                  <strong>Event {{ e }}</strong>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <label>Current E{{ e }} Days:</label>
+                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - DAYS'] }}" readonly>
                     </div>
-        
-                    <div class="mb-3">
-                        <label class="form-label">Staff Name:</label>
-                        <input type="text" class="form-control" name="staffName" required>
+                    <div class="col-md-6">
+                      <label>New E{{ e }} Days:</label>
+                      <input type="text" class="form-control" name="event{{ loop.index }}_days{{ e }}">
                     </div>
-        
-                    <div class="mb3">
-                        <label for="signature">Signature:</label>
-                        <div class="signature-container">
-                            <canvas id="signature-pad" class="signature-pad"></canvas>
-                        </div>
-                        <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
-                        <input type="hidden" name="signature" id="signature-input">
+                  </div>
+                  <div class="row mt-2">
+                    <div class="col"><label>Start</label>
+                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - START'] }}" readonly>
+                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_start{{ e }}">
                     </div>
-        
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </form>
-            </div>
-        </div>
-    <!-- </div> -->
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.getElementById('company').addEventListener('change', function() {
-            let company = this.value;
-            axios.get(`/get-premises/${company}`)
-                .then(response => {
-                    let premiseDropdown = document.getElementById('premise');
-                    premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
-                    response.data.forEach(p => premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`);
-                    premiseDropdown.disabled = false;
+                    <div class="col"><label>End</label>
+                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - END'] }}" readonly>
+                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_end{{ e }}">
+                    </div>
+                    <div class="col"><label>Work</label>
+                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - WORK'] }}" readonly>
+                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_work{{ e }}">
+                    </div>
+                    <div class="col"><label>Pause</label>
+                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - PAUSE'] }}" readonly>
+                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_pause{{ e }}">
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              <hr>
+              <h4>Acknowledgement</h4>
+              <label>Actions Done:</label><br>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="action1">
+                <label class="form-check-label" for="action1">Alcohol Cleaning</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="actions" value="Oil Refill" id="action2">
+                <label class="form-check-label" for="action2">Oil Refill</label>
+              </div>
+              <!-- Add more checkboxes as needed -->
+              
+              <div class="mb-3 mt-3">
+                <label class="form-label">Remarks:</label>
+                <textarea class="form-control" name="remarks"></textarea>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Staff Name:</label>
+                <input type="text" class="form-control" name="staffName" required>
+              </div>
+              
+              <!-- Signature Pad -->
+              <div class="mb-3">
+                <label for="signature">Signature:</label>
+                <div class="signature-container">
+                  <canvas id="signature-pad" class="signature-pad"></canvas>
+                </div>
+                <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
+                <input type="hidden" name="signature" id="signature-input">
+              </div>
+              
+              <button type="submit" class="btn btn-primary">Submit</button>
+              </form>
+              </div> <!-- .container -->
+              
+              <!-- Bootstrap Bundle -->
+              <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+              <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+              <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
+              
+              <!-- ✅ Script Section -->
+              <script>
+                // SignaturePad logic
+                const canvas = document.getElementById("signature-pad");
+                const signaturePad = new SignaturePad(canvas, {
+                  minWidth: 1,
+                  maxWidth: 3,
+                  penColor: "black"
                 });
-        });
-
-        document.getElementById('premise').addEventListener('change', function() {
-            let premise = this.value;
-            axios.get(`/get-models/${premise}`)
-                .then(response => {
-                    let modelDropdown = document.getElementById('model');
-                    modelDropdown.innerHTML = '<option value="" selected disabled>Select a model</option>';
-                    response.data.forEach(m => modelDropdown.innerHTML += `<option value="${m}">${m}</option>`);
-                    modelDropdown.disabled = false;
+              
+                function resizeCanvas() {
+                  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                  canvas.width = canvas.offsetWidth * ratio;
+                  canvas.height = canvas.offsetHeight * ratio;
+                  canvas.getContext("2d").scale(ratio, ratio);
+                  signaturePad.clear();
+                }
+              
+                window.addEventListener("resize", resizeCanvas);
+                resizeCanvas();
+              
+                document.getElementById("clear-signature").addEventListener("click", function () {
+                  signaturePad.clear();
                 });
-        });
-
-        document.getElementById('model').addEventListener('change', function() {
-    let model = this.value;
-    let premise = document.getElementById('premise').value;
-    
-    axios.get(`/get-colors/${model}/${premise}`)
-        .then(response => {
-            let colorDropdown = document.getElementById('color');
-            colorDropdown.innerHTML = '<option value="" selected disabled>Select a color</option>';
-            if (Array.isArray(response.data)) {
-                response.data.forEach(c => colorDropdown.innerHTML += `<option value="${c}">${c}</option>`);
-            }
-            colorDropdown.disabled = false;
-        })
-        .catch(error => console.error('Error fetching colors:', error));
-});
-
-document.getElementById('color').addEventListener('change', function() {
-    let color = this.value;
-    let model = document.getElementById('model').value;
-    let premise = document.getElementById('premise').value;
-    
-    axios.get(`/get-eo/${model}/${premise}/${color}`)
-        .then(response => {
-            let eoDropdown = document.getElementById('eo');
-            eoDropdown.innerHTML = '<option value="" selected disabled>Select an EO</option>';
-            if (Array.isArray(response.data)) {
-                response.data.forEach(e => eoDropdown.innerHTML += `<option value="${e}">${e}</option>`);
-            }
-            eoDropdown.disabled = false;
-        })
-        .catch(error => console.error('Error fetching EO:', error));
-});
-
-    </script>
-
-
-
-    
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
-
-    <script>
-        // Initialize Signature Pad
-        const canvas = document.getElementById("signature-pad");
-        const signaturePad = new SignaturePad(canvas, {
-            minWidth: 1,
-            maxWidth: 3,
-            penColor: "black"
-        });
-    
-        // Adjust canvas size on load
-        function resizeCanvas() {
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            signaturePad.clear(); // Clear after resize
-        }
-        
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
-    
-        // Clear signature button
-        document.getElementById("clear-signature").addEventListener("click", function() {
-            signaturePad.clear();
-        });
-    
-        // Save signature as Base64 before submitting
-        document.querySelector("form").addEventListener("submit", function(event) {
-            if (!signaturePad.isEmpty()) {
-                document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
-            }
-        });
-    </script>
-</body>
-</html>
+              
+                document.querySelector("form").addEventListener("submit", function () {
+                  if (!signaturePad.isEmpty()) {
+                    document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+                  }
+                });
+              
+                // Disable all inputs in a device block if 'Device Inactive' is checked
+                document.querySelectorAll('.device-inactive').forEach((checkbox) => {
+                  checkbox.addEventListener('change', function () {
+                    const card = this.closest('.device-card');
+                    const inputs = card.querySelectorAll('input, select, textarea');
+                    inputs.forEach(input => {
+                      if (input !== this && input.name.includes('inactive') === false) {
+                        input.disabled = this.checked;
+                      }
+                    });
+                  });
+                });
+              
+                // Company → Premises
+                document.getElementById('company').addEventListener('change', function () {
+                  let company = this.value;
+                  axios.get(`/get-premises/${company}`)
+                    .then(response => {
+                      let premiseDropdown = document.getElementById('premise');
+                      premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
+                      response.data.forEach(p => {
+                        premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`;
+                      });
+                      premiseDropdown.disabled = false;
+                    });
+                });
+              
+                // Premise → PIC Contact + Change Notes
+                document.getElementById('premise').addEventListener('change', function () {
+                  const premise = this.value;
+                  axios.get(`/get-pic/${premise}`)
+                    .then(response => {
+                      const pic = response.data;
+                      document.getElementById("pic_contact").value = `${pic.name} (${pic.contact})`;
+                    });
+              
+                  axios.get(`/get-change-notes/${premise}`)
+                    .then(response => {
+                      document.getElementById("change_notes").value = response.data.notes;
+                    });
+                });
+              
+              </script>
+              </body>
+              </html>
+              

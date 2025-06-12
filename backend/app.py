@@ -277,7 +277,7 @@ def case_success(case_no):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -310,7 +310,7 @@ def register():
 @app.route('/register-admin', methods=['GET', 'POST'])
 def register_admin():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -344,7 +344,7 @@ def register_admin():
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     user_id = request.form['user_id']
     user = login_cust_collection.find_one({'_id': ObjectId(user_id)})
@@ -359,7 +359,7 @@ def delete_user():
 @app.route('/delete_admin', methods=['POST'])
 def delete_admin():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     user_id = request.form['user_id']
 
@@ -654,7 +654,7 @@ def reports():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
 @app.route('/pack-list',methods=['GET'])
 def pack_list():
@@ -897,7 +897,7 @@ def pack_list():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
     
 @app.route('/eo-list',methods=['GET'])
 def eo_list():
@@ -1034,7 +1034,7 @@ def eo_list():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
         
 
 @app.route("/dashboard")
@@ -1058,13 +1058,13 @@ def dashboard():
                                )
     else:
         flash("Please log in to access this page.", "warning")
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
 
 @app.route('/change-form', methods=['GET', 'POST'])
 def change_form():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     if request.method == 'POST':
         # data = request.json
@@ -1131,7 +1131,7 @@ def change_form():
 @app.route('/remarks/<remark_type>')
 def view_remarks(remark_type):
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     is_urgent = True if remark_type == 'urgent' else False
     remarks = list(remark_collection.find({'urgent': is_urgent}))
 
@@ -1181,7 +1181,7 @@ def get_image2(image_id):
 @app.route('/new-customer',methods=['GET', 'POST'])
 def new_customer():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
 
     raw_models = list(model_list_collection.find().sort("order", 1))
     models = [{k: v for k, v in model.items() if k != '_id'} for model in raw_models]
@@ -1358,7 +1358,7 @@ def new_customer():
 @app.route('/pre-service',  methods=['GET', 'POST'])
 def pre_service():
     if "username" not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     companies = services_collection.distinct('company')
     
 
@@ -1426,7 +1426,7 @@ def get_eo(model, premise, color):
 @app.route('/remark', methods=['GET', 'POST'])
 def remark():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
 
     username = session['username']  # Get the logged-in user's username
     if request.method == 'POST':
@@ -1500,7 +1500,7 @@ def get_devices_post():
 @app.route("/post-service", methods=["POST", "GET"])
 def post_service():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
 
     username = session['username']  # Get the logged-in user's username
     
@@ -1541,7 +1541,7 @@ def post_service():
 @app.route('/view-users', methods=['GET'])
 def view_users():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     users = list(login_cust_collection.find({}, {'username': 1,'email':1}))
 
@@ -1592,7 +1592,7 @@ def view_users():
 @app.route('/view-admins', methods=['GET'])
 def view_admins():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     admins = list(login_collection.find({}, {'username': 1}))
 
@@ -1643,7 +1643,7 @@ def view_admins():
 @app.route('/logs', methods=['GET','POST'])
 def get_logs():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
 
     logs = list(logs_collection.find({}).sort("timestamp", -1)) 
     
@@ -1738,7 +1738,7 @@ def get_logs():
 @app.route('/profile', methods=['GET','POST'])
 def profile():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     # Pagination parameters
     page = int(request.args.get('page', 1))
@@ -1843,7 +1843,7 @@ def profile():
 def view_device():
     
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
 
     # Pagination parameters
     page = int(request.args.get('page', 1))
@@ -2064,7 +2064,7 @@ def delete_record(record_id):
 @app.route('/route_table', methods=['GET'])
 def route_table():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     # Pagination parameters
     page = int(request.args.get('page', 1))
@@ -2209,7 +2209,7 @@ def edit_record(record_id):
 @app.route('/delete_route', methods=['POST'])
 def delete_route():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     
     record_id = request.form['record_id']
     
@@ -2233,13 +2233,13 @@ def delete_route():
 @app.route('/view-help-requestssss', methods=['POST','GET'])
 def view_helpss():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     return render_template('view-complaints.html')
 
 @app.route("/view-help-list", methods=['POST','GET'])
 def view_help():
     if 'username' not in session:
-        return redirect(url_for('admin_login'))
+        return redirect(url_for('login'))
     """Displays all case numbers with links to their respective staff forms."""
     cases = collection.find({}, {"case_no": 1})  # Fetch only case_no field
     return render_template("view-complaint.html", cases=cases)
