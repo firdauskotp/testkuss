@@ -29,6 +29,7 @@ app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('SMTP_TEST_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
 app.config['MODE'] = os.getenv('MODE')
+app.config['MAIL_SENDER_ADDRESS'] = os.getenv('MAIL_SENDER_ADDRESS')
 
 mail = Mail(app)
 
@@ -112,8 +113,8 @@ def customer_form():
         })
 
         # Send emails to the customer and admin
-        send_email_to_customer(case_no, user_email,app.config['MAIL_USERNAME'],mail)
-        send_email_to_admin(case_no,user_email,app.config['MAIL_USERNAME'],mail)
+        send_email_to_customer(case_no, user_email,app.config['MAIL_SENDER_ADDRESS'],mail)
+        send_email_to_admin(case_no,user_email,app.config['MAIL_SENDER_ADDRESS'],mail)
         
 
         # Redirect to success page
