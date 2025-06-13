@@ -55,6 +55,14 @@
                     <input type="text" id="premise" name="premise" class="form-control" placeholder="Premise Name">
                 </div>
                 <div class="col-md-3">
+                    <label for="premiseArea" class="form-label">Premise Area</label>
+                    <input type="text" id="premiseArea" name="premiseArea" class="form-control" placeholder="Premise Area">
+                </div>
+                <div class="col-md-3">
+                    <label for="premiseAddress" class="form-label">Premise Address</label>
+                    <input type="text" id="premiseAddress" Address="premiseAddress" class="form-control" placeholder="Premise Name">
+                </div>
+                <div class="col-md-3">
                     <label for="pic" class="form-label">PIC Name</label>
                     <input type="text" id="pic" name="pic" class="form-control" placeholder="Person In Charge">
                 </div>
@@ -272,21 +280,10 @@
                       <td>{{ user.industry }}</td>
                       <td>{{ user['Premise Name'] }}</td>
 
-                <td>{{ user.premise_area }}</td>
-                <td>{{ user.premise_address }}</td>
+                <td>{{ user['Premise Area'] }}</td>
+                <td>{{ user['Premise Address'] }}</td>
                 <td>
-                    {% if user.pics %}
-                        <ul>
-                        {% for pic in user.pics %}
-                            <li><strong>PIC Name = {{ pic.name }}</strong></li>
-                            <li>PIC Designation = ({{ pic.designation }})</li>
-                             <li>PIC Contact = {{ pic.contact }}</li>
-                             <li>PIC Email = {{ pic.email }}</li>
-                        {% endfor %}
-                        </ul>
-                    {% else %}
-                        No PIC assigned
-                    {% endif %}
+                    {{ user['PIC Name'] }}
                 </td>
                         <td>{{ user['Model'] }}</td>
                         <td>{{ user['Color'] }}</td>

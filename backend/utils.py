@@ -10,7 +10,11 @@ def log_activity(name, action, database):
         "timestamp": datetime.now(),
     }
     database.insert_one(log_entry)
-
+def parse_date_safe(d):
+    try:
+        return datetime.fromisoformat(d)
+    except Exception:
+        return None
 def safe_int(value):
     try:
         return int(value)

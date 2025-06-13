@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Discontinued Devices</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+<div class="container mt-5">
+    <h2>Discontinued Device Records</h2>
+
+    <form method="get" class="mb-3">
+        <div class="row g-2">
+            <div class="col-md-3"><input type="text" name="company" class="form-control" placeholder="Company"></div>
+            <div class="col-md-3"><input type="text" name="user" class="form-control" placeholder="User"></div>
+            <div class="col-md-2"><input type="text" name="month" class="form-control" placeholder="Month"></div>
+            <div class="col-md-2"><input type="text" name="year" class="form-control" placeholder="Year"></div>
+            <div class="col-md-2"><select name="change_scent" class="form-control">
+                <option value="">Change Scent?</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select></div>
+            <div class="col-md-2"><select name="collect_back" class="form-control">
+                <option value="">Collect Back?</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select></div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Filter</button></div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+            <tr>
+                <th>User</th><th>Company</th><th>Date</th><th>Premises</th><th>Devices</th>
+                <th>Change Scent</th><th>To</th><th>Move Device</th><th>To</th>
+                <th>Relocate</th><th>To</th><th>Collect Back</th><th>Remarks</th><th>Submitted</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in data %}
+                <tr>
+                    <td>{{ item.user }}</td>
+                    <td>{{ item.company }}</td>
+                    <td>{{ item.date.strftime('%Y-%m-%d') if item.date }}</td>
+                    <td>{{ item.premises }}</td>
+                    <td>{{ item.devices | join(', ') }}</td>
+                    <td>{{ item.change_scent }}</td>
+                    <td>{{ item.change_scent_to }}</td>
+                    <td>{{ item.move_device }}</td>
+                    <td>{{ item.move_device_to }}</td>
+                    <td>{{ item.relocate_device }}</td>
+                    <td>{{ item.relocate_device_to }}</td>
+                    <td>{{ item.collect_back }}</td>
+                    <td>{{ item.remark }}</td>
+                    <td>{{ item.submitted_at.strftime('%Y-%m-%d %H:%M') if item.submitted_at }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if page == p %}active{% endif %}">
+                    <a class="page-link" href="{{ pagination_base_url }}?{{ query_params | to_querystring | update_querystring('page', p) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+</div>
+</body>
+</html>

@@ -318,8 +318,9 @@
         // Update premise dropdown options for contacts
         // Update premise dropdown options for contacts and devices
 function updatePremiseDropdowns() {
-    const selectElements = document.querySelectorAll('#contactDetails .form-select');
-    const deviceElements = document.querySelectorAll('#deviceDetails .form-select');
+    const selectElements = document.querySelectorAll('#contactDetails select[id^="contactPremise"]');
+const deviceElements = document.querySelectorAll('#deviceDetails select[id^="devicePremise"]');
+
 
     const premiseOptions = getPremiseOptions(); // Get updated premise names
     selectElements.forEach(select => {

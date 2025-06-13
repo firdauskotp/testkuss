@@ -2,6 +2,7 @@ from libs import *
 from col import *
 from fpdf import FPDF
 import io
+from utils import *
 
 app = Flask(__name__)
 
@@ -264,6 +265,8 @@ def reports():
         E3_Work = request.args.get("E3_Work"); E3_Pause = request.args.get("E3_Pause"); E3_Days = request.args.get("E3_Days")
         E3_Start = request.args.get("E3_Start"); E3_End = request.args.get("E3_End")
         E4_Work = request.args.get("E4_Work"); E4_Pause = request.args.get("E4_Pause"); E4_Days = request.args.get("E4_Days")
+        premiseAddress = request.args.get('premiseAddress', '').strip()
+        premise = request.args.get('premise', '').strip()
         E4_Start = request.args.get("E4_Start"); E4_End = request.args.get("E4_End")
         Colour = request.args.get("Colour")
         Current_EO = request.args.get("Current_EO"); New_EO = request.args.get("New_EO")
@@ -275,7 +278,12 @@ def reports():
             month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
             query['$expr'] = {'$and': [{'$in': [{'$month': '$month_year'}, month_list]}, {'$eq': [{'$year': '$month_year'}, int(year)]}]}
         if industry: query["industry"] = {'$regex': industry, '$options': 'i'}
-        if premise: query["premise_name"] = {'$regex': premise, '$options': 'i'}
+        # if premise: query["premise_name"] = {'$regex': premise, '$options': 'i'}
+        if premise:
+            query["Premise Name"] = {'$regex': premise, '$options': 'i'}
+
+        if premiseAddress:
+            query["Premise Address"] = {'$regex': premiseAddress, '$options': 'i'}
         if pic: query["name"] = {'$regex': pic, '$options': 'i'}
         if EO: query['Current EO'] = {'$regex': EO, '$options': 'i'}
         if Company: query['company'] = {'$regex': Company, '$options': 'i'}
@@ -449,8 +457,8 @@ def dashboard():
         urgent_remarks = [r for r in remarks if r.get('urgent')]
         non_urgent_remarks = [r for r in remarks if not r.get('urgent')]
         help_request = list(collection.find({}))
-        change = list(change_collection.find({}))
-        refund = list(refund_collection.find({}))
+        change = list(changed_models_collection.find({}))
+        refund = list(discontinue_collection.find({}))
         return render_template("dashboard.html", username=session["username"], remarks_count=len(non_urgent_remarks), urgent_remarks_count=len(urgent_remarks), help_request_count=len(help_request), change_count = len(change), refund_count=len(refund))
     else:
         flash("Please log in to access this page.", "warning")
@@ -560,6 +568,61 @@ def view_remarks(remark_type):
     is_urgent = True if remark_type == 'urgent' else False
     remarks = list(remark_collection.find({'urgent': is_urgent}))
     return render_template('view_remarks.html', remarks=remarks, remark_type=remark_type)
+@app.route('/discontinue-list', methods=['GET'])
+def discontinued_reports():
+    if 'username' not in session:
+        flash("Please log in to access this page.", "warning")
+        return redirect(url_for('login'))
+
+    # Pagination
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    skip = (page - 1) * limit
+
+    # Filters
+    query = {}
+    company = request.args.get('company', '').strip()
+    user = request.args.get('user', '').strip()
+    month = request.args.get('month', '').strip()
+    year = request.args.get('year', '').strip()
+    change_scent = request.args.get('change_scent', '').strip()
+    collect_back = request.args.get('collect_back', '').strip()
+
+    if company:
+        query['company'] = {'$regex': company, '$options': 'i'}
+    if user:
+        query['user'] = {'$regex': user, '$options': 'i'}
+    if month and year:
+        query['$expr'] = {
+            '$and': [
+                {'$eq': [{'$month': '$date'}, int(month)]},
+                {'$eq': [{'$year': '$date'}, int(year)]}
+            ]
+        }
+    if change_scent:
+        query['change_scent'] = change_scent.lower() == 'true'
+    if collect_back:
+        query['collect_back'] = collect_back.lower() == 'true'
+
+    total_entries = discontinue_collection.count_documents(query)
+    results = list(discontinue_collection.find(query).skip(skip).limit(limit))
+
+    # Add month and year for rendering
+    for r in results:
+        if isinstance(r.get('date'), str):
+            r['date'] = parse_date_safe(r['date'])
+        if isinstance(r.get('submitted_at'), str):
+            r['submitted_at'] = parse_date_safe(r['submitted_at'])
+
+    total_pages = (total_entries + limit - 1) // limit
+
+    return render_template('discontinue_list.html',
+                           username=session["username"],
+                           data=results,
+                           page=page,
+                           total_pages=total_pages,
+                           pagination_base_url=request.path,
+                           query_params=request.args.to_dict())
 
 @app.route("/logout")
 def logout():
@@ -597,73 +660,174 @@ def new_customer():
 
     raw_models = list(model_list_collection.find().sort("order", 1))
     models = [{k: v for k, v in model.items() if k != '_id'} for model in raw_models]
+
     eo_raw = list(eo_pack_collection.find().sort("order", 1))
     essential_oils = [{k: v for k, v in eo.items() if k != '_id'} for eo in eo_raw]
-    
+
     if request.method == "POST":
         date_str = request.form.get("dateCreated")
-        dateCreated = datetime.strptime(date_str, "%Y-%m-%d") if date_str else None  
+        dateCreated = datetime.strptime(date_str, "%Y-%m-%d") if date_str else None
+
         companyName = request.form.get("companyName")
         industry = request.form.get("industry")
-        premises_data_list, pic_records, device_records, master_list = [], [], [], [] # renamed premises to premises_data_list
+
+        premises = []
+        pic_records = []
+        device_records = []
+        master_list = []
 
         if companyName:
-            premise_map, pic_map = {}, {}
+            premise_map = {}
+            pic_map = {}
+
+            # Extract Premises
             k = 1
             while True:
-                premise_name = request.form.get(f'premiseName{k}')
-                if not premise_name: break
-                premise_record = {"company": companyName, "month_year": datetime.now(), "industry": industry, "premise_name": premise_name, "premise_area": request.form.get(f'premiseArea{k}'), "premise_address": request.form.get(f'premiseAddress{k}'), "created_at": datetime.now()}
-                premises_data_list.append(premise_record)
-                premise_map[premise_name] = premise_record
+                pname = request.form.get(f'premiseName{k}')
+                parea = request.form.get(f'premiseArea{k}')
+                paddr = request.form.get(f'premiseAddress{k}')
+                if not pname:
+                    break
+
+                prem = {
+                    "company": companyName,
+                    "month_year": datetime.now(),
+                    "industry": industry,
+                    "premise_name": pname,
+                    "premise_area": parea,
+                    "premise_address": paddr,
+                    "created_at": datetime.now(),
+                }
+                premises.append(prem)
+                premise_map[pname] = prem
                 k += 1
+
+            # Extract PICs
             i = 1
             while True:
                 pic_name = request.form.get(f'picName{i}')
-                if not pic_name: break
-                contact_premise = request.form.get(f'contactPremise{i}')
-                picdata = {"company": companyName, "tied_to_premise": contact_premise, "name": pic_name, "designation": request.form.get(f'picDesignation{i}'), "contact": request.form.get(f'picContact{i}'), "email": request.form.get(f'picEmail{i}'), "created_at": datetime.now()}
+                if not pic_name:
+                    break
+                picdata = {
+                    "company": companyName,
+                    "tied_to_premise": request.form.get(f'contactPremise{i}'),
+                    "name": pic_name,
+                    "designation": request.form.get(f'picDesignation{i}'),
+                    "contact": request.form.get(f'picContact{i}'),
+                    "email": request.form.get(f'picEmail{i}'),
+                    "created_at": datetime.now(),
+                }
                 pic_records.append(picdata)
-                if contact_premise:
-                    if contact_premise == "all":
-                        for pname_key in premise_map.keys(): pic_map.setdefault(pname_key, []).append(picdata) # Corrected variable name
+
+                tied = picdata["tied_to_premise"]
+                if tied:
+                    if tied == "all":
+                        for pname in premise_map:
+                            pic_map.setdefault(pname, []).append(picdata)
                     else:
-                        pic_map.setdefault(contact_premise, []).append(picdata)
+                        pic_map.setdefault(tied, []).append(picdata)
                 i += 1
+
+            # Extract Devices and Build Master List
             j = 1
             while True:
-                device_sn = request.form.get(f'deviceSN{j}')
-                if not device_sn: break
-                device_premise = request.form.get(f'devicePremise{j}')
-                devicedata = {"company": companyName, "tied_to_premise": device_premise, "location": request.form.get(f'deviceLocation{j}'), "S/N": safe_int(device_sn), "Model": request.form.get(f'deviceModel{j}'), "Color": request.form.get(f'deviceColour{j}'), "Volume": safe_int(request.form.get(f'deviceVolume{j}')), "Current EO": request.form.get(f'deviceScent{j}'),
-                              "E1 - DAYS": request.form.get(f"E1Days{j}"), "E1 - START": request.form.get(f"E1StartTime{j}"), "E1 - END": request.form.get(f"E1EndTime{j}"), "E1 - PAUSE": safe_int(request.form.get(f"E1Pause{j}")), "E1 - WORK": safe_int(request.form.get(f"E1Work{j}")),
-                              "E2 - DAYS": request.form.get(f"E2Days{j}"), "E2 - START": request.form.get(f"E2StartTime{j}"), "E2 - END": request.form.get(f"E2EndTime{j}"), "E2 - PAUSE": safe_int(request.form.get(f"E2Pause{j}")), "E2 - WORK": safe_int(request.form.get(f"E2Work{j}")),
-                              "E3 - DAYS": request.form.get(f"E3Days{j}"), "E3 - START": request.form.get(f"E3StartTime{j}"), "E3 - END": request.form.get(f"E3EndTime{j}"), "E3 - PAUSE": safe_int(request.form.get(f"E3Pause{j}")), "E3 - WORK": safe_int(request.form.get(f"E3Work{j}")),
-                              "E4 - DAYS": request.form.get(f"E4Days{j}"), "E4 - START": request.form.get(f"E4StartTime{j}"), "E4 - END": request.form.get(f"E4EndTime{j}"), "E4 - PAUSE": safe_int(request.form.get(f"E4Pause{j}")), "E4 - WORK": safe_int(request.form.get(f"E4Work{j}")), "created_at": datetime.now()}
+                sn = request.form.get(f'deviceSN{j}')
+                if not sn:
+                    break
+
+                devicedata = {
+                    "company": companyName,
+                    "tied_to_premise": request.form.get(f'devicePremise{j}'),
+                    "location": request.form.get(f'deviceLocation{j}'),
+                    "S/N": safe_int(sn),
+                    "Model": request.form.get(f'deviceModel{j}'),
+                    "Color": request.form.get(f'deviceColour{j}'),
+                    "Volume": safe_int(request.form.get(f'deviceVolume{j}')),
+                    "Current EO": request.form.get(f'deviceScent{j}'),
+                    "E1 - DAYS": request.form.get(f"E1Days{j}"),
+                    "E1 - START": request.form.get(f"E1StartTime{j}"),
+                    "E1 - END": request.form.get(f"E1EndTime{j}"),
+                    "E1 - PAUSE": safe_int(request.form.get(f"E1Pause{j}")),
+                    "E1 - WORK": safe_int(request.form.get(f"E1Work{j}")),
+                    "E2 - DAYS": request.form.get(f"E2Days{j}"),
+                    "E2 - START": request.form.get(f"E2StartTime{j}"),
+                    "E2 - END": request.form.get(f"E2EndTime{j}"),
+                    "E2 - PAUSE": safe_int(request.form.get(f"E2Pause{j}")),
+                    "E2 - WORK": safe_int(request.form.get(f"E2Work{j}")),
+                    "E3 - DAYS": request.form.get(f"E3Days{j}"),
+                    "E3 - START": request.form.get(f"E3StartTime{j}"),
+                    "E3 - END": request.form.get(f"E3EndTime{j}"),
+                    "E3 - PAUSE": safe_int(request.form.get(f"E3Pause{j}")),
+                    "E3 - WORK": safe_int(request.form.get(f"E3Work{j}")),
+                    "E4 - DAYS": request.form.get(f"E4Days{j}"),
+                    "E4 - START": request.form.get(f"E4StartTime{j}"),
+                    "E4 - END": request.form.get(f"E4EndTime{j}"),
+                    "E4 - PAUSE": safe_int(request.form.get(f"E4Pause{j}")),
+                    "E4 - WORK": safe_int(request.form.get(f"E4Work{j}")),
+                    "created_at": datetime.now(),
+                }
                 device_records.append(devicedata)
-                assigned_pics = pic_map.get(device_premise, [{}])
-                for pic_item in assigned_pics: # Corrected variable name
-                    master_list.append({"company": companyName, "industry": industry, "month_year": dateCreated, **premise_map.get(device_premise, {}), **pic_item, **devicedata})
+
+                premise_name = devicedata["tied_to_premise"]
+                premise_data = premise_map.get(premise_name, {})
+                assigned_pics = pic_map.get(premise_name, [{}])
+
+                for pic in assigned_pics:
+                    master_record = {
+                        "company": companyName,
+                        "industry": industry,
+                        "month_year": datetime.now(),
+
+                        # Remapped Premise Info
+                        "Premise Name": premise_data.get("premise_name"),
+                        "Premise Area": premise_data.get("premise_area"),
+                        "Premise Address": premise_data.get("premise_address"),
+
+                        # Remapped PIC Info
+                        "PIC Name": pic.get("name"),
+                        "Designation": pic.get("designation"),
+                        "Contact": pic.get("contact"),
+                        "Email": pic.get("email"),
+
+                        # Remapped Device Info
+                        "S/N": devicedata["S/N"],
+                        "Model": devicedata["Model"],
+                        "Color": devicedata["Color"],
+                        "Volume": devicedata["Volume"],
+                        "Location": devicedata["location"],
+                        "Current EO": devicedata["Current EO"],
+                        "E1 - DAYS": devicedata.get("E1 - DAYS"),
+                        "E1 - START": devicedata.get("E1 - START"),
+                        "E1 - END": devicedata.get("E1 - END"),
+                        "E1 - WORK": devicedata.get("E1 - WORK"),
+                        "E1 - PAUSE": devicedata.get("E1 - PAUSE"),
+                        "E2 - DAYS": devicedata.get("E2 - DAYS"),
+                        "E2 - START": devicedata.get("E2 - START"),
+                        "E2 - END": devicedata.get("E2 - END"),
+                        "E2 - WORK": devicedata.get("E2 - WORK"),
+                        "E2 - PAUSE": devicedata.get("E2 - PAUSE"),
+                        "E3 - DAYS": devicedata.get("E3 - DAYS"),
+                        "E3 - START": devicedata.get("E3 - START"),
+                        "E3 - END": devicedata.get("E3 - END"),
+                        "E3 - WORK": devicedata.get("E3 - WORK"),
+                        "E3 - PAUSE": devicedata.get("E3 - PAUSE"),
+                        "E4 - DAYS": devicedata.get("E4 - DAYS"),
+                        "E4 - START": devicedata.get("E4 - START"),
+                        "E4 - END": devicedata.get("E4 - END"),
+                        "E4 - WORK": devicedata.get("E4 - WORK"),
+                        "E4 - PAUSE": devicedata.get("E4 - PAUSE"),
+                    }
+                    master_list.append(master_record)
+
                 j += 1
 
-        if premises_data_list: # Check the renamed list
-            profile_list_collection.insert_many(premises_data_list)
+        # Insert into MongoDB
+        if premises:
+            profile_list_collection.insert_many(premises)
         if pic_records:
             profile_list_collection.insert_many(pic_records)
         if device_records:
             device_list_collection.insert_many(device_records)
-
-        # --- DIAGNOSTIC LOGGING START ---
-        print(f"--- new_customer debug ---")
-        print(f"app.config['MODE'] = {app.config.get('MODE')}")
-        print(f"Length of master_list: {len(master_list) if master_list is not None else 'master_list is None'}")
-        if master_list and len(master_list) > 0:
-            print(f"First record in master_list: {master_list[0]}")
-        else:
-            print(f"master_list is empty or None, no records to show or insert.")
-        print(f"--- end new_customer debug ---")
-        # --- DIAGNOSTIC LOGGING END ---
-
         if master_list:
             if app.config['MODE'] == "PROD":
                 services_collection.insert_many(master_list)
