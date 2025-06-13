@@ -6,6 +6,7 @@ yarn-error.log*
 .idea/
 .vscode/
 __pycache__/
+**/__pycache__/
 dist/
 .coverage*
 htmlcov/
@@ -42,3 +43,19 @@ build/
 # if not using a build server to generate it on the fly.
 # However, if you were using a more complex build setup (e.g. with Parcel, Webpack),
 # you might have a /dist or /build folder to ignore.
+
+# Rules moved from backend/.gitignore
+backend/.env
+backend/file-import.py
+backend/importTP.py
+backend/testemail.py
+backend/activity.txt
+backend/activity-log2.txt
+codestash.html
+backend/2024 - 12 - A. Service List.xlsx
+backend/templates/index2.html
+backend/templates/index3.html
+backend/mail.json
+backend/env
+backend/__pycache__/
+backend/__pycache__
