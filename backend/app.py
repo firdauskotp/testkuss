@@ -522,6 +522,48 @@ def change_form():
             changed_models_collection.insert_one(data_for_db)
             log_activity(session["username"], f"updated settings (changed_models_collection): {data_for_db.get('premises')} {data_for_db.get('devices')}", logs_collection)
 
+            # Update services_collection based on the change form
+            if not data_for_db["collect_back"]:
+                service_update_query = {
+                    "company": data_for_db.get("company"),
+                    "Premise Name": {"$in": data_for_db.get("premises", [])},
+                    "Model": {"$in": data_for_db.get("devices", [])}
+                }
+
+                service_update_values = {"$set": {}}
+
+                if data_for_db.get("change_scent") and data_for_db.get("change_scent_to"):
+                    service_update_values["$set"]["Current EO"] = data_for_db["change_scent_to"]
+
+                if data_for_db.get("move_device") and data_for_db.get("move_device_to"):
+                    service_update_values["$set"]["Location"] = data_for_db["move_device_to"]
+
+                if data_for_db.get("relocate_device") and data_for_db.get("relocate_device_to"):
+                    service_update_values["$set"]["Premise Name"] = data_for_db["relocate_device_to"]
+                    # Assuming Location should also reflect the new premise, or a more specific location within it.
+                    # For now, setting it to the new premise name for simplicity.
+                    service_update_values["$set"]["Location"] = data_for_db["relocate_device_to"]
+
+                # Regarding Model, Color, Volume updates:
+                # The current form structure (form_data_dict/data_for_db) does not provide explicit fields for *new* Model, Color, or Volume.
+                # The 'devices' field in the form is used to *identify* existing devices to apply changes to, not to specify a new model type.
+                # 'redoSettings' might imply resetting to defaults, but the form doesn't specify what those defaults are or where they'd come from.
+                # Therefore, updating Model, Color, and Volume "based on new settings provided in the change form" is not possible
+                # without either new form fields for these values or a different interpretation of existing fields.
+                # For now, only Current EO and Location/Premise Name are updated as per clear form fields.
+                # If `redoSettings` is true and implies changing Model, Color, Volume, the specific new values are not provided by the form.
+                # For example, if `data_for_db.get("redo_settings")` is true:
+                #   if data_for_db.get("devices"):
+                #       service_update_values["$set"]["Model"] = data_for_db.get("devices")[0] # Highly speculative
+                #   service_update_values["$set"]["Color"] = "" # No source from form
+                #   service_update_values["$set"]["Volume"] = 0 # No source from form
+                # Due to this ambiguity and lack of direct form fields, Model, Color, Volume are not being updated in this modification.
+
+                if service_update_values["$set"]:
+                    update_result = services_collection.update_many(service_update_query, service_update_values)
+                    log_activity(session["username"], f"Applied changes to services_collection: {update_result.modified_count} devices updated for company {data_for_db.get('company')}", logs_collection)
+                    flash(f"{update_result.modified_count} devices updated in services records.", "info")
+
         try:
             pdf_bytes = generate_change_form_pdf_bytes(form_data_dict) # Use the consistent dict
             client_emails = []
@@ -1445,6 +1487,79 @@ def generate_change_form_pdf_bytes(data):
     if data.get("collectBack"): add_field("Month for Collection:", data.get("month")); add_field("Year for Collection:", data.get("year"))
     pdf.ln(5); add_field("Remarks:", data.get("remark"))
     return pdf.output(dest="S").encode('latin-1')
+
+@app.route('/changed-settings-list', methods=['GET'])
+def changed_settings_list():
+    if 'username' not in session:
+        flash("Please log in to access this page.", "warning")
+        return redirect(url_for('login'))
+
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20)) # Default to 20 items per page
+    skip = (page - 1) * limit
+
+    query = {}
+    user_filter = request.args.get('user', '').strip()
+    company_filter = request.args.get('company', '').strip()
+    month_filter = request.args.get('month', '').strip()
+    year_filter = request.args.get('year', '').strip()
+
+    if user_filter:
+        query['user'] = {'$regex': user_filter, '$options': 'i'}
+    if company_filter:
+        query['company'] = {'$regex': company_filter, '$options': 'i'}
+
+    # Date filtering - assumes 'date' field in changed_models_collection is a string like 'YYYY-MM-DD'
+    # or a datetime object. If it's a string, this query needs adjustment or data needs conversion.
+    # For changed_models_collection, 'date' is form.get("date") or datetime.now().strftime('%Y-%m-%d')
+    # 'submitted_at' is datetime.now()
+    # Let's filter by 'submitted_at' for month/year as it's a proper datetime object.
+    if month_filter and year_filter:
+        try:
+            month_int = int(month_filter)
+            year_int = int(year_filter)
+            query['$expr'] = {
+                '$and': [
+                    {'$eq': [{'$month': '$submitted_at'}, month_int]},
+                    {'$eq': [{'$year': '$submitted_at'}, year_int]}
+                ]
+            }
+        except ValueError:
+            flash("Invalid month or year format.", "danger")
+    elif year_filter: # Filter by year only if month is not provided
+        try:
+            year_int = int(year_filter)
+            query['$expr'] = {'$eq': [{'$year': '$submitted_at'}, year_int]}
+        except ValueError:
+            flash("Invalid year format.", "danger")
+
+
+    total_entries = changed_models_collection.count_documents(query)
+    # Sort by submission date, newest first
+    results = list(changed_models_collection.find(query).sort("submitted_at", -1).skip(skip).limit(limit))
+
+    # Format dates if necessary for display, e.g., 'submitted_at'
+    for r in results:
+        if isinstance(r.get("submitted_at"), datetime):
+            r["submitted_at"] = r["submitted_at"].strftime("%Y-%m-%d %H:%M:%S")
+        # 'date' field is likely already a string 'YYYY-MM-DD' from the form
+        # If 'premises' or 'devices' can be None, ensure template handles it (already done with |join(', ') if X else '')
+
+    total_pages = (total_entries + limit - 1) // limit
+
+    # Preserve other query parameters for pagination links
+    query_params_for_template = request.args.to_dict()
+    if 'page' in query_params_for_template:
+        del query_params_for_template['page']
+
+
+    return render_template("changed_settings_list.html",
+                           data=results,
+                           page=page,
+                           total_pages=total_pages,
+                           limit=limit, # Though limit is not directly used in this template's pagination macro
+                           query_params=query_params_for_template, # Pass the filtered dict
+                           username=session.get('username'))
 
 if __name__ == "__main__":
     app.run(debug=True)
