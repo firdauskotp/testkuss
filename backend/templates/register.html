@@ -38,7 +38,7 @@
                 <p class="mt-2 text-sm text-red-600 dark:text-red-400">Please remember the password. It will be hashed for security and cannot be retrieved.</p>
             </div>
 
-            <form id="registerForm" method="POST" action="{{ url_for('register') }}" class="space-y-6">
+            <form id="registerForm" method="POST" action="{{ url_for('auth.register') }}" class="space-y-6">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                     <input type="email" name="email" id="email"

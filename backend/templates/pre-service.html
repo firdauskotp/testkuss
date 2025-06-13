@@ -34,7 +34,11 @@
         {% endwith %}
 
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
-            <form method="POST" action="{{ url_for('pre_service') }}" class="space-y-6">
+            <form method="POST" action="{{ url_for('forms.pre_service') }}" class="space-y-6"
+                  data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
+                  data-get-models-url-template="{{ url_for('api_helpers.get_models', premise='__PREMISE_ID__') }}"
+                  data-get-colors-url-template="{{ url_for('api_helpers.get_colors', model='__MODEL_ID__', premise='__PREMISE_ID__') }}"
+                  data-get-eo-url-template="{{ url_for('api_helpers.get_eo', model='__MODEL_ID__', premise='__PREMISE_ID__', color='__COLOR_ID__') }}">
                 <div>
                     <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
                     <input type="date" id="date" name="date" value="{{ request.form.get('date', '') }}" autocomplete="off" required
@@ -93,6 +97,12 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const preServiceForm = document.querySelector('form[action="{{ url_for("forms.pre_service") }}"]');
+    const getPremisesUrlTemplate = preServiceForm.dataset.getPremisesUrlTemplate;
+    const getModelsUrlTemplate = preServiceForm.dataset.getModelsUrlTemplate;
+    const getColorsUrlTemplate = preServiceForm.dataset.getColorsUrlTemplate;
+    const getEoUrlTemplate = preServiceForm.dataset.getEoUrlTemplate;
+
     const companyDropdown = document.getElementById('company');
     const premiseDropdown = document.getElementById('premise');
     const modelDropdown = document.getElementById('model');
@@ -113,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetAndDisableDropdowns(allDropdowns);
         if (!companyId) return;
 
-        axios.get(`/get-premises/${encodeURIComponent(companyId)}`)
+        axios.get(getPremisesUrlTemplate.replace('__COMPANY_ID__', encodeURIComponent(companyId)))
             .then(response => {
                 premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
                 // Assuming response.data is the list of premises for the /get-premises/ endpoint
@@ -138,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetAndDisableDropdowns([modelDropdown, colorDropdown, eoDropdown]);
         if (!premiseId) return;
 
-        axios.get(`/get-models/${encodeURIComponent(premiseId)}`)
+        axios.get(getModelsUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
             .then(response => {
                 modelDropdown.innerHTML = '<option value="" selected disabled>Select a model</option>';
                 if (response.data && Array.isArray(response.data)) {
@@ -157,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetAndDisableDropdowns([colorDropdown, eoDropdown]);
         if (!modelId || !premiseId) return;
 
-        axios.get(`/get-colors/${encodeURIComponent(modelId)}/${encodeURIComponent(premiseId)}`)
+        axios.get(getColorsUrlTemplate.replace('__MODEL_ID__', encodeURIComponent(modelId)).replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
             .then(response => {
                 colorDropdown.innerHTML = '<option value="" selected disabled>Select a color</option>';
                 if (response.data && Array.isArray(response.data)) {
@@ -177,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetAndDisableDropdowns([eoDropdown]);
         if (!colorId || !modelId || !premiseId) return;
 
-        axios.get(`/get-eo/${encodeURIComponent(modelId)}/${encodeURIComponent(premiseId)}/${encodeURIComponent(colorId)}`)
+        axios.get(getEoUrlTemplate.replace('__MODEL_ID__', encodeURIComponent(modelId)).replace('__PREMISE_ID__', encodeURIComponent(premiseId)).replace('__COLOR_ID__', encodeURIComponent(colorId)))
             .then(response => {
                 eoDropdown.innerHTML = '<option value="" selected disabled>Select an EO</option>';
                 if (response.data && Array.isArray(response.data)) {

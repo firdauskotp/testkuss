@@ -93,7 +93,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('view_help') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.view_complaints_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('view_remarks', remark_type='normal') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='normal') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('view_remarks', remark_type='urgent') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='urgent') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('profile') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.profile_master_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -177,7 +177,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('view_device') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.device_master_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -198,7 +198,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('route_table') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.route_table_view') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -219,7 +219,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('reports') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.reports') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -240,7 +240,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('eo_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.eo_list_func') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>
@@ -261,7 +261,7 @@
           </div>
           <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
             <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('pack_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
+            <a href="{{ url_for('data_reports.pack_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
           </div>
         </div>
       </div>

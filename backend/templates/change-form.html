@@ -33,7 +33,9 @@
             {% endif %}
         {% endwith %}
 
-        <form id="changeForm" method="POST" action="{{ url_for('change_form') }}" class="space-y-8">
+        <form id="changeForm" method="POST" action="{{ url_for('forms.change_form') }}" class="space-y-8"
+              data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY__') }}"
+              data-get-devices-url-template="{{ url_for('api_helpers.get_devices', premise='__PREMISE__') }}">
             <!-- User and Company -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">User & Company Details</h3>
@@ -186,6 +188,10 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    const changeForm = document.getElementById('changeForm');
+    const getPremisesUrlTemplate = changeForm.dataset.getPremisesUrlTemplate;
+    const getDevicesUrlTemplate = changeForm.dataset.getDevicesUrlTemplate;
+
     const companySelect = document.getElementById("companyName");
     const premisesContainer = document.getElementById("premises-container");
     const devicesContainer = document.getElementById("devices-container");
@@ -208,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Fetch HTML for premises checkboxes (assuming the endpoint returns pre-styled HTML or simple structure)
-        fetch(`/get-premises/${encodeURIComponent(company)}`)
+        fetch(getPremisesUrlTemplate.replace('__COMPANY__', encodeURIComponent(company)))
             .then(res => res.text())
             .then(html => {
                 premisesContainer.innerHTML = html; // This HTML might need to be Tailwind-styled at its source or here
@@ -261,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
         devicesContainer.innerHTML = ''; // Clear before populating
 
         let deviceFetchPromises = selectedPremises.map(premise => {
-            return fetch(`/get-devices/${encodeURIComponent(premise)}`)
+            return fetch(getDevicesUrlTemplate.replace('__PREMISE__', encodeURIComponent(premise)))
                 .then(res => res.json())
                 .then(data => ({ premise, devices: data.devices }))
                 .catch(err => { console.error(`Error fetching devices for ${premise}:`, err); return { premise, devices: [] }; });
@@ -323,7 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 eoContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">Loading EOs...</p>';
 
-                fetch("{{ url_for('get_eos') }}", { // Using url_for for the endpoint
+                fetch("{{ url_for('api_helpers.get_eos') }}", { // Using url_for for the endpoint
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ devices: selectedDevices })

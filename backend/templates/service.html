@@ -37,7 +37,10 @@
             </a>
         </div>
 
-        <form method="POST" action="{{ url_for('service') }}" class="space-y-8"> {# Assuming 'service' is the correct endpoint name #}
+        <form method="POST" action="{{ url_for('forms.service') }}" class="space-y-8" {# Assuming 'service' is the correct endpoint name #}
+              data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
+              data-get-pic-url-template="{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}"
+              data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}">
 
             <!-- Technician, Date, Service Time -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
@@ -293,6 +296,11 @@
 
 
     // JS for dependent dropdowns and device inactive state (from original file, needs class/ID checks)
+    const serviceForm = document.querySelector('form[action="{{ url_for("forms.service") }}"]');
+    const getPremisesUrlTemplate = serviceForm.dataset.getPremisesUrlTemplate;
+    const getPicUrlTemplate = serviceForm.dataset.getPicUrlTemplate;
+    const getChangeNotesUrlTemplate = serviceForm.dataset.getChangeNotesUrlTemplate;
+
     document.querySelectorAll('.device-inactive').forEach((checkbox) => {
         checkbox.addEventListener('change', function () {
             const card = this.closest('.device-card'); // Ensure this class is on the device card
@@ -329,7 +337,7 @@
                 return;
             }
 
-            axios.get(`/get-premises/${encodeURIComponent(companyId)}`)
+            axios.get(getPremisesUrlTemplate.replace('__COMPANY_ID__', encodeURIComponent(companyId)))
                 .then(response => {
                     premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
                     // Assuming response.data is a list of premise names or objects
@@ -360,7 +368,7 @@
 
             // Fetch PIC Contact
             if (picContactInput) {
-                axios.get(`/get-pic/${encodeURIComponent(premiseId)}`) // Assuming this endpoint exists
+                axios.get(getPicUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId))) // Assuming this endpoint exists
                     .then(response => {
                         // Assuming response.data is an object like { name: "PIC Name", contact: "PIC Contact" }
                         if (response.data && response.data.name && response.data.contact) {
@@ -377,7 +385,7 @@
 
             // Fetch Change Notes
             if (changeNotesTextarea) {
-                 axios.get(`/get-change-notes/${encodeURIComponent(premiseId)}`) // Assuming this endpoint exists
+                 axios.get(getChangeNotesUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId))) // Assuming this endpoint exists
                     .then(response => {
                          // Assuming response.data is an object like { notes: "Some notes" }
                         if (response.data && response.data.notes) {

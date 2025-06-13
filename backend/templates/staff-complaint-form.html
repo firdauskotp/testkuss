@@ -45,7 +45,7 @@
             </a>
         </div>
 
-        <form method="POST" action="{{ url_for('staff_form', case_no=case_no) }}" enctype="multipart/form-data" class="space-y-8">
+        <form method="POST" action="{{ url_for('staff.staff_form', case_no=case_no) }}" enctype="multipart/form-data" class="space-y-8">
 
             <!-- Case Details Section -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
@@ -71,7 +71,7 @@
                     {% if case_data.get('image_id') %}
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Uploaded Device Image</label>
-                        <img src="{{ url_for('get_device_image', image_id=case_data.image_id) }}"
+                        <img src="{{ url_for('api_helpers.get_device_image', image_id=case_data.image_id) }}"
                              alt="Device Image" class="mt-1 rounded-md border border-gray-300 dark:border-gray-600" style="max-width: 200px; max-height: 200px;"
                              data-modal-target="imageModal" data-modal-toggle="imageModal" id="modalImageTrigger">
                     </div>

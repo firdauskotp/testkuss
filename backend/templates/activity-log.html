@@ -42,7 +42,7 @@
             </svg>
         </button>
         <div id="filterFormContainer" class="hidden mt-6">
-            <form method="get" action="{{ url_for('get_logs') }}" class="space-y-6"> {# Assuming 'get_logs' is the filter endpoint #}
+            <form method="get" action="{{ url_for('data_reports.activity_logs_view') }}" class="space-y-6"> {# Assuming 'get_logs' is the filter endpoint #}
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                     <div>
                         <label for="filter_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>

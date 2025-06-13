@@ -242,7 +242,7 @@
             return id.startsWith('new-') ? li.querySelector('.eo-name-input').value.trim() : id;
         });
 
-        fetch("{{ url_for('save_all_eo_global_changes') }}", {
+        fetch("{{ url_for('global_settings.save_eo_global_changes') }}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ added: addedEOsToSave, edited: editedEOsToSave, deleted: deletedEOsToSave, visual_order: finalOrder })

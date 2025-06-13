@@ -23,7 +23,7 @@
         {% endwith %}
 
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
-            <form method="POST" action="{{ url_for('remark') }}" class="space-y-6">
+            <form method="POST" action="{{ url_for('forms.remark') }}" class="space-y-6">
                 <div>
                     <label for="remark_text" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Remark</label>
                     <textarea name="remark" id="remark_text" rows="4"

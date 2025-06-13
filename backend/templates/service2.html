@@ -38,7 +38,13 @@
         </div>
 
         {# Assuming the action for this form is the 'service' endpoint, adjust if it's different like 'service2_submit' #}
-        <form method="POST" action="{{ url_for('service') }}" class="space-y-8"> {# Check if action should be different, e.g. /service-simple #}
+        <form method="POST" action="{{ url_for('forms.service2') }}" class="space-y-8" {# Check if action should be different, e.g. /service-simple #}
+              data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
+              data-get-client-details-url-template="{{ url_for('api_helpers.get_client_details', premise_name='__PREMISE_ID__') }}"
+              data-get-device-details-url-template="{{ url_for('api_helpers.get_device_details', premise_name='__PREMISE_ID__') }}"
+              data-get-models-url-template="{{ url_for('api_helpers.get_models', premise='__PREMISE_ID__') }}"
+              data-get-colors-url-template="{{ url_for('api_helpers.get_colors', model='__MODEL_ID__', premise='__PREMISE_ID__') }}"
+              data-get-eo-url-template="{{ url_for('api_helpers.get_eo', model='__MODEL_ID__', premise='__PREMISE_ID__', color='__COLOR_ID__') }}">
 
             <!-- Technician Info -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
@@ -204,6 +210,14 @@
     }
 
     // Dependent dropdown logic (similar to pre-service.html)
+    const service2Form = document.querySelector('form[action="{{ url_for("forms.service2") }}"]');
+    const getPremisesUrlTemplate = service2Form.dataset.getPremisesUrlTemplate;
+    const getClientDetailsUrlTemplate = service2Form.dataset.getClientDetailsUrlTemplate;
+    const getDeviceDetailsUrlTemplate = service2Form.dataset.getDeviceDetailsUrlTemplate;
+    const getModelsUrlTemplate = service2Form.dataset.getModelsUrlTemplate;
+    const getColorsUrlTemplate = service2Form.dataset.getColorsUrlTemplate;
+    const getEoUrlTemplate = service2Form.dataset.getEoUrlTemplate;
+
     const companyDropdown = document.getElementById('company');
     const premiseDropdown = document.getElementById('premise');
     const modelDropdown = document.getElementById('model');
@@ -234,7 +248,7 @@
 
             if (!companyId) return;
 
-            axios.get(`/get-premises/${encodeURIComponent(companyId)}`)
+            axios.get(getPremisesUrlTemplate.replace('__COMPANY_ID__', encodeURIComponent(companyId)))
                 .then(response => {
                     premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
                      if (response.data && Array.isArray(response.data.premises)) {
@@ -263,14 +277,14 @@
             if (!premiseId) return;
 
             // Fetch and display client details
-            axios.get(`/get-client-details/${encodeURIComponent(premiseId)}`)
+            axios.get(getClientDetailsUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
                 .then(response => {
                     if(clientDetailsDiv) clientDetailsDiv.innerHTML = response.data.html; // Assuming endpoint returns HTML
                 })
                 .catch(error => console.error('Error fetching client details:', error));
 
             // Fetch and display device details (simplified, might need more complex rendering)
-            axios.get(`/get-device-details/${encodeURIComponent(premiseId)}`)
+            axios.get(getDeviceDetailsUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
                 .then(response => {
                     if(deviceDetailsDiv) deviceDetailsDiv.innerHTML = response.data.html; // Assuming endpoint returns HTML
                 })
@@ -278,7 +292,7 @@
 
 
             // Populate model dropdown (example, actual endpoint might differ)
-            axios.get(`/get-models/${encodeURIComponent(premiseId)}`)
+            axios.get(getModelsUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
                 .then(response => {
                     modelDropdown.innerHTML = '<option value="" selected disabled>Select a model</option>';
                     if (response.data && Array.isArray(response.data)) {
@@ -300,7 +314,7 @@
             resetAndDisableDynamicDropdowns([colorDropdown, eoDropdown]);
             if (!modelId || !premiseId) return;
 
-            axios.get(`/get-colors/${encodeURIComponent(modelId)}/${encodeURIComponent(premiseId)}`)
+            axios.get(getColorsUrlTemplate.replace('__MODEL_ID__', encodeURIComponent(modelId)).replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
                 .then(response => {
                     colorDropdown.innerHTML = '<option value="" selected disabled>Select a color</option>';
                      if (response.data && Array.isArray(response.data)) {
@@ -323,7 +337,7 @@
             resetAndDisableDynamicDropdowns([eoDropdown]);
             if (!colorId || !modelId || !premiseId) return;
 
-            axios.get(`/get-eo/${encodeURIComponent(modelId)}/${encodeURIComponent(premiseId)}/${encodeURIComponent(colorId)}`)
+            axios.get(getEoUrlTemplate.replace('__MODEL_ID__', encodeURIComponent(modelId)).replace('__PREMISE_ID__', encodeURIComponent(premiseId)).replace('__COLOR_ID__', encodeURIComponent(colorId)))
                 .then(response => {
                     eoDropdown.innerHTML = '<option value="" selected disabled>Select an EO</option>';
                     if (response.data && Array.isArray(response.data)) {

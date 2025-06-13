@@ -26,11 +26,11 @@
         </div>
 
         <div class="mt-8 space-y-4 sm:space-y-0 sm:flex sm:gap-4 sm:justify-center">
-            <a href="{{ url_for('index') }}"  {# Assuming '/' is client login or a general home page #}
+            <a href="{{ url_for('auth.index') }}"
                class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
                 Go Back to Home
             </a>
-            <a href="{{ url_for('customer_form') }}" {# Assuming 'customer_form' is the route for customer-help #}
+            <a href="{{ url_for('customer.customer_form') }}"
                class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md shadow-sm text-indigo-700 dark:text-indigo-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
                 Submit Another Case
             </a>

@@ -269,7 +269,7 @@
         });
 
 
-        fetch("{{ url_for('save_model1_changes') }}", { // Assuming this is the correct endpoint
+        fetch("{{ url_for('global_settings.save_device_global_changes') }}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ added: addedToSave, edited: editedToSave, deleted: deletedToSave, order: finalOrder })

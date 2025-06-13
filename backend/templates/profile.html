@@ -27,7 +27,7 @@
             </svg>
         </button>
         <div id="filterFormContainer" class="hidden mt-6">
-            <form method="get" action="{{ url_for('profile') }}" class="space-y-6"> {# Assuming 'profile' is the correct endpoint #}
+            <form method="get" action="{{ url_for('data_reports.profile_master_list') }}" class="space-y-6"> {# Assuming 'profile' is the correct endpoint #}
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                     {% for name, label, placeholder, type in [
                         ('company', 'Company', 'Company Name', 'text'),
@@ -55,7 +55,9 @@
     <!-- Data Table Section -->
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-0 sm:p-2">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+                   data-edit-url-template="{{ url_for('api_helpers.edit_profile_record', record_id='__RECORD_ID__') }}"
+                   data-delete-url-template="{{ url_for('api_helpers.delete_profile_record', record_id='__RECORD_ID__') }}">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
                         {% for header in ['Company', 'Industry', 'Premise Name', 'Premise Area', 'Premise Address', 'PICs', 'Month', 'Year', 'Actions'] %}
@@ -201,6 +203,10 @@
 
 
     document.addEventListener("DOMContentLoaded", function () {
+        const profileTable = document.querySelector('table.min-w-full'); // Or a more specific ID if you add one
+        const editRecordUrlTemplate = profileTable.dataset.editUrlTemplate;
+        const deleteRecordUrlTemplate = profileTable.dataset.deleteUrlTemplate;
+
         let selectedRecordIdForAction; // To store ID for delete/save
         let currentRowForAction; // To store row for UI update
         let currentEditableData = {};
@@ -267,7 +273,7 @@
 
         // Confirm Save button in modal
         document.getElementById("confirmSaveBtn").addEventListener("click", function () {
-            fetch(`/edit_record/${selectedRecordIdForAction}`, { // Make sure this endpoint is correct
+            fetch(editRecordUrlTemplate.replace('__RECORD_ID__', selectedRecordIdForAction), { // Make sure this endpoint is correct
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(currentEditableData)
@@ -308,7 +314,7 @@
 
         // Confirm Delete button in modal
         document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
-            fetch(`/delete_record/${selectedRecordIdForAction}`, { // Make sure this endpoint is correct
+            fetch(deleteRecordUrlTemplate.replace('__RECORD_ID__', selectedRecordIdForAction), { // Make sure this endpoint is correct
                 method: "POST" // Or DELETE, depending on backend
             })
             .then(response => response.json())

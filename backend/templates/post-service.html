@@ -34,7 +34,7 @@
         {% endwith %}
 
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
-            <form id="post-service-form" action="{{ url_for('post_service') }}" method="POST" class="space-y-6">
+            <form id="post-service-form" action="{{ url_for('forms.post_service') }}" method="POST" class="space-y-6">
                 <div>
                     <label for="essential_oil" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Essential Oil</label>
                     <select id="essential_oil" name="essential_oil" required
@@ -107,7 +107,7 @@
         // Populate essential oil dropdown
         const essentialOilSelect = document.getElementById("essential_oil");
         if (essentialOilSelect) {
-            axios.get("{{ url_for('get_essential_oils') }}") // Using Flask's url_for
+            axios.get("{{ url_for('api_helpers.get_essential_oils') }}") // Using Flask's url_for
                 .then(response => {
                     const essentialOils = response.data;
                     essentialOilSelect.innerHTML = '<option value="" selected disabled>Select an Essential Oil</option>'; // Clear loading/default

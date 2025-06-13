@@ -42,7 +42,7 @@
             </svg>
         </button>
         <div id="filterFormContainer" class="hidden mt-6">
-            <form method="get" action="{{ url_for('view_admins') }}" class="space-y-6">
+            <form method="get" action="{{ url_for('user_mgnt.view_admins') }}" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                     <div>
                         <label for="filter_username_admin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
@@ -115,7 +115,7 @@
                 </button>
             </div>
             <div class="p-6"><p class="text-base leading-relaxed text-gray-600 dark:text-gray-400">Are you sure you want to delete this admin user?</p></div>
-            <form id="deleteAdminForm" method="POST" action="{{ url_for('delete_admin') }}">
+            <form id="deleteAdminForm" method="POST" action="{{ url_for('user_mgnt.delete_admin') }}">
                 <input type="hidden" name="user_id" id="deleteAdminIdInput">
                 <div class="flex items-center justify-end p-6 space-x-2 border-t border-gray-300 dark:border-gray-700 rounded-b">
                     <button data-modal-hide="deleteAdminModal" type="button" class="tailwind-button-gray">Cancel</button>

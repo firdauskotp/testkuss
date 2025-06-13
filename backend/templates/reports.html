@@ -27,7 +27,7 @@
             </svg>
         </button>
         <div id="filterFormContainer" class="hidden mt-6">
-            <form method="get" action="{{ url_for('reports') }}" class="space-y-6"> {# Assuming 'reports' is the correct endpoint for filtering #}
+            <form method="get" action="{{ url_for('data_reports.reports') }}" class="space-y-6"> {# Assuming 'reports' is the correct endpoint for filtering #}
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
                     {# Helper macro for form fields could be useful here if Jinja2 supports it easily in this context #}
                     {% for name, label, placeholder, type in [
@@ -387,7 +387,7 @@
             const payload = { 'S/N': recordId, ...data };
 
 
-            fetch("{{ url_for('update_data') }}", { // Assuming 'update_data' is the correct Flask endpoint
+            fetch("{{ url_for('api_helpers.update_data') }}", { // Assuming 'update_data' is the correct Flask endpoint
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

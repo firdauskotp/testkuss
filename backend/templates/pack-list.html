@@ -120,7 +120,7 @@
             <span>Show/Hide Filters</span><svg id="eoFilterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
         <div id="eoFilterFormContainer" class="hidden mb-6">
-            <form method="get" action="{{ url_for('pack_list') }}" class="space-y-6">
+            <form method="get" action="{{ url_for('data_reports.pack_list') }}" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                     {% for name, label, placeholder, type in [
                         ('month', 'Month', '10', 'text'), ('year', 'Year', '2024', 'number'),
@@ -165,7 +165,7 @@
             <span>Show/Hide Filters</span><svg id="otherDeviceFilterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
         <div id="otherDeviceFilterFormContainer" class="hidden mb-6">
-            <form method="get" action="{{ url_for('pack_list') }}" class="space-y-6">
+            <form method="get" action="{{ url_for('data_reports.pack_list') }}" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                     {% for name, label, placeholder, type in [
                         ('device_month', 'Month', '10', 'text'), ('device_year', 'Year', '2024', 'number'),
@@ -199,7 +199,7 @@
             <span>Show/Hide Filters</span><svg id="bottleFilterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
         <div id="bottleFilterFormContainer" class="hidden mb-6">
-            <form method="get" action="{{ url_for('pack_list') }}" class="space-y-6">
+            <form method="get" action="{{ url_for('data_reports.pack_list') }}" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                      {% for name, label, placeholder, type in [
                         ('bottle_month', 'Month', '10', 'text'), ('bottle_year', 'Year', '2024', 'number'),
@@ -233,7 +233,7 @@
             <span>Show/Hide Filters</span><svg id="strawFilterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
         </button>
         <div id="strawFilterFormContainer" class="hidden mb-6">
-            <form method="get" action="{{ url_for('pack_list') }}" class="space-y-6">
+            <form method="get" action="{{ url_for('data_reports.pack_list') }}" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                     {% for name, label, placeholder, type in [
                         ('straw_month', 'Month', '10', 'text'), ('straw_year', 'Year', '2024', 'number'),

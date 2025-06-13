@@ -6,23 +6,94 @@
     <title>{% block title %}Kuss Essentials{% endblock %}</title>
     <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
     {% block head_extra %}{% endblock %}
+    <style>
+        /* Additional style for dropdown arrow if not using a library that provides one */
+        .dropdown-toggle::after {
+            content: ' ▼'; /* Simple down arrow */
+            font-size: 0.7em;
+            margin-left: 0.25em;
+        }
+    </style>
 </head>
 <body class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
 
-    <header class="bg-gray-800 dark:bg-gray-900 text-white shadow-md">
+    <header class="bg-gray-800 dark:bg-gray-900 text-white shadow-md print:hidden"> {# Hide header when printing #}
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="/" class="text-xl font-bold hover:text-gray-300">
-                Kuss Essentials {# Placeholder for logo/site name #}
+            <a href="{{ url_for('dashboard') }}" class="text-xl font-bold hover:text-gray-300 dark:hover:text-gray-400">
+                Kuss Essentials
             </a>
             <div class="flex items-center space-x-3">
-                <nav class="hidden md:flex space-x-4">
-                    <a href="{{ url_for('dashboard') }}" class="hover:text-gray-300">Dashboard</a>
-                    {# Add other main navigation links here as needed #}
-                    <a href="#" class="hover:text-gray-300">Profile</a>
-                    <a href="{{ url_for('logout') }}" class="hover:text-gray-300">Logout</a>
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-2">
+                    <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Dashboard</a>
+
+                    <!-- Customer Management Dropdown -->
+                    <div class="relative group">
+                        <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Customer</button>
+                        <div class="absolute left-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
+                            <a href="{{ url_for('forms.new_customer') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add New Customer</a>
+                            <a href="{{ url_for('forms.change_form') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Change Form (Settings)</a>
+                            <a href="{{ url_for('data_reports.profile_master_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile Master List</a>
+                            <a href="{{ url_for('data_reports.device_master_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Device Master List</a>
+                        </div>
+                    </div>
+
+                    <!-- Service Management Dropdown -->
+                    <div class="relative group">
+                        <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Service</button>
+                        <div class="absolute left-0 mt-0 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
+                            <a href="{{ url_for('forms.pre_service') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add Routes</a>
+                            <a href="{{ url_for('forms.service') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Service Form</a>
+                             <a href="{{ url_for('forms.service2') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Service Form (Simple)</a>
+                            <a href="{{ url_for('forms.post_service') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Post-Service Form</a>
+                            <a href="{{ url_for('data_reports.view_complaints_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Help Requests</a>
+                        </div>
+                    </div>
+
+                    <!-- User Management Dropdown -->
+                    <div class="relative group">
+                        <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Users</button>
+                        <div class="absolute left-0 mt-0 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
+                            <a href="{{ url_for('auth.register') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add User</a>
+                            <a href="{{ url_for('auth.register_admin') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add Admin</a>
+                            <a href="{{ url_for('user_mgnt.view_users') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Client Users</a>
+                            <a href="{{ url_for('user_mgnt.view_admins') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Admins</a>
+                        </div>
+                    </div>
+
+                    <!-- Global Settings Dropdown -->
+                     <div class="relative group">
+                        <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Globals</button>
+                        <div class="absolute left-0 mt-0 w-52 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
+                            <a href="{{ url_for('global_settings.eo_global_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Global EO List</a>
+                            <a href="{{ url_for('global_settings.device_global_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Global Device List</a>
+                        </div>
+                    </div>
+
+                    <!-- Reports & Logs Dropdown -->
+                    <div class="relative group">
+                        <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Reports</button>
+                        <div class="absolute right-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
+                            <a href="{{ url_for('data_reports.reports') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">All Data Report</a>
+                            <a href="{{ url_for('data_reports.eo_list_func') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">EO/Models Report</a>
+                            <a href="{{ url_for('data_reports.pack_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Packing List Report</a>
+                            <a href="{{ url_for('data_reports.route_table_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Route Table</a>
+                            <a href="{{ url_for('data_reports.activity_logs_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Activity Log</a>
+                        </div>
+                    </div>
+                     <!-- Remarks Dropdown -->
+                    <div class="relative group">
+                        <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Remarks</button>
+                        <div class="absolute right-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
+                            <a href="{{ url_for('forms.remark') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Submit Remark</a>
+                            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='normal') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Normal Remarks</a>
+                            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='urgent') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Urgent Remarks</a>
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('auth.logout') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Logout</a>
                 </nav>
                 <button id="theme-toggle-btn" class="p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                    {# Icon will be handled by JS or CSS later, for now, text #}
                     Theme
                 </button>
                 <button id="mobile-menu-btn" class="md:hidden p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
@@ -32,22 +103,57 @@
                 </button>
             </div>
         </div>
-        <!-- Mobile Menu (hidden by default) -->
+        <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-800 dark:bg-gray-900">
-            <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Dashboard</a>
-            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Profile</a>
-            <a href="{{ url_for('logout') }}" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Logout</a>
+            <a href="{{ url_for('dashboard') }}" class="mobile-nav-link">Dashboard</a>
+
+            <h3 class="mobile-nav-heading">Customer Management</h3>
+            <a href="{{ url_for('forms.new_customer') }}" class="mobile-nav-link">Add New Customer</a>
+            <a href="{{ url_for('forms.change_form') }}" class="mobile-nav-link">Change Form (Settings)</a>
+            <a href="{{ url_for('data_reports.profile_master_list') }}" class="mobile-nav-link">Profile Master List</a>
+            <a href="{{ url_for('data_reports.device_master_list') }}" class="mobile-nav-link">Device Master List</a>
+
+            <h3 class="mobile-nav-heading">Service Management</h3>
+            <a href="{{ url_for('forms.pre_service') }}" class="mobile-nav-link">Add Routes</a>
+            <a href="{{ url_for('forms.service') }}" class="mobile-nav-link">Service Form</a>
+            <a href="{{ url_for('forms.service2') }}" class="mobile-nav-link">Service Form (Simple)</a>
+            <a href="{{ url_for('forms.post_service') }}" class="mobile-nav-link">Post-Service Form</a>
+            <a href="{{ url_for('data_reports.view_complaints_list') }}" class="mobile-nav-link">Help Requests</a>
+
+            <h3 class="mobile-nav-heading">User Management</h3>
+            <a href="{{ url_for('auth.register') }}" class="mobile-nav-link">Add User</a>
+            <a href="{{ url_for('auth.register_admin') }}" class="mobile-nav-link">Add Admin</a>
+            <a href="{{ url_for('user_mgnt.view_users') }}" class="mobile-nav-link">View Client Users</a>
+            <a href="{{ url_for('user_mgnt.view_admins') }}" class="mobile-nav-link">View Admins</a>
+
+            <h3 class="mobile-nav-heading">Global Settings</h3>
+            <a href="{{ url_for('global_settings.eo_global_view') }}" class="mobile-nav-link">Global EO List</a>
+            <a href="{{ url_for('global_settings.device_global_view') }}" class="mobile-nav-link">Global Device List</a>
+
+            <h3 class="mobile-nav-heading">Reports & Logs</h3>
+            <a href="{{ url_for('data_reports.reports') }}" class="mobile-nav-link">All Data Report</a>
+            <a href="{{ url_for('data_reports.eo_list_func') }}" class="mobile-nav-link">EO/Models Report</a>
+            <a href="{{ url_for('data_reports.pack_list') }}" class="mobile-nav-link">Packing List Report</a>
+            <a href="{{ url_for('data_reports.route_table_view') }}" class="mobile-nav-link">Route Table</a>
+            <a href="{{ url_for('data_reports.activity_logs_view') }}" class="mobile-nav-link">Activity Log</a>
+
+            <h3 class="mobile-nav-heading">Remarks</h3>
+            <a href="{{ url_for('forms.remark') }}" class="mobile-nav-link">Submit Remark</a>
+            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='normal') }}" class="mobile-nav-link">View Normal Remarks</a>
+            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='urgent') }}" class="mobile-nav-link">View Urgent Remarks</a>
+
+            <hr class="border-gray-700 my-2">
+            <a href="{{ url_for('auth.logout') }}" class="mobile-nav-link bg-red-500 hover:bg-red-600 text-white">Logout</a>
         </div>
     </header>
 
-    <main class="container mx-auto p-4 flex-grow">
-        <h1 class="text-2xl font-bold my-4">{% block page_title %}{% endblock %}</h1>
+    <main class="container mx-auto p-4 flex-grow print:p-0">
+        <h1 class="text-2xl font-bold my-4 print:text-xl print:my-2">{% block page_title %}{% endblock %}</h1>
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 p-6 mt-auto text-center text-sm">
+    <footer class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 p-6 mt-auto text-center text-sm print:hidden">
         <p>&copy; <span id="current-year">2024</span> Kuss Essentials. All rights reserved.</p>
-        {# You can add more footer links here if needed #}
     </footer>
 
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
@@ -61,24 +167,17 @@
             });
         }
 
-        // Update theme button text/icon based on theme (example)
-        const themeToggleBtn = document.getElementById('theme-toggle-btn');
-        function updateToggleButtonText() {
-            if (themeToggleBtn) {
-                const currentTheme = document.documentElement.getAttribute('data-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                themeToggleBtn.textContent = currentTheme === 'dark' ? 'Light' : 'Dark';
-            }
-        }
-        // Update on load
-        updateToggleButtonText();
-        // Update when theme changes (listen to custom event or override in theme-toggle.js)
-        // For simplicity, theme-toggle.js already updates it. If not, you'd call updateToggleButtonText() after theme change.
-        // We might need to enhance theme-toggle.js to emit an event or allow callback.
-        // For now, theme-toggle.js directly updates button text.
-
-        // Current year in footer
-        // document.getElementById('current-year').textContent = new Date().getFullYear(); // This can be uncommented if preferred over static year
+        // Current year in footer (optional, if you want it dynamic)
+        // document.getElementById('current-year').textContent = new Date().getFullYear();
     </script>
+    <style>
+        .mobile-nav-link {
+            @apply block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700 dark:hover:bg-gray-700;
+        }
+        .mobile-nav-heading {
+            @apply px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider;
+        }
+    </style>
     {% block scripts %}{% endblock %}
 </body>
 </html>
