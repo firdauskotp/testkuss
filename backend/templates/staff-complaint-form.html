@@ -284,7 +284,7 @@
             maxWidth: 2.5,
             penColor: document.documentElement.getAttribute('data-theme') === 'dark' ? "white" : "black"
         });
-        const savedSignature = "{{ case_data.get('signature', '')|escapejs }}"; // Use escapejs for safety
+            const savedSignature = {{ case_data.get('signature', '')|tojson }}; // Changed to |tojson
 
         if (savedSignature && savedSignature.startsWith("data:image")) {
             // Delay loading to ensure canvas is sized if it depends on CSS fully loading

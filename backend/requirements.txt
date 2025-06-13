@@ -11,3 +11,4 @@ Flask-CORS
 flask-apscheduler
 pytest
 pytest-mock
+pytest-flask

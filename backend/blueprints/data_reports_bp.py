@@ -151,7 +151,6 @@ def reports():
                                query_params=query_params_for_template)
     return redirect(url_for('auth.admin_login')) # Should be handled by before_request
 
-
 @data_reports_bp.route('/pack-list')
 def pack_list():
     # ... (Full original content of pack_list function from app.py)
@@ -217,18 +216,17 @@ def pack_list():
 
 
     return render_template("pack-list.html",
-                            username=session["username"],
-                            data=data_eo_pack_list, device_data=data_device_pack_list,
-                            bottle_data=data_bottle_pack_list, straw_data=data_other_pack_list,
-                            page=page, total_pages=total_pages_eo, limit=limit,
-                            device_page=device_page, total_device_pages=total_pages_device, device_limit=device_limit,
-                            bottle_page=bottle_page, total_bottle_pages=total_pages_bottle, bottle_limit=bottle_limit,
-                            straw_page=straw_page, total_straw_pages=total_pages_straw, straw_limit=straw_limit,
-                            pagination_base_url=url_for('.pack_list'), query_params=query_params_eo,
-                            pagination_base_url_device=url_for('.pack_list'), query_params_device=query_params_device,
-                            pagination_base_url_bottle=url_for('.pack_list'), query_params_bottle=query_params_bottle,
-                            pagination_base_url_straw=url_for('.pack_list'), query_params_straw=query_params_straw)
-
+                           username=session["username"],
+                           data=data_eo_pack_list, device_data=data_device_pack_list,
+                           bottle_data=data_bottle_pack_list, straw_data=data_other_pack_list,
+                           page=page, total_pages=total_pages_eo, limit=limit,
+                           device_page=device_page, total_device_pages=total_pages_device, device_limit=device_limit,
+                           bottle_page=bottle_page, total_bottle_pages=total_pages_bottle, bottle_limit=bottle_limit,
+                           straw_page=straw_page, total_straw_pages=total_pages_straw, straw_limit=straw_limit,
+                           pagination_base_url=url_for('.pack_list'), query_params=query_params_eo,
+                           pagination_base_url_device=url_for('.pack_list'), query_params_device=query_params_device,
+                           pagination_base_url_bottle=url_for('.pack_list'), query_params_bottle=query_params_bottle,
+                           pagination_base_url_straw=url_for('.pack_list'), query_params_straw=query_params_straw)
 
 @data_reports_bp.route('/eo-model-list') # Original was /eo-list
 def eo_list_func(): # Renamed from eo_list to avoid conflict with collection name
@@ -274,12 +272,11 @@ def eo_list_func(): # Renamed from eo_list to avoid conflict with collection nam
 
 
     return render_template("eo-list.html",
-                            username=session["username"], data=data_eo_list, model_data=data_model_list,
-                            page=page, total_pages=total_pages_eo, limit=limit,
-                            model_page=model_page, total_model_pages=total_pages_model, model_limit=model_limit,
-                            pagination_base_url=url_for('.eo_list_func'), query_params=query_params_eo,
-                            pagination_base_url_model=url_for('.eo_list_func'), query_params_model=query_params_model)
-
+                           username=session["username"], data=data_eo_list, model_data=data_model_list,
+                           page=page, total_pages=total_pages_eo, limit=limit,
+                           model_page=model_page, total_model_pages=total_pages_model, model_limit=model_limit,
+                           pagination_base_url=url_for('.eo_list_func'), query_params=query_params_eo,
+                           pagination_base_url_model=url_for('.eo_list_func'), query_params_model=query_params_model)
 
 @data_reports_bp.route('/profile-master') # Original was /profile
 def profile_master_list(): # Renamed from profile
@@ -314,9 +311,8 @@ def profile_master_list(): # Renamed from profile
     paginated_data = structured_data[(page - 1) * limit : page * limit]
 
     return render_template('profile.html', page=page, total_pages=total_pages, limit=limit,
-                            pagination_base_url=url_for('.profile_master_list'),
-                            query_params=request.args.to_dict(), data=paginated_data)
-
+                           pagination_base_url=url_for('.profile_master_list'),
+                           query_params=request.args.to_dict(), data=paginated_data)
 
 @data_reports_bp.route('/device-master') # Original was /view-device
 def device_master_list(): # Renamed from view_device
@@ -352,8 +348,8 @@ def device_master_list(): # Renamed from view_device
     paginated_data = structured_data[(page - 1) * limit: page * limit]
 
     return render_template('device.html', page=page, total_pages=total_pages, limit=limit,
-                            pagination_base_url=url_for('.device_master_list'),
-                            query_params=request.args.to_dict(), data=paginated_data)
+                           pagination_base_url=url_for('.device_master_list'),
+                           query_params=request.args.to_dict(), data=paginated_data)
 
 @data_reports_bp.route('/route-table-view') # Original was /route_table
 def route_table_view(): # Renamed from route_table
@@ -376,8 +372,8 @@ def route_table_view(): # Renamed from route_table
     paginated_data = structured_data[(page - 1) * limit: page * limit]
 
     return render_template('route-table.html', page=page, total_pages=total_pages, limit=limit,
-                            pagination_base_url=url_for('.route_table_view'),
-                            query_params=request.args.to_dict(), data=paginated_data)
+                           pagination_base_url=url_for('.route_table_view'),
+                           query_params=request.args.to_dict(), data=paginated_data)
 
 @data_reports_bp.route('/activity-logs') # Original was /logs, function get_logs
 def activity_logs_view(): # Renamed from get_logs
@@ -402,9 +398,9 @@ def activity_logs_view(): # Renamed from get_logs
     total_pages = (total_list + limit - 1) // limit
 
     return render_template('activity-log.html', username=session["username"],
-                            data=processed_data_logs_list, page=page, total_pages=total_pages, limit=limit,
-                            pagination_base_url=url_for('.activity_logs_view'),
-                            query_params=request.args.to_dict())
+                           data=processed_data_logs_list, page=page, total_pages=total_pages, limit=limit,
+                           pagination_base_url=url_for('.activity_logs_view'),
+                           query_params=request.args.to_dict())
 
 @data_reports_bp.route("/complaints-list") # Original was /view-help-list, function view_help
 def view_complaints_list():
@@ -422,37 +418,5 @@ def view_remarks_by_type(remark_type):
             r_item['_id_str'] = str(r_item['_id'])
     return render_template('view_remarks.html', remarks=remarks_list, remark_type=remark_type)
 
-    # Helper for pagination, if needed by templates directly (though handled in views now)
-    # @data_reports_bp.app_template_filter('to_querystring_bp')
-    # def to_querystring_bp(query_params):
-    #     return urlencode(query_params)
-
-    # @data_reports_bp.app_template_filter('update_querystring_bp')
-    # def update_querystring_bp(querystring, key, value):
-    #     query_dict = dict(parse.parse_qsl(querystring))
-    #     query_dict[key] = value
-    #     return urlencode(query_dict)
-
-    """
-
-    This is a very large file. I will create it now. The placeholders for function bodies mean I will copy the exact logic from `app.py` into these functions, making sure to adjust `url_for` calls for pagination to be relative (e.g., `url_for('.reports')`). I've included simplified placeholders in the prompt above to keep its size manageable, but the actual tool call will use the full, correct code.
-    The actual implementation of the full functions from `app.py` (reports, pack_list, eo_list, profile, view_device, route_table, get_logs) will be done in the `create_file_with_block` call.
-    I have to be extremely careful with variable names (e.g. `month` vs `month_filter`) and `url_for` calls.
-    The provided code block for the blueprint is a template. I will now fill this template with the actual code from `app.py` for the long functions.
-    This is a very long operation. I will generate the full file content for `data_reports_bp.py` by extracting and adapting the original route functions.
-    This is the most complex step. I will try my best.
-    The `urlencode` and `datetime` and `defaultdict` imports are added.
-    The collection names are imported.
-    The function renaming (e.g. `get_logs` to `activity_logs_view`) is reflected.
-    The url_prefix `/reports` is added.
-    The pagination base URLs are made relative like `url_for('.reports')`.
-    The query_params passed to templates are filtered to only include those relevant to the current filter form, to avoid clashes when multiple forms are on one page (like pack-list).
-
-This is a massive amount of code to generate in one block. I will try. If it fails, I might need to do it in chunks or simplify the content.
-I will use the content from the `app.py` read in the previous step.
-The `reports` function in `app.py` had `Model = request.args.get("Model")` twice. I'll ensure this is corrected to use unique variable names for filters if they were different, or just use one if it was a typo. (It was `Model` and then later `Model = request.args.get("Model")` again - seems like a copy-paste, will use `Model_filter` for consistency).
-The `safe_int` utility is not imported here, so if it was used (e.g. in `new-customer`), it would need to be added or handled. However, these report routes mostly deal with string/regex queries or direct int conversions.
-The `ObjectId` is not used in these report routes directly, but good to keep in mind if any detail views were to be added.
-The `urlencode` for pagination is directly available in Flask templates via `to_querystring` filter, so custom ones in blueprint might not be needed. I will use the existing global filters `to_querystring` and `update_querystring` defined in `app.py`.
-
-Let's proceed with creating `data_reports_bp.py`."""
+# The multi-line comment block that was causing the SyntaxError has been removed.
+# It was my own instructional text mistakenly included in the generated file.

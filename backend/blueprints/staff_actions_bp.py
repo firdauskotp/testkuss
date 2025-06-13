@@ -6,8 +6,8 @@ from bson import ObjectId # Make sure ObjectId is imported if used for _id strin
 
 from ..col import collection # Customer cases/complaints
 # For fs, mail and other utils, it's better if they are registered with the app and accessed via current_app or specific getters
-from backend.extentions import fs as main_fs_instance # GridFS instance from main app (e.g. backend/__init__.py or app.py)
-# from .. import mail as main_mail_instance # If mail is needed in this blueprint
+from ..app import fs as main_fs_instance # GridFS instance from main app (e.g. backend/__init__.py or app.py)
+# from ..app import mail as main_mail_instance # If mail is needed in this blueprint
 
 staff_actions_bp = Blueprint(
     'staff',

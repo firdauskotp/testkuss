@@ -1,4 +1,4 @@
-from libs import *
+from .libs import *
 
 load_dotenv()
 
