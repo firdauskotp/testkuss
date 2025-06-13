@@ -10,3 +10,38 @@ yarn-error.log*
 # if not using a build server to generate it on the fly.
 # However, if you were using a more complex build setup (e.g. with Parcel, Webpack),
 # you might have a /dist or /build folder to ignore.
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Virtual environment
+env/
+venv/
+*.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Rules moved from backend/.gitignore
+backend/.env
+backend/file-import.py
+backend/importTP.py
+backend/testemail.py
+backend/activity.txt
+backend/activity-log2.txt
+# ../codestash.html is relative to backend, so it becomes codestash.html in root
+codestash.html 
+backend/2024 - 12 - A. Service List.xlsx
+backend/templates/index2.html
+backend/templates/index3.html
+backend/mail.json
