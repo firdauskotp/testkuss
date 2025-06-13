@@ -902,17 +902,132 @@ def new_customer():
 
 @app.route('/pre-service',  methods=['GET', 'POST'])
 def pre_service():
-    if "username" not in session: return redirect(url_for('login'))
+    # if "username" not in session: return redirect(url_for('login'))
+    # companies = services_collection.distinct('company')
+    # if request.method == 'POST':
+    #     date_str = request.form.get('date')
+    #     date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
+    #     entry = {"date": date_obj, "company": request.form.get('company'), "premise": request.form.get('premise'), "model": request.form.get('model'), "color": request.form.get('color'), "eo": request.form.get('eo')}
+    #     route_list_collection.insert_one(entry)
+    #     flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
+    #     log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
+    #     return render_template('pre-service.html', companies=companies)
+    # return render_template('pre-service.html', companies=companies)
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    technician_name = session['username']
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     companies = services_collection.distinct('company')
+
     if request.method == 'POST':
-        date_str = request.form.get('date')
-        date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
-        entry = {"date": date_obj, "company": request.form.get('company'), "premise": request.form.get('premise'), "model": request.form.get('model'), "color": request.form.get('color'), "eo": request.form.get('eo')}
-        route_list_collection.insert_one(entry)
-        flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
-        log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
-        return render_template('pre-service.html', companies=companies)
-    return render_template('pre-service.html', companies=companies)
+        # Base details
+        staff_name = request.form.get('staffName')
+        remarks = request.form.get('remarks')
+        actions_taken = request.form.getlist('actions')
+        signature = request.form.get('signature')
+
+        # Service Date
+        service_day = request.form.get('service_day')
+        service_month = request.form.get('service_month')
+        service_year = request.form.get('service_year')
+
+        # Premise
+        premise_name = request.form.get('premise')
+        company = request.form.get('company')
+
+        # PIC details
+        pic_record = profile_list_collection.find_one({'premise_name': premise_name}, {'pic_name': 1, 'pic_contact': 1})
+        pic_contact = f"{pic_record.get('pic_name', '')} ({pic_record.get('pic_contact', '')})"
+
+        # Get tied devices
+        devices = list(device_list_collection.find({'tied_to_premise': premise_name}))
+        device_entries = []
+
+        for index, device in enumerate(devices, start=1):
+            model = request.form.get(f'model{index}')
+            color = request.form.get(f'color{index}')
+            eo = request.form.get(f'eo{index}')
+            location = request.form.get(f'location{index}')
+            scent_change = request.form.get(f'scent_change{index}')
+            relocate = request.form.get(f'relocate{index}')
+            inactive = request.form.get(f'inactive{index}') == '1'
+
+            # Events update
+            new_events = []
+            for e in range(1, 5):
+                new_event = {
+                    'days': request.form.get(f'event{index}_days{e}'),
+                    'start_time': request.form.get(f'event{index}_start{e}'),
+                    'end_time': request.form.get(f'event{index}_end{e}'),
+                    'work': request.form.get(f'event{index}_work{e}'),
+                    'pause': request.form.get(f'event{index}_pause{e}')
+                }
+                new_events.append(new_event)
+
+            # Build device entry
+            entry = {
+                'original_model': device.get('Model'),
+                'serial_number': device.get('S/N'),
+                'location': location,
+                'model': model,
+                'color': color,
+                'eo': eo,
+                'scent_change': scent_change,
+                'inactive': inactive,
+                'relocate_to': relocate,
+                'events': new_events
+            }
+
+            device_entries.append(entry)
+
+            # If inactive, remove from master
+            if inactive:
+                device_list_collection.delete_one({'_id': device['_id']})
+                removed_devices_collection.insert_one({
+                    'premise': premise_name,
+                    'device': entry,
+                    'removed_on': {
+                        'day': service_day,
+                        'month': service_month,
+                        'year': service_year
+                    }
+                })
+
+            # If relocated, update master
+            elif relocate:
+                device_list_collection.update_one(
+                    {'_id': device['_id']},
+                    {'$set': {'tied_to_premise': relocate}}
+                )
+
+        # Save service record
+        service_record = {
+            'technician_name': technician_name,
+            'timestamp': current_time,
+            'service_day': service_day,
+            'service_month': service_month,
+            'service_year': service_year,
+            'company': company,
+            'premise_name': premise_name,
+            'pic_contact': pic_contact,
+            'devices': device_entries,
+            'actions_taken': actions_taken,
+            'remarks': remarks,
+            'staff_name': staff_name,
+            'signature': signature
+        }
+
+        change_collection.insert_one(service_record)
+        flash('Service form submitted successfully!', 'success')
+        return redirect(url_for('field_service'))
+
+    premises = profile_list_collection.find({}, {'premise_name': 1, '_id': 0})
+    return render_template('service.html',
+                           technician_name=technician_name,
+                           current_time=current_time,
+                           companies=companies,
+                           premises=premises)
 
 @app.route('/get-models/<premise>')
 def get_models(premise):
