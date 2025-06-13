@@ -1539,9 +1539,16 @@ def changed_settings_list():
     results = list(changed_models_collection.find(query).sort("submitted_at", -1).skip(skip).limit(limit))
 
     # Format dates if necessary for display, e.g., 'submitted_at'
+    # Also extract month and day from submitted_at
     for r in results:
-        if isinstance(r.get("submitted_at"), datetime):
-            r["submitted_at"] = r["submitted_at"].strftime("%Y-%m-%d %H:%M:%S")
+        submitted_at_dt = r.get("submitted_at") # Keep original datetime object if present
+        if isinstance(submitted_at_dt, datetime):
+            r["submitted_month"] = submitted_at_dt.month
+            r["submitted_day"] = submitted_at_dt.day
+            r["submitted_at"] = submitted_at_dt.strftime("%Y-%m-%d %H:%M:%S") # Format for existing display
+        else: # Should not happen if data is consistent, but good to have fallbacks
+            r["submitted_month"] = None
+            r["submitted_day"] = None
         # 'date' field is likely already a string 'YYYY-MM-DD' from the form
         # If 'premises' or 'devices' can be None, ensure template handles it (already done with |join(', ') if X else '')
 

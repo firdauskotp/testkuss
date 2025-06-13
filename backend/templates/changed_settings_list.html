@@ -25,11 +25,11 @@
           <div class="accordion-body">
             <div class="row">
               <div class="col-md-3">
-                <label class="form-label">Month (e.g., 1 for Jan)</label> <!-- Assuming 'date' field for filtering -->
+                <label class="form-label">Month (e.g., 1 for Jan)</label> <!-- Filters by submitted_at month -->
                 <input type="text" name="month" class="form-control" placeholder="6" value="{{ query_params.get('month', '') }}">
               </div>
               <div class="col-md-3">
-                <label class="form-label">Year</label>
+                <label class="form-label">Year</label> <!-- Filters by submitted_at year -->
                 <input type="number" name="year" class="form-control" placeholder="2025" value="{{ query_params.get('year', '') }}">
               </div>
               <div class="col-md-3">
@@ -57,7 +57,9 @@
         <tr>
           <th>User</th>
           <th>Company</th>
-          <th>Date</th>
+          <th>Date of Change</th> <!-- This is 'date' from the form -->
+          <th>Submitted Month</th> <!-- From 'submitted_at' -->
+          <th>Submitted Day</th>   <!-- From 'submitted_at' -->
           <th>Premises</th>
           <th>Devices</th>
           <th>Change Scent</th>
@@ -70,7 +72,6 @@
           <th>Relocate Device</th>
           <th>Relocate Device To</th>
           <th>Remark</th>
-          <th>Submitted At</th>
         </tr>
       </thead>
       <tbody>
@@ -78,7 +79,9 @@
         <tr>
           <td>{{ row.user }}</td>
           <td>{{ row.company }}</td>
-          <td>{{ row.date }}</td> <!-- Assuming 'date' is the primary date field -->
+          <td>{{ row.date }}</td>
+          <td>{{ row.submitted_month }}</td>
+          <td>{{ row.submitted_day }}</td>
           <td>{{ row.premises | join(', ') if row.premises else '' }}</td>
           <td>{{ row.devices | join(', ') if row.devices else '' }}</td>
           <td>{{ row.change_scent }}</td>
@@ -91,11 +94,10 @@
           <td>{{ row.relocate_device }}</td>
           <td>{{ row.relocate_device_to }}</td>
           <td>{{ row.remark }}</td>
-          <td>{{ row.submitted_at }}</td> <!-- Or format if it's a datetime object -->
         </tr>
         {% else %}
         <tr>
-          <td colspan="16" class="text-center">No records found.</td>
+          <td colspan="17" class="text-center">No records found.</td> <!-- Adjusted colspan -->
         </tr>
         {% endfor %}
       </tbody>
