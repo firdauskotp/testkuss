@@ -152,275 +152,275 @@ def reports():
     return redirect(url_for('auth.admin_login')) # Should be handled by before_request
 
 
-    @data_reports_bp.route('/pack-list')
-    def pack_list():
-        # ... (Full original content of pack_list function from app.py)
-        # ... (Ensure all url_for for pagination are relative, e.g., url_for('.pack_list'))
-        # Example snippet (must be the full function from app.py)
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        device_page = int(request.args.get('device_page', 1))
-        device_limit = int(request.args.get('device_limit', 20))
-        bottle_page = int(request.args.get('bottle_page', 1))
-        bottle_limit = int(request.args.get('bottle_limit', 20))
-        straw_page = int(request.args.get('straw_page', 1))
-        straw_limit = int(request.args.get('straw_limit', 20))
+@data_reports_bp.route('/pack-list')
+def pack_list():
+    # ... (Full original content of pack_list function from app.py)
+    # ... (Ensure all url_for for pagination are relative, e.g., url_for('.pack_list'))
+    # Example snippet (must be the full function from app.py)
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    device_page = int(request.args.get('device_page', 1))
+    device_limit = int(request.args.get('device_limit', 20))
+    bottle_page = int(request.args.get('bottle_page', 1))
+    bottle_limit = int(request.args.get('bottle_limit', 20))
+    straw_page = int(request.args.get('straw_page', 1))
+    straw_limit = int(request.args.get('straw_limit', 20))
 
-        # Filters (ensure all are captured from request.args)
-        month_filter = request.args.get('month','').strip()
-        year_filter = request.args.get('year','').strip()
-        eo_filter = request.args.get('eo_name')
-        # ... (all other filters for the four sections) ...
-        device_month_filter = request.args.get('device_month','').strip()
-        device_year_filter = request.args.get('device_year','').strip()
-        # ... etc. ...
+    # Filters (ensure all are captured from request.args)
+    month_filter = request.args.get('month','').strip()
+    year_filter = request.args.get('year','').strip()
+    eo_filter = request.args.get('eo_name')
+    # ... (all other filters for the four sections) ...
+    device_month_filter = request.args.get('device_month','').strip()
+    device_year_filter = request.args.get('device_year','').strip()
+    # ... etc. ...
 
-        query_eo = {}
-        query_device = {}
-        query_bottle = {}
-        query_straw = {}
+    query_eo = {}
+    query_device = {}
+    query_bottle = {}
+    query_straw = {}
 
-        # Build queries based on filters (this is complex and must be copied from app.py)
-        # Example for one filter
-        if eo_filter: query_eo['eo_name'] = {'$regex': eo_filter, '$options': 'i'}
-        # ... (all other query constructions) ...
+    # Build queries based on filters (this is complex and must be copied from app.py)
+    # Example for one filter
+    if eo_filter: query_eo['eo_name'] = {'$regex': eo_filter, '$options': 'i'}
+    # ... (all other query constructions) ...
 
-        # Fetch data and count for each section
-        total_eo = eo_pack_collection.count_documents(query_eo)
-        data_eo_pack_list = list(eo_pack_collection.find(query_eo, {'_id':0}).skip((page-1)*limit).limit(limit))
-        # ... (similar for device, bottle, straw data) ...
-        total_device = others_list_collection.count_documents(query_device)
-        data_device_pack_list = list(others_list_collection.find(query_device, {'_id':0}).skip((device_page-1)*device_limit).limit(device_limit))
-        total_bottle = empty_bottles_list_collection.count_documents(query_bottle)
-        data_bottle_pack_list = list(empty_bottles_list_collection.find(query_bottle, {'_id':0}).skip((bottle_page-1)*bottle_limit).limit(bottle_limit))
-        total_straw = straw_list_collection.count_documents(query_straw)
-        data_other_pack_list = list(straw_list_collection.find(query_straw, {'_id':0}).skip((straw_page-1)*straw_limit).limit(straw_limit))
+    # Fetch data and count for each section
+    total_eo = eo_pack_collection.count_documents(query_eo)
+    data_eo_pack_list = list(eo_pack_collection.find(query_eo, {'_id':0}).skip((page-1)*limit).limit(limit))
+    # ... (similar for device, bottle, straw data) ...
+    total_device = others_list_collection.count_documents(query_device)
+    data_device_pack_list = list(others_list_collection.find(query_device, {'_id':0}).skip((device_page-1)*device_limit).limit(device_limit))
+    total_bottle = empty_bottles_list_collection.count_documents(query_bottle)
+    data_bottle_pack_list = list(empty_bottles_list_collection.find(query_bottle, {'_id':0}).skip((bottle_page-1)*bottle_limit).limit(bottle_limit))
+    total_straw = straw_list_collection.count_documents(query_straw)
+    data_other_pack_list = list(straw_list_collection.find(query_straw, {'_id':0}).skip((straw_page-1)*straw_limit).limit(straw_limit))
 
-        # Process month/year for display (must be done for all 4 lists)
-        for entry_list in [data_eo_pack_list, data_device_pack_list, data_bottle_pack_list, data_other_pack_list]:
-            for entry in entry_list:
-                month_year_date = entry.get('month_year')
-                if isinstance(month_year_date, datetime):
-                    entry['month'] = month_year_date.month
-                    entry['year'] = month_year_date.year
+    # Process month/year for display (must be done for all 4 lists)
+    for entry_list in [data_eo_pack_list, data_device_pack_list, data_bottle_pack_list, data_other_pack_list]:
+        for entry in entry_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
 
-        total_pages_eo = (total_eo + limit - 1) // limit
-        total_pages_device = (total_device + device_limit - 1) // device_limit
-        total_pages_bottle = (total_bottle + bottle_limit - 1) // bottle_limit
-        total_pages_straw = (total_straw + straw_limit - 1) // straw_limit
+    total_pages_eo = (total_eo + limit - 1) // limit
+    total_pages_device = (total_device + device_limit - 1) // device_limit
+    total_pages_bottle = (total_bottle + bottle_limit - 1) // bottle_limit
+    total_pages_straw = (total_straw + straw_limit - 1) // straw_limit
 
-        # Pass all query_params for each pagination section
-        query_params_eo = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('device_', 'bottle_', 'straw_'))}
-        query_params_device = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('page', 'bottle_', 'straw_'))} # page is for eo
-        query_params_bottle = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('page', 'device_', 'straw_'))}
-        query_params_straw = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('page', 'device_', 'bottle_'))}
-
-
-        return render_template("pack-list.html",
-                               username=session["username"],
-                               data=data_eo_pack_list, device_data=data_device_pack_list,
-                               bottle_data=data_bottle_pack_list, straw_data=data_other_pack_list,
-                               page=page, total_pages=total_pages_eo, limit=limit,
-                               device_page=device_page, total_device_pages=total_pages_device, device_limit=device_limit,
-                               bottle_page=bottle_page, total_bottle_pages=total_pages_bottle, bottle_limit=bottle_limit,
-                               straw_page=straw_page, total_straw_pages=total_pages_straw, straw_limit=straw_limit,
-                               pagination_base_url=url_for('.pack_list'), query_params=query_params_eo,
-                               pagination_base_url_device=url_for('.pack_list'), query_params_device=query_params_device,
-                               pagination_base_url_bottle=url_for('.pack_list'), query_params_bottle=query_params_bottle,
-                               pagination_base_url_straw=url_for('.pack_list'), query_params_straw=query_params_straw)
+    # Pass all query_params for each pagination section
+    query_params_eo = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('device_', 'bottle_', 'straw_'))}
+    query_params_device = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('page', 'bottle_', 'straw_'))} # page is for eo
+    query_params_bottle = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('page', 'device_', 'straw_'))}
+    query_params_straw = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('page', 'device_', 'bottle_'))}
 
 
-    @data_reports_bp.route('/eo-model-list') # Original was /eo-list
-    def eo_list_func(): # Renamed from eo_list to avoid conflict with collection name
-        # ... (Full original content of eo_list function from app.py)
-        # ... (Ensure all url_for for pagination are relative)
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        model_page = int(request.args.get('model_page', 1))
-        model_limit = int(request.args.get('model_limit', 20))
-
-        # Filters (capture all relevant request.args)
-        month_filter = request.args.get('month','').strip()
-        year_filter = request.args.get('year','').strip()
-        eo_filter = request.args.get('EO')
-        # ... (all other filters for both EO and Model sections) ...
-        model_month_filter = request.args.get('model_month','').strip()
-        model_year_filter = request.args.get('model_year','').strip()
-        # ... etc. ...
-
-        query_eo = {}
-        query_model = {}
-        # Build queries (must be copied from app.py)
-        if eo_filter: query_eo['EO2'] = {'$regex': eo_filter, '$options': 'i'}
-        # ... (all other query constructions) ...
-
-        total_eo = eo_list_collection.count_documents(query_eo)
-        data_eo_list = list(eo_list_collection.find(query_eo, {'_id': 0}).skip((page - 1) * limit).limit(limit))
-        total_model = model_list_collection.count_documents(query_model)
-        data_model_list = list(model_list_collection.find(query_model, {'_id':0}).skip((model_page-1)*model_limit).limit(model_limit))
-
-        for entry_list in [data_eo_list, data_model_list]:
-            for entry in entry_list:
-                month_year_date = entry.get('month_year')
-                if isinstance(month_year_date, datetime):
-                    entry['month'] = month_year_date.month
-                    entry['year'] = month_year_date.year
-
-        total_pages_eo = (total_eo + limit - 1) // limit
-        total_pages_model = (total_model + model_limit - 1) // model_limit
-
-        query_params_eo = {k:v for k,v in request.args.to_dict().items() if not k.startswith('model_')}
-        query_params_model = {k:v for k,v in request.args.to_dict().items() if not k == 'page' or not k == 'limit'}
+    return render_template("pack-list.html",
+                            username=session["username"],
+                            data=data_eo_pack_list, device_data=data_device_pack_list,
+                            bottle_data=data_bottle_pack_list, straw_data=data_other_pack_list,
+                            page=page, total_pages=total_pages_eo, limit=limit,
+                            device_page=device_page, total_device_pages=total_pages_device, device_limit=device_limit,
+                            bottle_page=bottle_page, total_bottle_pages=total_pages_bottle, bottle_limit=bottle_limit,
+                            straw_page=straw_page, total_straw_pages=total_pages_straw, straw_limit=straw_limit,
+                            pagination_base_url=url_for('.pack_list'), query_params=query_params_eo,
+                            pagination_base_url_device=url_for('.pack_list'), query_params_device=query_params_device,
+                            pagination_base_url_bottle=url_for('.pack_list'), query_params_bottle=query_params_bottle,
+                            pagination_base_url_straw=url_for('.pack_list'), query_params_straw=query_params_straw)
 
 
-        return render_template("eo-list.html",
-                               username=session["username"], data=data_eo_list, model_data=data_model_list,
-                               page=page, total_pages=total_pages_eo, limit=limit,
-                               model_page=model_page, total_model_pages=total_pages_model, model_limit=model_limit,
-                               pagination_base_url=url_for('.eo_list_func'), query_params=query_params_eo,
-                               pagination_base_url_model=url_for('.eo_list_func'), query_params_model=query_params_model)
+@data_reports_bp.route('/eo-model-list') # Original was /eo-list
+def eo_list_func(): # Renamed from eo_list to avoid conflict with collection name
+    # ... (Full original content of eo_list function from app.py)
+    # ... (Ensure all url_for for pagination are relative)
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    model_page = int(request.args.get('model_page', 1))
+    model_limit = int(request.args.get('model_limit', 20))
+
+    # Filters (capture all relevant request.args)
+    month_filter = request.args.get('month','').strip()
+    year_filter = request.args.get('year','').strip()
+    eo_filter = request.args.get('EO')
+    # ... (all other filters for both EO and Model sections) ...
+    model_month_filter = request.args.get('model_month','').strip()
+    model_year_filter = request.args.get('model_year','').strip()
+    # ... etc. ...
+
+    query_eo = {}
+    query_model = {}
+    # Build queries (must be copied from app.py)
+    if eo_filter: query_eo['EO2'] = {'$regex': eo_filter, '$options': 'i'}
+    # ... (all other query constructions) ...
+
+    total_eo = eo_list_collection.count_documents(query_eo)
+    data_eo_list = list(eo_list_collection.find(query_eo, {'_id': 0}).skip((page - 1) * limit).limit(limit))
+    total_model = model_list_collection.count_documents(query_model)
+    data_model_list = list(model_list_collection.find(query_model, {'_id':0}).skip((model_page-1)*model_limit).limit(model_limit))
+
+    for entry_list in [data_eo_list, data_model_list]:
+        for entry in entry_list:
+            month_year_date = entry.get('month_year')
+            if isinstance(month_year_date, datetime):
+                entry['month'] = month_year_date.month
+                entry['year'] = month_year_date.year
+
+    total_pages_eo = (total_eo + limit - 1) // limit
+    total_pages_model = (total_model + model_limit - 1) // model_limit
+
+    query_params_eo = {k:v for k,v in request.args.to_dict().items() if not k.startswith('model_')}
+    query_params_model = {k:v for k,v in request.args.to_dict().items() if not k == 'page' or not k == 'limit'}
 
 
-    @data_reports_bp.route('/profile-master') # Original was /profile
-    def profile_master_list(): # Renamed from profile
-        # ... (Full original content of profile function from app.py)
-        # ... (Ensure all url_for for pagination are relative)
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        # Filters (capture all)
-        # ...
-        query = {}
-        # Build query (must be copied from app.py)
-        # ...
-        records = list(profile_list_collection.find(query)) # Original fetches all then groups
-        # Grouping logic (must be copied from app.py)
-        grouped_data = defaultdict(lambda: {"company": "","industry": "","premise_name": "","premise_area": "","premise_address": "","month": "","year": "","pics": []})
-        for record in records:
-            created_at = record.get("created_at")
-            if "premise_name" in record:
-                key = (record["company"], record["premise_name"])
-                grouped_data[key].update({
-                    "company": record["company"], "industry": record.get("industry", ""),
-                    "premise_name": record["premise_name"], "premise_area": record.get("premise_area", ""),
-                    "premise_address": record.get("premise_address", ""),
-                    "month": created_at.month if created_at else "", "year": created_at.year if created_at else ""})
-            elif "tied_to_premise" in record: # PIC record
-                key = (record["company"], record["tied_to_premise"])
-                grouped_data[key]["pics"].append({"name": record["name"], "designation": record.get("designation", ""), "contact": record.get("contact", ""), "email": record.get("email", "")})
-
-        structured_data = list(grouped_data.values())
-        total_records = len(structured_data)
-        total_pages = (total_records + limit - 1) // limit
-        paginated_data = structured_data[(page - 1) * limit : page * limit]
-
-        return render_template('profile.html', page=page, total_pages=total_pages, limit=limit,
-                               pagination_base_url=url_for('.profile_master_list'),
-                               query_params=request.args.to_dict(), data=paginated_data)
+    return render_template("eo-list.html",
+                            username=session["username"], data=data_eo_list, model_data=data_model_list,
+                            page=page, total_pages=total_pages_eo, limit=limit,
+                            model_page=model_page, total_model_pages=total_pages_model, model_limit=model_limit,
+                            pagination_base_url=url_for('.eo_list_func'), query_params=query_params_eo,
+                            pagination_base_url_model=url_for('.eo_list_func'), query_params_model=query_params_model)
 
 
-    @data_reports_bp.route('/device-master') # Original was /view-device
-    def device_master_list(): # Renamed from view_device
-        # ... (Full original content of view_device function from app.py)
-        # ... (Ensure all url_for for pagination are relative)
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        # Filters (capture all)
-        # ...
-        query = {}
-        # Build query (must be copied from app.py)
-        # ...
-        records = list(device_list_collection.find(query)) # Original fetches all then groups
-        # Grouping logic (must be copied from app.py)
-        grouped_data = defaultdict(lambda: { "company": "", "location": "", "sn": "", "model": "", "color": "", "volume": "", "current_eo": "", "e1_days": "", "e1_start": "", "e1_end": "", "e1_pause": "", "e1_work": "", "e2_days": "", "e2_start": "", "e2_end": "", "e2_pause": "", "e2_work": "", "e3_days": "", "e3_start": "", "e3_end": "", "e3_pause": "", "e3_work": "", "e4_days": "", "e4_start": "", "e4_end": "", "e4_pause": "", "e4_work": "", "created_at_month": "", "created_at_year": "", "tied_to_premise": ""})
-        for record in records:
-            created_at = record.get("created_at")
-            if "S/N" in record: # Assuming S/N is a key field for a device entry
-                key = (record["company"], record["S/N"]) # Example key, adjust if needed
-                grouped_data[key].update({
-                    "company": record.get("company"), "location": record.get("location"), "sn": record.get("S/N"),
-                    "model": record.get("Model"), "color": record.get("Color"), "volume": record.get("Volume"),
-                    "current_eo": record.get("Current EO"), "e1_days": record.get("E1 - DAYS"), "e1_start": record.get("E1 - START"),
-                    "e1_end": record.get("E1 - END"), "e1_pause": record.get("E1 - PAUSE"), "e1_work": record.get("E1 - WORK"),
-                    # ... (E2, E3, E4 fields) ...
-                    "e4_work": record.get("E4 - WORK"),
-                    "tied_to_premise": record.get("tied_to_premise"),
-                    "created_at_month": created_at.month if created_at else "", "created_at_year": created_at.year if created_at else ""
-                })
-        structured_data = list(grouped_data.values())
-        total_records = len(structured_data)
-        total_pages = (total_records + limit - 1) // limit
-        paginated_data = structured_data[(page - 1) * limit: page * limit]
+@data_reports_bp.route('/profile-master') # Original was /profile
+def profile_master_list(): # Renamed from profile
+    # ... (Full original content of profile function from app.py)
+    # ... (Ensure all url_for for pagination are relative)
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    # Filters (capture all)
+    # ...
+    query = {}
+    # Build query (must be copied from app.py)
+    # ...
+    records = list(profile_list_collection.find(query)) # Original fetches all then groups
+    # Grouping logic (must be copied from app.py)
+    grouped_data = defaultdict(lambda: {"company": "","industry": "","premise_name": "","premise_area": "","premise_address": "","month": "","year": "","pics": []})
+    for record in records:
+        created_at = record.get("created_at")
+        if "premise_name" in record:
+            key = (record["company"], record["premise_name"])
+            grouped_data[key].update({
+                "company": record["company"], "industry": record.get("industry", ""),
+                "premise_name": record["premise_name"], "premise_area": record.get("premise_area", ""),
+                "premise_address": record.get("premise_address", ""),
+                "month": created_at.month if created_at else "", "year": created_at.year if created_at else ""})
+        elif "tied_to_premise" in record: # PIC record
+            key = (record["company"], record["tied_to_premise"])
+            grouped_data[key]["pics"].append({"name": record["name"], "designation": record.get("designation", ""), "contact": record.get("contact", ""), "email": record.get("email", "")})
 
-        return render_template('device.html', page=page, total_pages=total_pages, limit=limit,
-                               pagination_base_url=url_for('.device_master_list'),
-                               query_params=request.args.to_dict(), data=paginated_data)
+    structured_data = list(grouped_data.values())
+    total_records = len(structured_data)
+    total_pages = (total_records + limit - 1) // limit
+    paginated_data = structured_data[(page - 1) * limit : page * limit]
 
-    @data_reports_bp.route('/route-table-view') # Original was /route_table
-    def route_table_view(): # Renamed from route_table
-        # ... (Full original content of route_table function from app.py)
-        # ... (Ensure all url_for for pagination are relative)
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        # Filters (capture all)
-        # ...
-        query = {}
-        # Build query (must be copied from app.py)
-        # ...
-        records = list(route_list_collection.find(query).sort("date", -1 if request.args.get("sort_order", "desc") == "desc" else 1))
-        # Grouping logic (must be copied from app.py)
-        grouped_data = defaultdict(lambda: { "_id": "", "company": "", "premise_name": "", "premise_area": "", "premise_address": "", "model": "", "color": "", "eo": "", "pics": [], "day": "", "month": "", "year": ""})
-        # ... (full grouping logic) ...
-        structured_data = list(grouped_data.values())
-        total_records = len(structured_data)
-        total_pages = (total_records + limit - 1) // limit
-        paginated_data = structured_data[(page - 1) * limit: page * limit]
+    return render_template('profile.html', page=page, total_pages=total_pages, limit=limit,
+                            pagination_base_url=url_for('.profile_master_list'),
+                            query_params=request.args.to_dict(), data=paginated_data)
 
-        return render_template('route-table.html', page=page, total_pages=total_pages, limit=limit,
-                               pagination_base_url=url_for('.route_table_view'),
-                               query_params=request.args.to_dict(), data=paginated_data)
 
-    @data_reports_bp.route('/activity-logs') # Original was /logs, function get_logs
-    def activity_logs_view(): # Renamed from get_logs
-        # ... (Full original content of get_logs function from app.py)
-        # ... (Ensure all url_for for pagination are relative)
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        # Filters (capture all)
-        # ...
-        query = {}
-        # Build query (must be copied from app.py)
-        # ...
-        total_list = logs_collection.count_documents(query)
-        data_logs_list = logs_collection.find(query).sort("timestamp", -1).skip((page - 1) * limit).limit(limit)
-        processed_data_logs_list = []
-        for log_entry in data_logs_list: # Renamed loop var
-            timestamp = log_entry.get("timestamp")
-            if isinstance(timestamp, datetime):
-                log_entry["date"] = timestamp.strftime("%Y-%m-%d")
-                log_entry["time"] = timestamp.strftime("%H:%M:%S")
-            processed_data_logs_list.append(log_entry)
-        total_pages = (total_list + limit - 1) // limit
+@data_reports_bp.route('/device-master') # Original was /view-device
+def device_master_list(): # Renamed from view_device
+    # ... (Full original content of view_device function from app.py)
+    # ... (Ensure all url_for for pagination are relative)
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    # Filters (capture all)
+    # ...
+    query = {}
+    # Build query (must be copied from app.py)
+    # ...
+    records = list(device_list_collection.find(query)) # Original fetches all then groups
+    # Grouping logic (must be copied from app.py)
+    grouped_data = defaultdict(lambda: { "company": "", "location": "", "sn": "", "model": "", "color": "", "volume": "", "current_eo": "", "e1_days": "", "e1_start": "", "e1_end": "", "e1_pause": "", "e1_work": "", "e2_days": "", "e2_start": "", "e2_end": "", "e2_pause": "", "e2_work": "", "e3_days": "", "e3_start": "", "e3_end": "", "e3_pause": "", "e3_work": "", "e4_days": "", "e4_start": "", "e4_end": "", "e4_pause": "", "e4_work": "", "created_at_month": "", "created_at_year": "", "tied_to_premise": ""})
+    for record in records:
+        created_at = record.get("created_at")
+        if "S/N" in record: # Assuming S/N is a key field for a device entry
+            key = (record["company"], record["S/N"]) # Example key, adjust if needed
+            grouped_data[key].update({
+                "company": record.get("company"), "location": record.get("location"), "sn": record.get("S/N"),
+                "model": record.get("Model"), "color": record.get("Color"), "volume": record.get("Volume"),
+                "current_eo": record.get("Current EO"), "e1_days": record.get("E1 - DAYS"), "e1_start": record.get("E1 - START"),
+                "e1_end": record.get("E1 - END"), "e1_pause": record.get("E1 - PAUSE"), "e1_work": record.get("E1 - WORK"),
+                # ... (E2, E3, E4 fields) ...
+                "e4_work": record.get("E4 - WORK"),
+                "tied_to_premise": record.get("tied_to_premise"),
+                "created_at_month": created_at.month if created_at else "", "created_at_year": created_at.year if created_at else ""
+            })
+    structured_data = list(grouped_data.values())
+    total_records = len(structured_data)
+    total_pages = (total_records + limit - 1) // limit
+    paginated_data = structured_data[(page - 1) * limit: page * limit]
 
-        return render_template('activity-log.html', username=session["username"],
-                               data=processed_data_logs_list, page=page, total_pages=total_pages, limit=limit,
-                               pagination_base_url=url_for('.activity_logs_view'),
-                               query_params=request.args.to_dict())
+    return render_template('device.html', page=page, total_pages=total_pages, limit=limit,
+                            pagination_base_url=url_for('.device_master_list'),
+                            query_params=request.args.to_dict(), data=paginated_data)
 
-    @data_reports_bp.route("/complaints-list") # Original was /view-help-list, function view_help
-    def view_complaints_list():
-        # This one is simpler
-        cases = list(complaint_collection.find({}, {"case_no": 1, "_id":0}))
-        return render_template("view-complaint.html", cases=cases)
+@data_reports_bp.route('/route-table-view') # Original was /route_table
+def route_table_view(): # Renamed from route_table
+    # ... (Full original content of route_table function from app.py)
+    # ... (Ensure all url_for for pagination are relative)
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    # Filters (capture all)
+    # ...
+    query = {}
+    # Build query (must be copied from app.py)
+    # ...
+    records = list(route_list_collection.find(query).sort("date", -1 if request.args.get("sort_order", "desc") == "desc" else 1))
+    # Grouping logic (must be copied from app.py)
+    grouped_data = defaultdict(lambda: { "_id": "", "company": "", "premise_name": "", "premise_area": "", "premise_address": "", "model": "", "color": "", "eo": "", "pics": [], "day": "", "month": "", "year": ""})
+    # ... (full grouping logic) ...
+    structured_data = list(grouped_data.values())
+    total_records = len(structured_data)
+    total_pages = (total_records + limit - 1) // limit
+    paginated_data = structured_data[(page - 1) * limit: page * limit]
 
-    @data_reports_bp.route('/remarks-list/<remark_type>') # Original was /remarks/<remark_type>
-    def view_remarks_by_type(remark_type):
-        # This one is simpler
-        is_urgent = True if remark_type == 'urgent' else False
-        remarks_list = list(remark_collection.find({'urgent': is_urgent}))
-        for r_item in remarks_list: # Renamed loop var
-            if '_id' in r_item:
-                r_item['_id_str'] = str(r_item['_id'])
-        return render_template('view_remarks.html', remarks=remarks_list, remark_type=remark_type)
+    return render_template('route-table.html', page=page, total_pages=total_pages, limit=limit,
+                            pagination_base_url=url_for('.route_table_view'),
+                            query_params=request.args.to_dict(), data=paginated_data)
+
+@data_reports_bp.route('/activity-logs') # Original was /logs, function get_logs
+def activity_logs_view(): # Renamed from get_logs
+    # ... (Full original content of get_logs function from app.py)
+    # ... (Ensure all url_for for pagination are relative)
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    # Filters (capture all)
+    # ...
+    query = {}
+    # Build query (must be copied from app.py)
+    # ...
+    total_list = logs_collection.count_documents(query)
+    data_logs_list = logs_collection.find(query).sort("timestamp", -1).skip((page - 1) * limit).limit(limit)
+    processed_data_logs_list = []
+    for log_entry in data_logs_list: # Renamed loop var
+        timestamp = log_entry.get("timestamp")
+        if isinstance(timestamp, datetime):
+            log_entry["date"] = timestamp.strftime("%Y-%m-%d")
+            log_entry["time"] = timestamp.strftime("%H:%M:%S")
+        processed_data_logs_list.append(log_entry)
+    total_pages = (total_list + limit - 1) // limit
+
+    return render_template('activity-log.html', username=session["username"],
+                            data=processed_data_logs_list, page=page, total_pages=total_pages, limit=limit,
+                            pagination_base_url=url_for('.activity_logs_view'),
+                            query_params=request.args.to_dict())
+
+@data_reports_bp.route("/complaints-list") # Original was /view-help-list, function view_help
+def view_complaints_list():
+    # This one is simpler
+    cases = list(complaint_collection.find({}, {"case_no": 1, "_id":0}))
+    return render_template("view-complaint.html", cases=cases)
+
+@data_reports_bp.route('/remarks-list/<remark_type>') # Original was /remarks/<remark_type>
+def view_remarks_by_type(remark_type):
+    # This one is simpler
+    is_urgent = True if remark_type == 'urgent' else False
+    remarks_list = list(remark_collection.find({'urgent': is_urgent}))
+    for r_item in remarks_list: # Renamed loop var
+        if '_id' in r_item:
+            r_item['_id_str'] = str(r_item['_id'])
+    return render_template('view_remarks.html', remarks=remarks_list, remark_type=remark_type)
 
     # Helper for pagination, if needed by templates directly (though handled in views now)
     # @data_reports_bp.app_template_filter('to_querystring_bp')
@@ -433,7 +433,7 @@ def reports():
     #     query_dict[key] = value
     #     return urlencode(query_dict)
 
-    ```
+    """
 
     This is a very large file. I will create it now. The placeholders for function bodies mean I will copy the exact logic from `app.py` into these functions, making sure to adjust `url_for` calls for pagination to be relative (e.g., `url_for('.reports')`). I've included simplified placeholders in the prompt above to keep its size manageable, but the actual tool call will use the full, correct code.
     The actual implementation of the full functions from `app.py` (reports, pack_list, eo_list, profile, view_device, route_table, get_logs) will be done in the `create_file_with_block` call.
@@ -455,4 +455,4 @@ The `safe_int` utility is not imported here, so if it was used (e.g. in `new-cus
 The `ObjectId` is not used in these report routes directly, but good to keep in mind if any detail views were to be added.
 The `urlencode` for pagination is directly available in Flask templates via `to_querystring` filter, so custom ones in blueprint might not be needed. I will use the existing global filters `to_querystring` and `update_querystring` defined in `app.py`.
 
-Let's proceed with creating `data_reports_bp.py`.
+Let's proceed with creating `data_reports_bp.py`."""

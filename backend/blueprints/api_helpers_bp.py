@@ -5,7 +5,7 @@ from bson import ObjectId # For GridFS file IDs
 from werkzeug.utils import secure_filename # Though not used in these specific routes, good for general API file handling
 from datetime import datetime # Though not used in these specific routes
 
-from .. import fs # GridFS instance from main app
+from backend.extentions import fs # GridFS instance from main app
 from ..col import (
     services_collection, model_list_collection, eo_pack_collection,
     device_list_collection, profile_list_collection, change_collection

@@ -9,8 +9,8 @@ from ..utils import send_email_to_customer, send_email_to_admin # Email utilitie
 # For fs and mail, it's better if they are registered with the app and accessed via current_app
 # For now, we will try to import them directly, assuming they are initialized in __init__.py of backend or similar
 # If this fails, current_app.extensions['gridfs_instance'] or similar would be better.
-from .. import fs # GridFS instance from main app (__init__.py or app.py)
-from .. import mail as main_mail_instance # Mail instance from main app (__init__.py or app.py)
+from backend.extentions import fs # GridFS instance from main app (__init__.py or app.py)
+from backend.extentions import mail as main_mail_instance # Mail instance from main app (__init__.py or app.py)
 
 customer_actions_bp = Blueprint(
     'customer',
