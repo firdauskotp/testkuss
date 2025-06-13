@@ -776,13 +776,24 @@ def new_customer():
 
                 premise_name = devicedata["tied_to_premise"]
                 premise_data = premise_map.get(premise_name, {})
-                assigned_pics = pic_map.get(premise_name, [{}])
+                assigned_pics = pic_map.get(premise_name, [])
+                if not assigned_pics:
+                    # If no valid PICs found, skip this device for master list
+                    continue
+
+                premise_data = premise_map.get(premise_name)
+                if not premise_data:
+                    # If no valid premise found, skip this device for master list
+                    continue
 
                 for pic in assigned_pics:
+                    if not pic.get("name"):  # Skip empty PICs
+                        continue
+
                     master_record = {
                         "company": companyName,
                         "industry": industry,
-                        "month_year": datetime.now(),
+                        "month_year": dateCreated,
 
                         # Remapped Premise Info
                         "Premise Name": premise_data.get("premise_name"),
@@ -795,7 +806,7 @@ def new_customer():
                         "Contact": pic.get("contact"),
                         "Email": pic.get("email"),
 
-                        # Remapped Device Info
+                        # Device Info
                         "S/N": devicedata["S/N"],
                         "Model": devicedata["Model"],
                         "Color": devicedata["Color"],
@@ -824,6 +835,7 @@ def new_customer():
                         "E4 - PAUSE": devicedata.get("E4 - PAUSE"),
                     }
                     master_list.append(master_record)
+
 
                 j += 1
 
