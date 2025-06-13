@@ -568,30 +568,31 @@ def view_remarks(remark_type):
     is_urgent = True if remark_type == 'urgent' else False
     remarks = list(remark_collection.find({'urgent': is_urgent}))
     return render_template('view_remarks.html', remarks=remarks, remark_type=remark_type)
+
+
 @app.route('/discontinue-list', methods=['GET'])
 def discontinued_reports():
     if 'username' not in session:
         flash("Please log in to access this page.", "warning")
         return redirect(url_for('login'))
 
-    # Pagination
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
     skip = (page - 1) * limit
 
-    # Filters
+    # Get filters
     query = {}
-    company = request.args.get('company', '').strip()
     user = request.args.get('user', '').strip()
+    company = request.args.get('company', '').strip()
     month = request.args.get('month', '').strip()
     year = request.args.get('year', '').strip()
-    change_scent = request.args.get('change_scent', '').strip()
     collect_back = request.args.get('collect_back', '').strip()
+    change_scent = request.args.get('change_scent', '').strip()
 
-    if company:
-        query['company'] = {'$regex': company, '$options': 'i'}
     if user:
         query['user'] = {'$regex': user, '$options': 'i'}
+    if company:
+        query['company'] = {'$regex': company, '$options': 'i'}
     if month and year:
         query['$expr'] = {
             '$and': [
@@ -599,30 +600,35 @@ def discontinued_reports():
                 {'$eq': [{'$year': '$date'}, int(year)]}
             ]
         }
-    if change_scent:
-        query['change_scent'] = change_scent.lower() == 'true'
     if collect_back:
-        query['collect_back'] = collect_back.lower() == 'true'
+        query['collect_back'] = True if collect_back.lower() == 'true' else False
+    if change_scent:
+        query['change_scent'] = True if change_scent.lower() == 'true' else False
 
     total_entries = discontinue_collection.count_documents(query)
     results = list(discontinue_collection.find(query).skip(skip).limit(limit))
 
-    # Add month and year for rendering
+    # Convert ISO date strings if needed
     for r in results:
-        if isinstance(r.get('date'), str):
-            r['date'] = parse_date_safe(r['date'])
-        if isinstance(r.get('submitted_at'), str):
-            r['submitted_at'] = parse_date_safe(r['submitted_at'])
+        if isinstance(r.get("date"), str):
+            r["date"] = r["date"][:10]
+        if isinstance(r.get("submitted_at"), str):
+            r["submitted_at"] = r["submitted_at"][:16]
+        if isinstance(r.get("collect_back_date_dt"), str):
+            r["collect_back_date_dt"] = r["collect_back_date_dt"][:16]
 
     total_pages = (total_entries + limit - 1) // limit
+    query_params = request.args.to_dict()
+    query_params['page'] = page
+    query_params['limit'] = limit
 
-    return render_template('discontinue_list.html',
-                           username=session["username"],
+    return render_template("discontinue_list.html",
                            data=results,
                            page=page,
                            total_pages=total_pages,
                            pagination_base_url=request.path,
-                           query_params=request.args.to_dict())
+                           query_params=query_params)
+
 
 @app.route("/logout")
 def logout():
