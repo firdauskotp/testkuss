@@ -1,0 +1,59 @@
+{% if premises_with_devices_and_notes %}
+  <h4 class="mt-3">Important Notes for Devices</h4>
+  {% for premise_data in premises_with_devices_and_notes %}
+    <div class="premise-notes-group mb-3">
+      <h5>For Premise: <span class="text-info">{{ premise_data.premise_name }}</span></h5>
+      {% if premise_data.devices %}
+        {% for device in premise_data.devices %}
+          <div class="device-notes mb-2 p-2 border rounded bg-white shadow-sm">
+            <p class="mb-1"><strong>Device:</strong> {{ device.Model | default('N/A') }} (S/N: {{ device['S/N'] | default('N/A') }})</p>
+
+            <div class="notes-subsection ms-3">
+              <p class="mb-1 mt-1"><em>Change Requests:</em></p>
+              {% if device.change_requests %}
+                <ul class="list-group list-group-flush">
+                  {% for note in device.change_requests %}
+                    <li class="list-group-item ps-2">
+                        {{ note.remark | default('No specific remark.') }}
+                        (Status: {{ note.status | default('Unknown') }})
+                        {% if note.date %}
+                          <small class="text-muted">- Submitted: {{ note.date if note.date is string else note.date.strftime('%Y-%m-%d') if note.date else 'N/A' }}</small>
+                        {% elif note.submitted_at %}
+                          <small class="text-muted">- Submitted: {{ note.submitted_at if note.submitted_at is string else note.submitted_at.strftime('%Y-%m-%d %H:%M') if note.submitted_at else 'N/A' }}</small>
+                        {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p><small class="text-muted">No specific change requests found for this device.</small></p>
+              {% endif %}
+            </div>
+
+            <div class="notes-subsection ms-3 mt-2">
+              <p class="mb-1 mt-1"><em>Discontinuation Status:</em></p>
+              {% if device.discontinuation_status %}
+                <div class="alert alert-warning p-2">
+                    <small>
+                        Status: {{ device.discontinuation_status.status | default('Marked for Discontinuation') if device.discontinuation_status.collect_back else (device.discontinuation_status.status | default('Active')) }}.
+                        {% if device.discontinuation_status.collect_back_date_dt %}
+                            Collect back by: {{ device.discontinuation_status.collect_back_date_dt.strftime('%Y-%m-%d') if device.discontinuation_status.collect_back_date_dt else 'N/A' }}.
+                        {% endif %}
+                        {% if device.discontinuation_status.remark %}
+                            Note: {{ device.discontinuation_status.remark }}
+                        {% endif %}
+                    </small>
+                </div>
+              {% else %}
+                <p><small class="text-muted">No discontinuation record found (device assumed active).</small></p>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted">No devices listed for this premise to show notes for.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No premises selected or no devices found to display important notes.</p>
+{% endif %}

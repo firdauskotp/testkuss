@@ -1,6 +1,8 @@
-{% for premise in premises %}
+{% for premise_name in premises %}
   <div class="form-check">
-    <input type="checkbox" class="form-check-input premise-checkbox" value="{{ premise }}" id="premise_{{ loop.index }}">
-    <label class="form-check-label" for="premise_{{ loop.index }}">{{ premise }}</label>
+    <input class="form-check-input premise-checkbox" type="checkbox" name="selected_premises" value="{{ premise_name }}" id="premise_{{ premise_name | replace(' ', '_') | replace('/', '_') | replace('(', '_') | replace(')', '_') }}">
+    <label class="form-check-label" for="premise_{{ premise_name | replace(' ', '_') | replace('/', '_') | replace('(', '_') | replace(')', '_') }}">
+      {{ premise_name }}
+    </label>
   </div>
 {% endfor %}

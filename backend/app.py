@@ -1384,6 +1384,28 @@ def service():
     technician_name = session["username"]
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     companies = sorted(list(services_collection.distinct('company')))
+    devices = [] # Initialize devices
+    models_list = []
+    eo_list_data = [] # Renamed to avoid conflict with eo_list in other contexts if any
+    all_premises_for_company = []
+
+
+    if request.method == 'GET': # Logic for initial page load
+        models_list = [m.get('model1') for m in model_list_collection.find({}, {'model1': 1, '_id': 0}) if m.get('model1')]
+        eo_list_data = [eo.get('eo_name') for eo in eo_pack_collection.find({}, {'eo_name': 1, '_id': 0}) if eo.get('eo_name')]
+
+        if companies:
+            first_company_name = companies[0]
+            # Fetch all premises for the first company, to be used in "Relocate Device To" dropdown
+            all_premises_for_company = sorted(list(services_collection.distinct('Premise Name', {'company': first_company_name})))
+
+            premise_names_for_devices = services_collection.distinct('Premise Name', {'company': first_company_name}) # This could be the same as all_premises_for_company
+            if premise_names_for_devices: # If there are any premises for this company
+                first_premise_name = premise_names_for_devices[0] # Take the first one to show devices initially
+
+                devices = list(device_list_collection.find({"tied_to_premise": first_premise_name, "company": first_company_name}))
+                for device in devices:
+                    device['_id'] = str(device['_id'])
 
     if request.method == 'POST':
         premise_name = request.form.get("premiseName")
@@ -1434,7 +1456,156 @@ def service():
         flash("Field service report submitted successfully!", "success")
         return redirect(url_for("dashboard"))
 
-    return render_template("service.html", companies=companies, technician_name=technician_name, current_time=current_time)
+    # Pass all necessary data to the template context
+    return render_template("service.html",
+                           companies=companies,
+                           technician_name=technician_name,
+                           current_time=current_time,
+                           devices=devices,
+                           models_list=models_list,      # For Model dropdown options
+                           eo_list=eo_list_data,         # For EO and Change Scent dropdown options
+                           all_premises_for_company=all_premises_for_company) # For Relocate Device dropdown
+
+@app.route('/get-devices-for-premise-company', methods=['POST'])
+def get_devices_for_premise_company():
+    try:
+        data = request.get_json()
+        company_name = data.get('company')
+        selected_premises = data.get('selected_premises', [])
+
+        premises_data_for_template = []
+
+        if company_name and selected_premises:
+            premises_data_for_quick_view = []
+            pic_info_for_template = []
+            premises_with_devices_and_notes = []
+
+            for premise_name in selected_premises:
+                # Fetch devices for Quick View & Important Notes & Editable section
+                device_fields_projection = {
+                    "Model": 1, "S/N": 1, "Current EO": 1, "_id": 1,
+                    "location": 1, "Color": 1, "Volume": 1,
+                    # Explicitly list all E1-E4 fields
+                    "E1 - DAYS": 1, "E1 - START": 1, "E1 - END": 1, "E1 - WORK": 1, "E1 - PAUSE": 1,
+                    "E2 - DAYS": 1, "E2 - START": 1, "E2 - END": 1, "E2 - WORK": 1, "E2 - PAUSE": 1,
+                    "E3 - DAYS": 1, "E3 - START": 1, "E3 - END": 1, "E3 - WORK": 1, "E3 - PAUSE": 1,
+                    "E4 - DAYS": 1, "E4 - START": 1, "E4 - END": 1, "E4 - WORK": 1, "E4 - PAUSE": 1,
+                }
+                devices_for_notes_cursor = device_list_collection.find(
+                    {"company": company_name, "tied_to_premise": premise_name},
+                    device_fields_projection
+                )
+                devices_for_notes_list = []
+
+                temp_devices_for_quick_view = [] # For the items_quick_view partial
+
+                for device_doc in devices_for_notes_cursor:
+                    # Data for Quick View (subset of fields)
+                    temp_devices_for_quick_view.append({
+                        "Model": device_doc.get("Model"),
+                        "S/N": device_doc.get("S/N"),
+                        "Current EO": device_doc.get("Current EO")
+                    })
+
+                    # Augment device_doc for Important Notes
+                    # Ensure device identifiers used in queries for changed_models and discontinue_collection are correct
+                    # Assuming 'Model' is used in those collections to link to devices. If S/N, adjust accordingly.
+                    # It is more likely that a specific device S/N is used rather than just Model for change requests.
+                    # The current device_list_collection does not store company and premise directly in each device doc in this context,
+                    # so we use company_name and premise_name from the outer loop.
+
+                    device_identifier_for_collections = device_doc.get('S/N') # Prefer S/N if available and used in other collections
+                    if not device_identifier_for_collections:
+                         device_identifier_for_collections = device_doc.get('Model') # Fallback to model if S/N not present
+
+                    cr_cursor = changed_models_collection.find(
+                        {"company": company_name, "premises": premise_name, "devices": {"$in": [device_identifier_for_collections]}}, # Assuming devices is a list in changed_models
+                        {"remark": 1, "status": 1, "date": 1, "submitted_at": 1, "_id": 0}
+                    ).sort("submitted_at", -1)
+                    device_doc['change_requests'] = list(cr_cursor)
+
+                    dc_status = discontinue_collection.find_one(
+                        {"company": company_name, "premises": premise_name, "devices": {"$in": [device_identifier_for_collections]}}, # Assuming devices is a list
+                        {"remark": 1, "status": 1, "collect_back_date_dt": 1, "collect_back": 1, "_id": 0}
+                    )
+                    device_doc['discontinuation_status'] = dc_status if dc_status else None
+                    devices_for_notes_list.append(device_doc)
+
+                premises_data_for_quick_view.append({
+                    "premise_name": premise_name,
+                    "devices": temp_devices_for_quick_view
+                })
+                premises_with_devices_and_notes.append({
+                    "premise_name": premise_name,
+                    "devices": devices_for_notes_list
+                })
+
+                # Fetch PIC data for Contact Details section
+                pics_cursor = profile_list_collection.find(
+                    {"company": company_name, "tied_to_premise": premise_name},
+                    {"name": 1, "designation": 1, "contact": 1, "email": 1, "_id": 0}
+                )
+                pics_list = list(pics_cursor)
+                pic_info_for_template.append({
+                    "premise_name": premise_name,
+                    "pics": pics_list
+                })
+
+            # Data for Editable Device Details section
+            premises_for_editable_forms = []
+            for premise_data in premises_with_devices_and_notes: # This list already has devices with notes
+                devices_for_editing = []
+                for device_item in premise_data['devices']:
+                    editable_device_item = device_item.copy()
+                    if '_id' in editable_device_item and isinstance(editable_device_item['_id'], ObjectId):
+                        editable_device_item['_id'] = str(editable_device_item['_id'])
+                    # Ensure all E1-E4 fields are carried over if they exist in device_item
+                    for i in range(1, 5):
+                        for field_part in ['DAYS', 'START', 'END', 'WORK', 'PAUSE']:
+                            field_name = f'E{i} - {field_part}'
+                            if field_name not in editable_device_item and field_name in device_item: # device_item from devices_for_notes_list
+                                editable_device_item[field_name] = device_item[field_name]
+                    devices_for_editing.append(editable_device_item)
+                premises_for_editable_forms.append({
+                    "premise_name": premise_data["premise_name"],
+                    "devices": devices_for_editing # This now contains full device details including E1-E4
+                })
+
+            # Fetch lists for dropdowns in Special Controls
+            eo_list_data_for_controls = [eo.get('eo_name') for eo in eo_pack_collection.find({}, {'eo_name': 1, '_id': 0}) if eo.get('eo_name')]
+            all_premises_names_for_company_controls = sorted(list(services_collection.distinct('Premise Name', {'company': company_name})))
+
+            # Fetch lists for dropdowns in Special Controls, these are fetched once per request if not already available
+            # These were added in the previous step, ensuring they are correctly scoped or passed if needed
+            eo_list_data_for_special_controls = [eo.get('eo_name') for eo in eo_pack_collection.find({}, {'eo_name': 1, '_id': 0}) if eo.get('eo_name')]
+            all_premises_for_company_special_controls = sorted(list(services_collection.distinct('Premise Name', {'company': company_name})))
+
+
+            rendered_quick_view_html = render_template('partials/items_quick_view.html', premises_with_devices=premises_data_for_quick_view)
+            rendered_contacts_html = render_template('partials/contact_details.html', pic_data_by_premise=pic_info_for_template)
+            rendered_notes_html = render_template('partials/important_notes_for_devices.html', premises_with_devices_and_notes=premises_with_devices_and_notes)
+            rendered_editable_html = render_template('partials/editable_device_details.html',
+                                                     premises_with_devices_list=premises_for_editable_forms,
+                                                     eo_list_data=eo_list_data_for_special_controls, # Corrected variable name
+                                                     all_premises_names_for_company=all_premises_for_company_special_controls) # Corrected variable name
+
+            return jsonify({
+                'status': 'success',
+                'devices_html': rendered_quick_view_html,
+                'contacts_html': rendered_contacts_html,
+                'important_notes_html': rendered_notes_html,
+                'editable_devices_html': rendered_editable_html
+            })
+        elif not company_name:
+            # Ensure all html keys are present in error responses too for consistency in JS
+            empty_html_msg = '<p class="text-danger">Error: Company name missing.</p>'
+            return jsonify({'status': 'error', 'message': 'Company name not provided.', 'devices_html': empty_html_msg, 'contacts_html': empty_html_msg, 'important_notes_html': empty_html_msg, 'editable_devices_html': empty_html_msg}), 400
+        else: # No premises selected
+            no_premise_msg = '<p>Please select one or more premises.</p>'
+            return jsonify({'status': 'success', 'message': 'No premises selected.', 'devices_html': no_premise_msg, 'contacts_html': no_premise_msg, 'important_notes_html': no_premise_msg, 'editable_devices_html': no_premise_msg})
+    except Exception as e:
+        app.logger.error(f"Error in /get-devices-for-premise-company: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.after_request
 def add_no_cache_headers(response):

@@ -1,0 +1,23 @@
+{% if pic_data_by_premise %}
+  {% for premise_pics in pic_data_by_premise %}
+    <div class="mb-3">
+      <h5>PIC(s) for {{ premise_pics.premise_name }}</h5>
+      {% if premise_pics.pics %}
+        <ul class="list-unstyled">
+          {% for pic in premise_pics.pics %}
+            <li class="mb-2 p-2 border rounded">
+              <strong>Name:</strong> {{ pic.name | default('N/A') }}<br>
+              <strong>Designation:</strong> {{ pic.designation | default('N/A') }}<br>
+              <strong>Contact:</strong> {{ pic.contact | default('N/A') }}<br>
+              <strong>Email:</strong> {{ pic.email | default('N/A') }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No PIC information found for {{ premise_pics.premise_name }}.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No premises selected or no PIC information found for the selected premises.</p>
+{% endif %}

@@ -1,0 +1,22 @@
+{% if premises_with_devices %}
+  {% for premise_data in premises_with_devices %}
+    <div class="mb-3">
+      <h4>{{ premise_data.premise_name }}</h4>
+      {% if premise_data.devices %}
+        <ul class="list-group">
+          {% for device in premise_data.devices %}
+            <li class="list-group-item">
+              <strong>Model:</strong> {{ device.Model | default('N/A') }}
+              (S/N: {{ device['S/N'] | default('N/A') }}) -
+              <strong>Scent/EO:</strong> {{ device['Current EO'] | default('N/A') }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No devices found for this premise.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No premises selected or no devices found for selected premises.</p>
+{% endif %}

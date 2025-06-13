@@ -25,7 +25,7 @@
 <div class="container mt-5">
   <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">Back to Dashboard</a>
   <h1 class="text-center">SERVICE FORM</h1>
-  <form method="POST" action="/field-service">
+  <form method="POST" action="/field-service"> {# Ensure this action URL is correct, previous subtask mentioned /service #}
     <div class="mb-3">
       <label class="form-label">Technician Name:</label>
       <input type="text" class="form-control" value="{{ technician_name }}" readonly>
@@ -36,7 +36,6 @@
       <input type="text" class="form-control" value="{{ current_time }}" readonly>
     </div>
 
-    <!-- New: Service Time Dropdowns -->
     <div class="row mb-3">
       <label class="form-label">Service Time:</label>
       <div class="col-md-4">
@@ -64,259 +63,436 @@
         </select>
       </div>
     </div>
-        <!-- Company Dropdown -->
         <div class="mb-3">
             <label for="company" class="form-label">Company</label>
             <select class="form-select" id="company" name="company" required>
               <option value="" selected disabled>Select a company</option>
-              {% for company in companies %}
-              <option value="{{ company }}">{{ company }}</option>
+              {% for company_item in companies %} {# Renamed company to company_item to avoid conflict with device.company #}
+              <option value="{{ company_item }}">{{ company_item }}</option>
               {% endfor %}
             </select>
           </div>
-      
-          <!-- Premise Dropdown -->
-          <div class="mb-3">
-            <label for="premise" class="form-label">Premise</label>
-            <select class="form-select" id="premise" name="premise" required disabled>
-              <option value="" selected disabled>Select a premise</option>
-            </select>
+
+          <div id="premise-checkboxes-container" class="mb-3">
+            <label class="form-label">Premises (Select one or more):</label>
+            <div id="premise-checkboxes" class="border p-2" style="max-height: 150px; overflow-y: auto;">
+              <!-- Checkboxes will be loaded here by JavaScript -->
+              <small class="text-muted">Please select a company first.</small>
+            </div>
           </div>
-      
-          <!-- New: Change Notes (Overview) -->
+
           <div class="mb-3">
             <label for="change_notes" class="form-label">Change Notes (Overview)</label>
             <textarea class="form-control" id="change_notes" name="change_notes" disabled placeholder="System will auto-fill notes based on device changes"></textarea>
           </div>
-      
-          <!-- New: PIC Contact Info -->
+
           <div class="mb-3">
             <label class="form-label">PIC Contact</label>
-            <input type="text" class="form-control" id="pic_contact" name="pic_contact" readonly>
+            <input type="text" class="form-control" id="pic_contact_old_single_input" name="pic_contact_old_single_input" readonly style="display:none;">
           </div>
-      
+
+          <div id="contact-details-section" class="mb-3 p-3 border bg-light" style="min-height: 100px;">
+            <h4>PIC Contact Information</h4>
+            <small class="text-muted">Select a company and premise(s) to see PIC details.</small>
+          </div>
+
+          <div id="items-quick-view-section" class="mb-3 p-3 border bg-light" style="min-height: 100px;">
+            {#{% include 'partials/items_quick_view.html' %}#} {# Content will be loaded by JS #}
+            <small class="text-muted">Select a company and premise(s) to see a quick view of items.</small>
+          </div>
+
+          <div id="important-notes-section" class="mb-3 p-3 border" style="min-height: 100px; background-color: #f0f8ff;">
+            <small class="text-muted">Select company and premise(s) to see important notes.</small>
+          </div>
+
           <hr>
-          <h4 class="text-primary">Device Details</h4>
-          <div id="device-section">
-            <!-- This part will be dynamically filled for each device by backend or AJAX -->
-            <!-- Template shown below for ONE device -->
-            <div class="card mb-4 p-3 bg-white border rounded device-card">
-                <h5 class="text-secondary">Device {{ loop.index }}</h5>
-              
+          <h4 class="text-primary">Device Details for Editing</h4>
+
+          <div id="device-section" class="mt-3"> {# Initially loaded device cards are still here, they will be replaced by JS #}
+            {% if devices %}
+              {% for device in devices %}
+              <div class="card mb-4 p-3 bg-white border rounded device-card">
+                <h5 class="text-secondary">Device {{ loop.index }} (S/N: {{ device['S/N'] | default('N/A') }})</h5>
+
                 <!-- Model -->
                 <div class="mb-3">
-                  <label for="model{{ loop.index }}" class="form-label">Model</label>
-                  <select class="form-select" id="model{{ loop.index }}" name="model{{ loop.index }}" required>
-                    <option selected disabled>Select a model</option>
-                    {% for model in models %}
-                    <option value="{{ model }}">{{ model }}</option>
-                    {% endfor %}
+                  <label for="model_{{ device['_id'] }}" class="form-label">Model</label>
+                  <select class="form-select" id="model_{{ device['_id'] }}" name="model_{{ device['_id'] }}" required>
+                    <option value="{{ device.Model | default('') }}" selected>{{ device.Model | default('N/A') }}</option>
+                    {% if models_list is defined %}
+                      {% for model_option in models_list %}
+                        {% if model_option != device.Model %}
+                        <option value="{{ model_option }}">{{ model_option }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
                   </select>
                 </div>
-              
+
                 <!-- Colour -->
                 <div class="mb-3">
-                  <label for="color{{ loop.index }}" class="form-label">Color</label>
-                  <select class="form-select" id="color{{ loop.index }}" name="color{{ loop.index }}" required>
-                    <option selected disabled>Select a color</option>
+                  <label for="color_{{ device['_id'] }}" class="form-label">Color</label>
+                  <select class="form-select" id="color_{{ device['_id'] }}" name="color_{{ device['_id'] }}" required>
+                    <option value="{{ device.Color | default('') }}" selected>{{ device.Color | default('N/A') }}</option>
+                    {# Add other color options here if a list of all possible colors is available #}
                   </select>
                 </div>
-              
+
                 <!-- EO -->
                 <div class="mb-3">
-                  <label for="eo{{ loop.index }}" class="form-label">EO</label>
-                  <select class="form-select" id="eo{{ loop.index }}" name="eo{{ loop.index }}" required>
-                    <option selected disabled>Select an EO</option>
+                  <label for="eo_{{ device['_id'] }}" class="form-label">Current EO</label>
+                  <select class="form-select" id="eo_{{ device['_id'] }}" name="eo_{{ device['_id'] }}" required>
+                    <option value="{{ device['Current EO'] | default('') }}" selected>{{ device['Current EO'] | default('N/A') }}</option>
+                    {% if eo_list is defined %} {# eo_list is passed from app.py for all EOs #}
+                      {% for eo_option in eo_list %}
+                        {% if eo_option != device['Current EO'] %}
+                        <option value="{{ eo_option }}">{{ eo_option }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
                   </select>
                 </div>
-              
+
                 <!-- Location -->
                 <div class="mb-3">
-                  <label for="location{{ loop.index }}" class="form-label">Location</label>
-                  <input type="text" class="form-control" name="location{{ loop.index }}" required>
+                  <label for="location_{{ device['_id'] }}" class="form-label">Location</label>
+                  <input type="text" class="form-control" id="location_{{ device['_id'] }}" name="location_{{ device['_id'] }}" value="{{ device.location | default('') }}" required>
                 </div>
-              
-                <!-- Special Controls -->
+
+                <!-- S/N Display (Read-only) -->
                 <div class="mb-3">
-                  <label class="form-label">Change Scent</label>
-                  <select class="form-select" name="scent_change{{ loop.index }}">
+                  <label for="sn_{{ device['_id'] }}" class="form-label">S/N</label>
+                  <input type="text" class="form-control" id="sn_{{ device['_id'] }}" name="sn_{{ device['_id'] }}" value="{{ device['S/N'] | default('N/A') }}" readonly>
+                </div>
+
+                <!-- Volume Display (Read-only, as it's a device spec) -->
+                <div class="mb-3">
+                    <label for="volume_{{ device['_id'] }}" class="form-label">Volume (ml)</label>
+                    <input type="number" class="form-control" id="volume_{{ device['_id'] }}" name="volume_{{ device['_id'] }}" value="{{ device.Volume | default(0) }}" readonly>
+                </div>
+
+                <!-- Balance (Editable) -->
+                <div class="mb-3">
+                    <label for="balance_{{ device['_id'] }}" class="form-label">Balance (ml)</label>
+                    <input type="number" class="form-control" id="balance_{{ device['_id'] }}" name="balance_{{ device['S/N'] | default(device['_id']) }}" value="0" required>
+                </div>
+
+                <!-- Consumption (Display only, calculated based on Volume and Balance) -->
+                <div class="mb-3">
+                    <label for="consumption_{{ device['_id'] }}" class="form-label">Consumption (ml)</label>
+                    <input type="number" class="form-control" id="consumption_{{ device['_id'] }}" name="consumption_{{ device['_id'] }}" value="{{ (device.Volume | default(0)) - 0 }}" readonly> {# JS will update this if balance changes #}
+                </div>
+
+                <!-- Special Controls -->
+                <h6 class="text-info">Special Controls</h6>
+                <div class="mb-3">
+                  <label for="scent_change_{{ device['_id'] }}" class="form-label">Change Scent To (Optional)</label>
+                  <select class="form-select" id="scent_change_{{ device['_id'] }}" name="scent_change_{{ device['_id'] }}">
                     <option value="">No Change</option>
-                    {% for eo in eo_list %}
-                    <option value="{{ eo }}">{{ eo }}</option>
-                    {% endfor %}
+                    {% if eo_list is defined %} {# eo_list is passed from app.py #}
+                      {% for eo_option in eo_list %}
+                      <option value="{{ eo_option }}">{{ eo_option }}</option>
+                      {% endfor %}
+                    {% endif %}
                   </select>
                 </div>
-              
-                <!-- Device Inactive -->
+
                 <div class="form-check mb-3">
-                  <input class="form-check-input device-inactive" type="checkbox" value="1" id="inactive{{ loop.index }}" name="inactive{{ loop.index }}">
-                  <label class="form-check-label text-danger" for="inactive{{ loop.index }}">
-                    Mark Device as Inactive (remove from system on selected date)
+                  <input class="form-check-input device-inactive" type="checkbox" value="1" id="inactive_{{ device['_id'] }}" name="inactive_{{ device['_id'] }}">
+                  <label class="form-check-label text-danger" for="inactive_{{ device['_id'] }}">
+                    Mark Device as Inactive
                   </label>
                 </div>
-              
-                <!-- Relocate Device -->
+
                 <div class="mb-3">
-                  <label for="relocate{{ loop.index }}" class="form-label">Relocate Device To:</label>
-                  <select class="form-select" name="relocate{{ loop.index }}">
+                  <label for="relocate_{{ device['_id'] }}" class="form-label">Relocate Device To (Optional):</label>
+                  <select class="form-select" id="relocate_{{ device['_id'] }}" name="relocate_{{ device['_id'] }}">
                     <option value="">Do not relocate</option>
-                    {% for p in premises %}
-                    <option value="{{ p.premise_name }}">{{ p.premise_name }}</option>
-                    {% endfor %}
+                    {% if all_premises_for_company is defined %} {# Passed from app.py #}
+                      {% for p_option in all_premises_for_company %}
+                      <option value="{{ p_option }}">{{ p_option }}</option>
+                      {% endfor %}
+                    {% endif %}
                   </select>
                 </div>
-              
+
                 <!-- Events (E1–E4) -->
-                {% for e in range(1, 5) %}
-                <div class="border p-2 mb-2">
-                  <strong>Event {{ e }}</strong>
+                <h6 class="text-info">Timer Settings (E1-E4)</h6>
+                {% for e_num in range(1, 5) %}
+                <div class="border p-2 mb-2 event-block">
+                  <strong>Event {{ e_num }}</strong>
                   <div class="row">
                     <div class="col-md-6">
-                      <label>Current E{{ e }} Days:</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - DAYS'] }}" readonly>
+                      <label>Current E{{ e_num }} Days:</label>
+                      <input type="text" class="form-control" value="{{ device['E' ~ e_num ~ ' - DAYS'] | default('N/A') }}" readonly>
                     </div>
                     <div class="col-md-6">
-                      <label>New E{{ e }} Days:</label>
-                      <input type="text" class="form-control" name="event{{ loop.index }}_days{{ e }}">
+                      <label for="event_{{ device['_id'] }}_days{{ e_num }}">New E{{ e_num }} Days:</label>
+                      <input type="text" class="form-control" id="event_{{ device['_id'] }}_days{{ e_num }}" name="event_{{ device['_id'] }}_days{{ e_num }}" value="{{ device['E' ~ e_num ~ ' - DAYS'] | default('') }}">
                     </div>
                   </div>
                   <div class="row mt-2">
                     <div class="col"><label>Start</label>
-                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - START'] }}" readonly>
-                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_start{{ e }}">
+                      <input type="time" class="form-control" value="{{ device['E' ~ e_num ~ ' - START'] | default('') }}" readonly>
+                      <label for="event_{{ device['_id'] }}_start{{ e_num }}" class="mt-1 d-block">New Start</label>
+                      <input type="time" class="form-control" id="event_{{ device['_id'] }}_start{{ e_num }}" name="event_{{ device['_id'] }}_start{{ e_num }}" value="{{ device['E' ~ e_num ~ ' - START'] | default('') }}">
                     </div>
                     <div class="col"><label>End</label>
-                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - END'] }}" readonly>
-                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_end{{ e }}">
+                      <input type="time" class="form-control" value="{{ device['E' ~ e_num ~ ' - END'] | default('') }}" readonly>
+                      <label for="event_{{ device['_id'] }}_end{{ e_num }}" class="mt-1 d-block">New End</label>
+                      <input type="time" class="form-control" id="event_{{ device['_id'] }}_end{{ e_num }}" name="event_{{ device['_id'] }}_end{{ e_num }}" value="{{ device['E' ~ e_num ~ ' - END'] | default('') }}">
                     </div>
                     <div class="col"><label>Work</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - WORK'] }}" readonly>
-                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_work{{ e }}">
+                      <input type="text" class="form-control" value="{{ device['E' ~ e_num ~ ' - WORK'] | default('N/A') }}" readonly>
+                      <label for="event_{{ device['_id'] }}_work{{ e_num }}" class="mt-1 d-block">New Work</label>
+                      <input type="text" class="form-control" id="event_{{ device['_id'] }}_work{{ e_num }}" name="event_{{ device['_id'] }}_work{{ e_num }}" value="{{ device['E' ~ e_num ~ ' - WORK'] | default('') }}">
                     </div>
                     <div class="col"><label>Pause</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - PAUSE'] }}" readonly>
-                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_pause{{ e }}">
+                      <input type="text" class="form-control" value="{{ device['E' ~ e_num ~ ' - PAUSE'] | default('N/A') }}" readonly>
+                      <label for="event_{{ device['_id'] }}_pause{{ e_num }}" class="mt-1 d-block">New Pause</label>
+                      <input type="text" class="form-control" id="event_{{ device['_id'] }}_pause{{ e_num }}" name="event_{{ device['_id'] }}_pause{{ e_num }}" value="{{ device['E' ~ e_num ~ ' - PAUSE'] | default('') }}">
                     </div>
                   </div>
                 </div>
-                {% endfor %}
-              </div>
-              <hr>
-              <h4>Acknowledgement</h4>
-              <label>Actions Done:</label><br>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="action1">
-                <label class="form-check-label" for="action1">Alcohol Cleaning</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="actions" value="Oil Refill" id="action2">
-                <label class="form-check-label" for="action2">Oil Refill</label>
-              </div>
-              <!-- Add more checkboxes as needed -->
-              
-              <div class="mb-3 mt-3">
-                <label class="form-label">Remarks:</label>
-                <textarea class="form-control" name="remarks"></textarea>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">Staff Name:</label>
-                <input type="text" class="form-control" name="staffName" required>
-              </div>
-              
-              <!-- Signature Pad -->
-              <div class="mb-3">
-                <label for="signature">Signature:</label>
-                <div class="signature-container">
-                  <canvas id="signature-pad" class="signature-pad"></canvas>
-                </div>
-                <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
-                <input type="hidden" name="signature" id="signature-input">
-              </div>
-              
-              <button type="submit" class="btn btn-primary">Submit</button>
-              </form>
-              </div> <!-- .container -->
-              
-              <!-- Bootstrap Bundle -->
-              <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-              <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-              <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
-              
-              <!-- ✅ Script Section -->
-              <script>
-                // SignaturePad logic
-                const canvas = document.getElementById("signature-pad");
-                const signaturePad = new SignaturePad(canvas, {
-                  minWidth: 1,
-                  maxWidth: 3,
-                  penColor: "black"
-                });
-              
-                function resizeCanvas() {
-                  const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                  canvas.width = canvas.offsetWidth * ratio;
-                  canvas.height = canvas.offsetHeight * ratio;
-                  canvas.getContext("2d").scale(ratio, ratio);
-                  signaturePad.clear();
-                }
-              
-                window.addEventListener("resize", resizeCanvas);
-                resizeCanvas();
-              
-                document.getElementById("clear-signature").addEventListener("click", function () {
-                  signaturePad.clear();
-                });
-              
-                document.querySelector("form").addEventListener("submit", function () {
-                  if (!signaturePad.isEmpty()) {
-                    document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
-                  }
-                });
-              
-                // Disable all inputs in a device block if 'Device Inactive' is checked
-                document.querySelectorAll('.device-inactive').forEach((checkbox) => {
-                  checkbox.addEventListener('change', function () {
-                    const card = this.closest('.device-card');
-                    const inputs = card.querySelectorAll('input, select, textarea');
-                    inputs.forEach(input => {
-                      if (input !== this && input.name.includes('inactive') === false) {
-                        input.disabled = this.checked;
-                      }
-                    });
-                  });
-                });
-              
-                // Company → Premises
-                document.getElementById('company').addEventListener('change', function () {
-                  let company = this.value;
-                  axios.get(`/get-premises/${company}`)
-                    .then(response => {
-                      let premiseDropdown = document.getElementById('premise');
-                      premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
-                      response.data.forEach(p => {
-                        premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`;
-                      });
-                      premiseDropdown.disabled = false;
-                    });
-                });
-              
-                // Premise → PIC Contact + Change Notes
-                document.getElementById('premise').addEventListener('change', function () {
-                  const premise = this.value;
-                  axios.get(`/get-pic/${premise}`)
-                    .then(response => {
-                      const pic = response.data;
-                      document.getElementById("pic_contact").value = `${pic.name} (${pic.contact})`;
-                    });
-              
-                  axios.get(`/get-change-notes/${premise}`)
-                    .then(response => {
-                      document.getElementById("change_notes").value = response.data.notes;
-                    });
-                });
-              
-              </script>
-              </body>
-              </html>
-              
+                {% endfor %} {# End of E1-E4 loop #}
+              </div> {# End of device-card #}
+              {% endfor %} {# End of devices loop #}
+            {% else %}
+              <p>No devices found for the selected company and premise, or no company/premise selected.</p>
+            {% endif %}
+          </div> {# End of device-section #}
+
+          <hr>
+          <h4>Acknowledgement</h4>
+          <label>Actions Done:</label><br>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="action1">
+            <label class="form-check-label" for="action1">Alcohol Cleaning</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="actions" value="Oil Refill" id="action2">
+            <label class="form-check-label" for="action2">Oil Refill</label>
+          </div>
+
+          <div class="mb-3 mt-3">
+            <label class="form-label">Remarks:</label>
+            <textarea class="form-control" name="remarks"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Staff Name:</label>
+            <input type="text" class="form-control" name="staffName" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="signature">Signature:</label>
+            <div class="signature-container">
+              <canvas id="signature-pad" class="signature-pad"></canvas>
+            </div>
+            <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
+            <input type="hidden" name="signature" id="signature-input">
+          </div>
+
+          <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
+
+<script>
+  // SignaturePad logic
+  const canvas = document.getElementById("signature-pad");
+  const signaturePad = new SignaturePad(canvas, {
+    minWidth: 1,
+    maxWidth: 3,
+    penColor: "black"
+  });
+
+  function resizeCanvas() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    canvas.getContext("2d").scale(ratio, ratio);
+    signaturePad.clear();
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  document.getElementById("clear-signature").addEventListener("click", function () {
+    signaturePad.clear();
+  });
+
+  document.querySelector("form").addEventListener("submit", function () {
+    if (!signaturePad.isEmpty()) {
+      document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+    }
+  });
+
+  // Function to attach listeners for consumption calculation to newly added device forms
+  function attachConsumptionCalculationListeners() {
+    document.querySelectorAll('.device-card-editable').forEach(card => {
+      const volumeInput = card.querySelector('.volume-input');
+      const balanceInput = card.querySelector('.balance-input');
+      const consumptionOutput = card.querySelector('.consumption-output');
+
+      function updateConsumption() {
+        const volume = parseFloat(volumeInput.value) || 0;
+        const balance = parseFloat(balanceInput.value) || 0;
+        const consumption = Math.max(0, volume - balance); // Ensure consumption is not negative
+        consumptionOutput.value = consumption;
+      }
+
+      if (volumeInput && balanceInput && consumptionOutput) { // Ensure all elements exist
+        volumeInput.addEventListener('input', updateConsumption);
+        balanceInput.addEventListener('input', updateConsumption);
+        updateConsumption(); // Initial calculation on load
+      }
+    });
+  }
+
+  // Function to attach listeners for inactive checkboxes to newly added device forms
+  function attachInactiveCheckboxListeners() {
+    document.querySelectorAll('.device-card-editable .device-inactive').forEach(checkbox => {
+      // Prevent adding multiple listeners if this function is called multiple times on same elements
+      if (checkbox.dataset.listenerAttached) return;
+
+      checkbox.addEventListener('change', function () {
+        const card = this.closest('.device-card-editable'); // Ensure we are targeting the correct parent
+        const inputsToDisable = card.querySelectorAll('input:not(.device-inactive), select, textarea');
+        inputsToDisable.forEach(input => {
+          input.disabled = this.checked;
+        });
+      });
+      checkbox.dataset.listenerAttached = 'true'; // Mark as listener attached
+    });
+  }
+
+
+  // Company → Premises checkboxes population
+  document.getElementById('company').addEventListener('change', function () {
+    let companyName = this.value;
+    let premiseCheckboxesDiv = document.getElementById('premise-checkboxes');
+    premiseCheckboxesDiv.innerHTML = '<small class="text-muted">Loading premises...</small>';
+
+    // Clear previously loaded dynamic sections when company changes
+    document.getElementById('contact-details-section').innerHTML = '<h4>PIC Contact Information</h4><small class="text-muted">Select a company and premise(s) to see PIC details.</small>';
+    document.getElementById('items-quick-view-section').innerHTML = '<small class="text-muted">Select a company and premise(s) to see a quick view of items.</small>';
+    document.getElementById('important-notes-section').innerHTML = '<small class="text-muted">Select company and premise(s) to see important notes.</small>';
+    document.getElementById('device-section').innerHTML = '<p class="text-muted">Select company and premise(s) to load device forms.</p>'; // Clear editable device forms
+    // document.getElementById("pic_contact_old_single_input").value = ''; // Clear old hidden input
+    // document.getElementById("pic_contact_old_single_input").value = ''; // Clear old hidden input
+    document.getElementById("change_notes").value = '';
+
+
+    axios.get(`/get-premises/${companyName}`)
+      .then(response => {
+        premiseCheckboxesDiv.innerHTML = response.data;
+        attachPremiseCheckboxListeners();
+      })
+      .catch(error => {
+        console.error("Error fetching premises checkboxes:", error);
+        premiseCheckboxesDiv.innerHTML = '<small class="text-danger">Error loading premises.</small>';
+      });
+  });
+
+  // Initial setup for dynamically added device cards (event delegation might be better but this is simpler for now)
+  // These listeners are now called after new HTML is injected by updateDeviceDetailsAndContacts
+  // document.querySelectorAll('.device-card').forEach(card => { ... }); // Old logic for initially loaded cards
+  // document.querySelectorAll('.device-inactive').forEach((checkbox) => { ... }); // Old logic for initially loaded inactive checkboxes
+
+  function attachPremiseCheckboxListeners() {
+    const premiseCheckboxes = document.querySelectorAll('.premise-checkbox');
+    premiseCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        updateDeviceDetailsAndContacts();
+      });
+    });
+  }
+
+  function getSelectedPremises() {
+    const selected = [];
+    document.querySelectorAll('.premise-checkbox:checked').forEach(cb => {
+      selected.push(cb.value);
+    });
+    return selected;
+  }
+
+  function updateDeviceDetailsAndContacts() {
+    const selectedPremises = getSelectedPremises();
+    const selectedCompany = document.getElementById('company').value;
+    const itemsQuickViewSection = document.getElementById('items-quick-view-section');
+    const deviceSection = document.getElementById('device-section'); // Target for editable forms
+    const contactDetailsSection = document.getElementById('contact-details-section');
+    const importantNotesSection = document.getElementById('important-notes-section');
+    const changeNotesTextarea = document.getElementById("change_notes"); // Still used for general notes? Or remove if not.
+
+    changeNotesTextarea.value = ''; // Clear general notes area
+
+    if (!selectedCompany) {
+        itemsQuickViewSection.innerHTML = '<p class="text-muted">Please select a company first.</p>';
+        contactDetailsSection.innerHTML = '<h4>PIC Contact Information</h4><p class="text-muted">Please select a company first.</p>';
+        importantNotesSection.innerHTML = '<p class="text-muted">Please select a company first to see notes.</p>';
+        deviceSection.innerHTML = '<p class="text-muted">Please select a company first to load device forms.</p>';
+        return;
+    }
+
+    if (selectedPremises.length === 0) {
+        contactDetailsSection.innerHTML = '<h4>PIC Contact Information</h4><p class="text-muted">Select premise(s) to see PIC details.</p>';
+        itemsQuickViewSection.innerHTML = '<p class="text-muted">Please select one or more premises to see a quick view of items.</p>';
+        importantNotesSection.innerHTML = '<p class="text-muted">Please select premise(s) to see important notes.</p>';
+        deviceSection.innerHTML = '<p class="text-muted">Please select premise(s) to load device forms.</p>';
+        return;
+    }
+
+    itemsQuickViewSection.innerHTML = '<p class="text-muted">Loading items quick view...</p>';
+    contactDetailsSection.innerHTML = '<h4>PIC Contact Information</h4><p class="text-muted">Loading PIC details...</p>';
+    importantNotesSection.innerHTML = '<p class="text-muted">Loading important notes...</p>';
+    deviceSection.innerHTML = '<p class="text-muted">Loading editable device forms...</p>';
+
+    axios.post('/get-devices-for-premise-company', {
+        selected_premises: selectedPremises,
+        company: selectedCompany
+    })
+    .then(response => {
+        if(response.data.status === 'success'){
+          itemsQuickViewSection.innerHTML = response.data.devices_html || '<p class="text-muted">No items to display for Quick View.</p>';
+          contactDetailsSection.innerHTML = response.data.contacts_html || '<h4>PIC Contact Information</h4><p class="text-muted">No PIC information found.</p>';
+          importantNotesSection.innerHTML = response.data.important_notes_html || '<p class="text-muted">No important notes found.</p>';
+          deviceSection.innerHTML = response.data.editable_devices_html || '<p class="text-muted">No devices found for editing.</p>';
+
+          // After new HTML for editable devices is injected, attach listeners
+          attachConsumptionCalculationListeners();
+          attachInactiveCheckboxListeners(); // Attach listeners to new inactive checkboxes
+
+        } else {
+          const errorMsg = `<p class="text-danger">Error: ${response.data.message || 'Could not load details.'}</p>`;
+          itemsQuickViewSection.innerHTML = errorMsg;
+          contactDetailsSection.innerHTML = '<h4>PIC Contact Information</h4>' + errorMsg;
+          importantNotesSection.innerHTML = errorMsg;
+          deviceSection.innerHTML = errorMsg;
+        }
+    })
+    .catch(error => {
+        console.error("Error fetching details for premises:", error);
+        const errorMsgCatch = "<p class="text-danger">Error loading details. Please try again.</p>";
+        itemsQuickViewSection.innerHTML = errorMsgCatch;
+        contactDetailsSection.innerHTML = '<h4>PIC Contact Information</h4>' + errorMsgCatch;
+        importantNotesSection.innerHTML = errorMsgCatch;
+        deviceSection.innerHTML = errorMsgCatch;
+    });
+  }
+
+  // Initial call to attach listeners if there are any checkboxes loaded initially (e.g. from browser cache)
+  // For this setup, checkboxes are always loaded dynamically, so this might not be strictly necessary here.
+  // attachPremiseCheckboxListeners();
+
+  // Remove the old premise dropdown event listener as it's no longer used for primary device loading
+  // document.getElementById('premise').addEventListener('change', ... OLD LOGIC ... );
+  // The old logic for 'premise' dropdown change is now handled by premise checkbox changes.
+
+</script>
+</body>
+</html>

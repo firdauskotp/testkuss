@@ -1,0 +1,161 @@
+{% if premises_with_devices_list %}
+  {% for premise_data in premises_with_devices_list %}
+    <div class="premise-group mb-4">
+      <h5 class="text-success border-bottom pb-2 mb-3">Editable Details for Devices in: {{ premise_data.premise_name }}</h5>
+      {% if premise_data.devices %}
+        {% for device in premise_data.devices %}
+          <div class="card device-card-editable mb-3 shadow-sm">
+            <div class="card-header">
+              <strong>Model:</strong> {{ device.Model | default('N/A') }}
+              (<small>S/N: {{ device['S/N'] | default('N/A') }}</small>)
+              <input type="hidden" name="device_id_{{ loop.parentloop.loop.index0 }}_{{ loop.index0 }}" value="{{ device['_id'] }}">
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="sn_{{ device['_id'] }}" class="form-label">S/N</label>
+                    <input type="text" class="form-control" id="sn_{{ device['_id'] }}" name="sn_{{ device['_id'] }}" value="{{ device['S/N'] | default('') }}" readonly>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="location_{{ device['_id'] }}" class="form-label">Location</label>
+                    <input type="text" class="form-control" id="location_{{ device['_id'] }}" name="location_{{ device['_id'] }}" value="{{ device.location | default('') }}">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="color_{{ device['_id'] }}" class="form-label">Colour</label>
+                    <input type="text" class="form-control" id="color_{{ device['_id'] }}" name="color_{{ device['_id'] }}" value="{{ device.Color | default('') }}">
+                  </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label">Current EO Scent</label>
+                        <p class="form-control-plaintext">{{ device['Current EO'] | default('N/A') }}</p>
+                    </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="volume_{{ device['_id'] }}" class="form-label">Volume (Max Capacity, ml)</label>
+                    <input type="number" class="form-control volume-input" id="volume_{{ device['_id'] }}" name="volume_{{ device['_id'] }}" value="{{ device.Volume | default(0) }}">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="balance_{{ device['_id'] }}" class="form-label">Balance (Current Level, ml)</label>
+                    <input type="number" class="form-control balance-input" id="balance_{{ device['_id'] }}" name="balance_{{ device['S/N'] | default(device['_id']) }}" value="0"> {# Default to 0 or fetch last known balance #}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="consumption_{{ device['_id'] }}" class="form-label">Consumption (ml)</label>
+                    <input type="number" class="form-control consumption-output" id="consumption_{{ device['_id'] }}" name="consumption_{{ device['_id'] }}" value="{{ (device.Volume | default(0) | int) - 0 }}" readonly>
+                  </div>
+                </div>
+              </div>
+
+              {# Special Controls Section #}
+              <h6 class="text-info mt-3">Special Controls</h6>
+              <div class="mb-3">
+                <label for="scent_change_{{ device['_id'] }}" class="form-label">Change Scent To:</label>
+                <select class="form-select" name="scent_change_{{ device['_id'] }}" id="scent_change_{{ device['_id'] }}">
+                  <option value="">-- Select New Scent (Optional) --</option>
+                  {% if eo_list_data %} {# Use the passed eo_list_data from app.py #}
+                    {% for eo_name in eo_list_data %}
+                      <option value="{{ eo_name }}">{{ eo_name }}</option>
+                    {% endfor %}
+                  {% endif %}
+                </select>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input device-inactive" type="checkbox" name="inactive_{{ device['_id'] }}" id="inactive_{{ device['_id'] }}">
+                <label class="form-check-label text-danger" for="inactive_{{ device['_id'] }}">
+                  Device Inactive (Force Collect Back)
+                </label>
+              </div>
+
+              <div class="mb-3">
+                <label for="relocate_{{ device['_id'] }}" class="form-label">Relocate Device To Premise:</label>
+                <select class="form-select" name="relocate_{{ device['_id'] }}" id="relocate_{{ device['_id'] }}">
+                  <option value="">-- Select New Premise (Optional) --</option>
+                  {% if all_premises_names_for_company %} {# Use the passed list from app.py #}
+                    {% for p_name in all_premises_names_for_company %}
+                      {% if p_name != premise_data.premise_name %} {# Optional: Don't list current premise #}
+                        <option value="{{ p_name }}">{{ p_name }}</option>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                </select>
+              </div>
+
+              {# Timer Settings E1-E4 #}
+              <h6 class="text-info mt-3">Timer Settings (E1-E4)</h6>
+              {% for e_num in range(1, 5) %}
+              <div class="event-block border p-2 mb-3 rounded">
+                <p class="fw-bold">Event {{ e_num }}</p>
+                <div class="row g-2">
+                  <div class="col-md-12">
+                    <label class="form-label small mb-0">Current E{{ e_num }} Days:</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ device['E' ~ e_num ~ ' - DAYS'] | default('N/A') }}" readonly>
+                  </div>
+                  <div class="col-md-12">
+                    <label for="new_e{{ e_num }}_days_{{ device['_id'] }}" class="form-label small mb-0">New E{{ e_num }} Days:</label>
+                    <input type="text" class="form-control form-control-sm" name="new_e{{ e_num }}_days_{{ device['_id'] }}" id="new_e{{ e_num }}_days_{{ device['_id'] }}" value="{{ device['E' ~ e_num ~ ' - DAYS'] | default('') }}">
+                  </div>
+                </div>
+                <div class="row g-2 mt-1">
+                  <div class="col-md-3">
+                    <label class="form-label small mb-0">Current Start:</label>
+                    <input type="time" class="form-control form-control-sm" value="{{ device['E' ~ e_num ~ ' - START'] | default('') }}" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="new_e{{ e_num }}_start_{{ device['_id'] }}" class="form-label small mb-0">New Start:</label>
+                    <input type="time" class="form-control form-control-sm" name="new_e{{ e_num }}_start_{{ device['_id'] }}" id="new_e{{ e_num }}_start_{{ device['_id'] }}" value="{{ device['E' ~ e_num ~ ' - START'] | default('') }}">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small mb-0">Current End:</label>
+                    <input type="time" class="form-control form-control-sm" value="{{ device['E' ~ e_num ~ ' - END'] | default('') }}" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="new_e{{ e_num }}_end_{{ device['_id'] }}" class="form-label small mb-0">New End:</label>
+                    <input type="time" class="form-control form-control-sm" name="new_e{{ e_num }}_end_{{ device['_id'] }}" id="new_e{{ e_num }}_end_{{ device['_id'] }}" value="{{ device['E' ~ e_num ~ ' - END'] | default('') }}">
+                  </div>
+                </div>
+                <div class="row g-2 mt-1">
+                  <div class="col-md-3">
+                    <label class="form-label small mb-0">Current Work:</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ device['E' ~ e_num ~ ' - WORK'] | default('N/A') }}" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="new_e{{ e_num }}_work_{{ device['_id'] }}" class="form-label small mb-0">New Work:</label>
+                    <input type="text" class="form-control form-control-sm" name="new_e{{ e_num }}_work_{{ device['_id'] }}" id="new_e{{ e_num }}_work_{{ device['_id'] }}" value="{{ device['E' ~ e_num ~ ' - WORK'] | default('') }}">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small mb-0">Current Pause:</label>
+                    <input type="text" class="form-control form-control-sm" value="{{ device['E' ~ e_num ~ ' - PAUSE'] | default('N/A') }}" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="new_e{{ e_num }}_pause_{{ device['_id'] }}" class="form-label small mb-0">New Pause:</label>
+                    <input type="text" class="form-control form-control-sm" name="new_e{{ e_num }}_pause_{{ device['_id'] }}" id="new_e{{ e_num }}_pause_{{ device['_id'] }}" value="{{ device['E' ~ e_num ~ ' - PAUSE'] | default('') }}">
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div> {# End card-body #}
+          </div> {# End card #}
+        {% endfor %}
+      {% else %}
+        <p>No devices found for this premise.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No premises selected or no devices found for editing.</p>
+{% endif %}
