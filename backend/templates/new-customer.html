@@ -106,10 +106,14 @@
                         <input type="email" class="form-control mb-2" placeholder="Enter email" name="picEmail1" id="picEmail1" required>
                         <div class="invalid-feedback"> Field is required.</div>
 
-                        <select class="form-select"  id="contactPremise1" name="contactPremise1"  required>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input pic1-apply-all-premises" type="checkbox" id="tieAllPremises1" name="tieAllPremises1">
+                            <label class="form-check-label" for="tieAllPremises1">Apply PIC to All Premises</label>
+                        </div>
+
+                        <select class="form-select" id="contactPremise1" name="contactPremise1" required>
                             <option selected disabled>Tie contact to:</option>
-                            <option>Premise 1</option>
-                            <!-- <option value="all">All Premises</option> -->
+                            <!-- Options will be populated by getPremiseOptions() -->
                         </select>
                         <div class="invalid-feedback"> Field is required.</div>
 
@@ -117,10 +121,6 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-secondary w-100 mt-3" id="addContactBtn">+ Add New Contact and Device</button>
-                <div class="form-check mt-2">
-                    <input class="form-check-input tie-all-checkbox" type="checkbox" id="tieAllPremises${contactCount}" data-target="${contactCount}">
-                    <label class="form-check-label" for="tieAllPremises${contactCount}">Apply to All Premises</label>
-                  </div>
             </div>
 
             <div class="form-section" id="deviceDetails">
@@ -151,12 +151,12 @@
                         <label class="form-label">#1 Colour</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter colour" name="deviceColour1" id="deviceColour1"  required>
                         <div class="invalid-feedback"> Field is required.</div>
-                        
+
 
                         <label class="form-label">#1 Volume Required</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter volume required" name="deviceVolume1" id="deviceVolume1"  required>
                         <div class="invalid-feedback"> Field is required.</div>
-                        
+
 
                         <label class="form-label">#1 Scent</label>
                         <select class="form-select mb-2" name="deviceScent1" id="deviceScent1" required>
@@ -166,7 +166,7 @@
                             {% endfor %}
                         </select>
                         <div class="invalid-feedback"> Field is required.</div>
-                       
+
 
                         <label class="form-label">Tie Device to Premise:</label>
                         <select class="form-select mb-2" id="devicePremise1" name="devicePremise1" required>
@@ -174,7 +174,7 @@
                             <option>Premise 1</option>
                         </select>
                         <div class="invalid-feedback"> Field is required.</div>
-                       
+
 
                         <!-- Events for Device -->
                         <h6 class="section-heading">Event 1</h6>
@@ -194,12 +194,12 @@
                         <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E1Work1" id="E1Work1" required>
                         <div class="invalid-feedback"> Field is required.</div>
 
-                        
+
                         <label class="form-label">#1 - E1 - Pause</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E1Pause1" id="E1Pause1" required>
                         <div class="invalid-feedback"> Field is required.</div>
 
-                        
+
                         <h6 class="section-heading">Event 2</h6>
                         <label class="form-label">#1 - E2 - Days</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter days" name="E2Days1" id="E2Days1" >
@@ -213,11 +213,11 @@
                         <label class="form-label">#1 - E2 - Work</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E2Work1" id="E2Work1" >
 
-                        
+
                         <label class="form-label">#1 - E2 - Pause</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E2Pause1" id="E2Pause1" >
 
-                        
+
                         <h6 class="section-heading">Event 3</h6>
                         <label class="form-label">#1 - E3 - Days</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter days" name="E3Days1" id="E3Days1" >
@@ -236,7 +236,7 @@
                         <label class="form-label">#1 - E3 - Pause</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E3Pause1" id="E3Pause1" >
 
-                        
+
                         <h6 class="section-heading">Event 4</h6>
                         <label class="form-label">#1 - E4 - Days</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter days" name="E4Days1" id="E4Days1" >
@@ -254,10 +254,10 @@
                         <label class="form-label">#1 - E4 - Pause</label>
                         <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E4Pause1" id="E4Pause1" >
 
-                       
+
                     </div>
                 </div>
-                
+
                 <button type="button" class="btn btn-secondary w-100 mt-3" id="addDeviceBtn">+ Add New Device and Contact</button>
             </div>
 
@@ -271,6 +271,57 @@
         let contactCount = 1;
         let deviceCount = 1;
 
+        function updatePic1Controls() {
+            const tieAllPremises1 = document.getElementById('tieAllPremises1');
+            const addContactBtn = document.getElementById('addContactBtn');
+
+            if (!tieAllPremises1 || !addContactBtn) {
+                return; // Elements not found
+            }
+
+            if (premiseCount <= 1) {
+                tieAllPremises1.disabled = true;
+                tieAllPremises1.checked = false; // Uncheck if disabled
+            } else {
+                tieAllPremises1.disabled = false;
+            }
+
+            if (tieAllPremises1.checked && !tieAllPremises1.disabled) {
+                addContactBtn.disabled = true;
+            } else {
+                addContactBtn.disabled = false;
+            }
+        }
+
+        // Event listener for PIC1's "Apply to All Premises" checkbox
+        document.addEventListener('DOMContentLoaded', () => { // Ensure element exists
+            const tieAllPremises1Checkbox = document.getElementById('tieAllPremises1');
+            if (tieAllPremises1Checkbox) {
+                tieAllPremises1Checkbox.addEventListener('change', function(event) {
+                    const addContactBtn = document.getElementById('addContactBtn');
+                    const contactPremise1Select = document.getElementById('contactPremise1');
+
+                    if (!addContactBtn || !contactPremise1Select) return;
+
+                    if (event.target.checked) {
+                        addContactBtn.disabled = true;
+                        contactPremise1Select.value = "all";
+                        contactPremise1Select.disabled = true;
+                    } else {
+                        // Re-evaluate addContactBtn based on premiseCount
+                        if (premiseCount > 1) {
+                            addContactBtn.disabled = false;
+                        } else {
+                            addContactBtn.disabled = true;
+                        }
+                        contactPremise1Select.disabled = false;
+                        contactPremise1Select.value = ""; // Reset dropdown
+                    }
+                    updatePic1Controls(); // Call to ensure overall consistency
+                });
+            }
+        });
+
         // Event delegation for dynamic premise removal
         document.getElementById('premiseContainer').addEventListener('click', function(event) {
             if (event.target.classList.contains('remove-btn')) {
@@ -279,6 +330,7 @@
                 premiseCount--;
                 updatePremiseNumbers();
                 updatePremiseDropdowns();
+                updatePic1Controls(); // Update PIC1 controls after premise removal
             }
         });
 
@@ -304,6 +356,7 @@
             premiseContainer.insertAdjacentHTML('beforeend', newPremise);
             updatePremiseNumbers();
             updatePremiseDropdowns();
+            updatePic1Controls(); // Update PIC1 controls after premise addition
         });
 
         // Update premise numbering after adding/removing premises
@@ -364,24 +417,108 @@ document.getElementById('premiseContainer').addEventListener('input', function (
         document.getElementById('contactContainer').addEventListener('click', function(event) {
             if (event.target.classList.contains('remove-btn')) {
                 const contactItem = event.target.closest('.contact-item');
-                contactItem.remove();
-                contactCount--;
-                updateContactNumbers();
-                
+                if (contactItem) {
+                    contactItem.remove();
+                    contactCount--;
+                    updateContactNumbers();
+                    updatePic1Controls(); // Update after removing a contact
+                    updatePremiseDropdowns(); // Update premise dropdowns for all contacts
+                }
             }
         });
 
-        document.getElementById('contactContainer').addEventListener('change', function (event) {
-    if (event.target.classList.contains('tie-all-checkbox')) {
-        const contactIndex = event.target.getAttribute('data-target');
-        const select = document.getElementById(`contactPremise${contactIndex}`);
-        if (event.target.checked) {
-            select.value = "all";
-        } else {
-            select.value = "";  // Reset to default
-        }
-    }
-});
+        // Existing listener for 'tie-all-checkbox' - THIS WILL BE REPLACED/MERGED
+        // document.getElementById('contactContainer').addEventListener('change', function (event) {
+    // if (event.target.classList.contains('tie-all-checkbox')) {
+    //     const contactIndex = event.target.getAttribute('data-target');
+    //     const select = document.getElementById(`contactPremise${contactIndex}`);
+    //     if (event.target.checked) {
+    //         select.value = "all";
+    //     } else {
+    //         select.value = "";  // Reset to default
+    //     }
+    // }
+// });
+
+        document.getElementById('contactContainer').addEventListener('change', function(event) {
+            // Handle .contact-apply-all-premises for PIC N > 1
+            if (event.target.classList.contains('contact-apply-all-premises')) {
+                const contactIndex = event.target.id.replace('tieAllPremises', '');
+                if (contactIndex === '1') return; // Should be handled by pic1-apply-all-premises listener
+
+                const applyAllCheckbox = event.target;
+                const sameAsAboveCheckbox = document.getElementById(`sameAsAbove${contactIndex}`);
+                const contactPremiseSelect = document.getElementById(`contactPremise${contactIndex}`);
+
+                if (!contactPremiseSelect) return;
+
+                if (applyAllCheckbox.checked) {
+                    if (sameAsAboveCheckbox) {
+                        sameAsAboveCheckbox.checked = false;
+                        sameAsAboveCheckbox.disabled = true;
+                    }
+                    contactPremiseSelect.value = "all";
+                    contactPremiseSelect.disabled = true;
+                } else {
+                    if (sameAsAboveCheckbox) {
+                        sameAsAboveCheckbox.disabled = false;
+                    }
+                    contactPremiseSelect.disabled = false;
+                    contactPremiseSelect.value = ""; // Reset dropdown
+                }
+            }
+
+            // Handle .same-as-above for PIC N > 1
+            if (event.target.classList.contains('same-as-above')) {
+                const contactIndex = event.target.dataset.target;
+                if (!contactIndex || contactIndex === '1') return; // Ensure contactIndex is valid and not for PIC1
+
+                const sameAsAboveCheckbox = event.target;
+                const applyAllCheckbox = document.getElementById(`tieAllPremises${contactIndex}`);
+                const contactPremiseSelect = document.getElementById(`contactPremise${contactIndex}`);
+                const fields = ['picName', 'picDesignation', 'picContact', 'picEmail'];
+                const prevIndex = parseInt(contactIndex) - 1;
+
+                if (prevIndex === 0) return; // Should not happen if contactIndex !== '1'
+
+                if (!contactPremiseSelect) return;
+
+                if (sameAsAboveCheckbox.checked) {
+                    if (applyAllCheckbox) {
+                        applyAllCheckbox.checked = false;
+                        applyAllCheckbox.disabled = true;
+                    }
+                    fields.forEach(fieldPrefix => {
+                        const currentField = document.getElementById(`${fieldPrefix}${contactIndex}`);
+                        const prevField = document.getElementById(`${fieldPrefix}${prevIndex}`);
+                        if (currentField && prevField) {
+                            currentField.value = prevField.value;
+                            currentField.disabled = true;
+                        } else if (currentField) {
+                             currentField.disabled = true; // Disable if prev field doesn't exist but current does
+                        }
+                    });
+                    const prevPremiseSelect = document.getElementById(`contactPremise${prevIndex}`);
+                    if (prevPremiseSelect) {
+                        contactPremiseSelect.value = prevPremiseSelect.value;
+                    }
+                     contactPremiseSelect.disabled = true;
+                } else {
+                    if (applyAllCheckbox) {
+                        applyAllCheckbox.disabled = false;
+                    }
+                    fields.forEach(fieldPrefix => {
+                        const currentField = document.getElementById(`${fieldPrefix}${contactIndex}`);
+                        if (currentField) {
+                            currentField.disabled = false;
+                            // currentField.value = ''; // Optionally clear
+                        }
+                    });
+                    contactPremiseSelect.disabled = false;
+                    // contactPremiseSelect.value = ''; // Optionally clear
+                }
+            }
+        });
 
         // Event delegation for dynamic device removal
         document.getElementById('deviceContainer').addEventListener('click', function(event) {
@@ -395,18 +532,94 @@ document.getElementById('premiseContainer').addEventListener('input', function (
 
         // Update contact numbering after adding/removing contacts
         function updateContactNumbers() {
-            const contactItems = document.querySelectorAll('.contact-item');
-            contactItems.forEach((contactItem, index) => {
-                const contactNumber = index + 1;  // Contact numbering starts from 1
-                contactItem.querySelector('label').innerText = `PIC ${contactNumber} - Name`;
+            const contactItems = document.querySelectorAll('#contactContainer .contact-item');
+            contactItems.forEach((item, index) => {
+                const picNumber = index + 1;
+
+                // Update PIC Label (first label assumed to be the title)
+                const titleLabel = item.querySelector('label.form-label');
+                if (titleLabel) {
+                    titleLabel.innerText = \`PIC \${picNumber} - Name\`;
+                }
+                item.id = \`contact-\${picNumber}\`;
+
+                // Helper arrays for different element types
+                const simpleInputs = ['picName', 'picDesignation', 'picContact', 'picEmail'];
+                const selects = ['contactPremise'];
+                const checkboxes = [
+                    { baseId: 'tieAllPremises', labelTextContains: 'Apply PIC to All Premises' },
+                    { baseId: 'sameAsAbove', labelTextContains: 'Same as Above' }
+                ];
+
+                simpleInputs.forEach(baseId => {
+                    const inputField = item.querySelector(\`[id^='\${baseId}']\`);
+                    if (inputField) {
+                        inputField.id = \`\${baseId}\${picNumber}\`;
+                        inputField.name = \`\${baseId}\${picNumber}\`;
+                    }
+                });
+
+                selects.forEach(baseId => {
+                    const selectField = item.querySelector(\`select[id^='\${baseId}']\`);
+                    if (selectField) {
+                        selectField.id = \`\${baseId}\${picNumber}\`;
+                        selectField.name = \`\${baseId}\${picNumber}\`;
+                    }
+                });
+
+                checkboxes.forEach(cbInfo => {
+                    // Find checkbox by a more stable part of its ID or a class if available
+                    // Assuming the last part of the ID is the number that needs changing.
+                    // Example: find input that has an id starting with 'tieAllPremises'
+                    const checkbox = item.querySelector(\`input[type='checkbox'][id^='\${cbInfo.baseId}']\`);
+                    if (checkbox) {
+                        const oldId = checkbox.id;
+                        checkbox.id = \`\${cbInfo.baseId}\${picNumber}\`;
+                        checkbox.name = \`\${cbInfo.baseId}\${picNumber}\`; // Assuming name follows same pattern
+
+                        const label = item.querySelector(\`label[for='\${oldId}']\`);
+                        if (label) {
+                            label.setAttribute('for', checkbox.id);
+                        }
+
+                        if (cbInfo.baseId === 'tieAllPremises') {
+                            if (picNumber === 1) {
+                                checkbox.classList.remove('contact-apply-all-premises');
+                                checkbox.classList.add('pic1-apply-all-premises');
+                            } else {
+                                checkbox.classList.remove('pic1-apply-all-premises');
+                                checkbox.classList.add('contact-apply-all-premises');
+                            }
+                        }
+
+                        if (cbInfo.baseId === 'sameAsAbove') {
+                            checkbox.dataset.target = picNumber;
+                        }
+                    }
+                });
+
+                // Handle removal of "Same as Above" for PIC1
+                if (picNumber === 1) {
+                    const sameAsAboveCheckbox = item.querySelector("input.same-as-above[id^='sameAsAbove']");
+                    if (sameAsAboveCheckbox) {
+                        const formCheckDiv = sameAsAboveCheckbox.closest('.form-check');
+                        if (formCheckDiv) {
+                            formCheckDiv.remove();
+                        }
+                    }
+                }
             });
+
+            // After re-indexing, update controls that depend on PIC1's state or dropdown content
+            updatePic1Controls();
+            updatePremiseDropdowns();
         }
 
         // Handle form submission with validation
         document.getElementById('customerForm').addEventListener('submit', function(event) {
             const premiseItems = document.querySelectorAll('.premise-item');
             const contactItems = document.querySelectorAll('.contact-item');
-            
+
             // Ensure at least one premise and one contact are present
             if (premiseItems.length === 0 || contactItems.length === 0) {
                 event.preventDefault();  // Prevent form submission
@@ -423,6 +636,8 @@ document.getElementById('premiseContainer').addEventListener('input', function (
         });
 
         document.getElementById('addContactBtn').addEventListener('click', () => {
+            if (document.getElementById('addContactBtn').disabled) return; // Prevent adding if button is disabled
+
             contactCount++;
             const contactContainer = document.getElementById('contactContainer');
             const newContact = `
@@ -444,15 +659,15 @@ document.getElementById('premiseContainer').addEventListener('input', function (
                         <option selected disabled>Tie contact to:</option>
                         ${getPremiseOptions()}
                     </select>
-          
                     <div class="invalid-feedback"> Field is required.</div>
-
                     <div class="form-check mt-2">
-                <input class="form-check-input same-as-above" type="checkbox" id="sameAsAbove${contactCount}" data-target="${contactCount}">
-                <label class="form-check-label" for="sameAsAbove${contactCount}">Same as Above</label>
-            </div>
-
-
+                        <input class="form-check-input contact-apply-all-premises" type="checkbox" id="tieAllPremises${contactCount}" name="tieAllPremises${contactCount}">
+                        <label class="form-check-label" for="tieAllPremises${contactCount}">Apply PIC to All Premises</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input same-as-above" type="checkbox" id="sameAsAbove${contactCount}" data-target="${contactCount}">
+                        <label class="form-check-label" for="sameAsAbove${contactCount}">Same as Above</label>
+                    </div>
                     <button type="button" class="remove-btn mt-2">Remove</button>
                 </div>
             `;
@@ -469,8 +684,8 @@ document.getElementById('premiseContainer').addEventListener('input', function (
             document.getElementById(`picName${contactIndex}`).value = document.getElementById(`picName${prevIndex}`).value;
             document.getElementById(`picDesignation${contactIndex}`).value = document.getElementById(`picDesignation${prevIndex}`).value;
             document.getElementById(`picContact${contactIndex}`).value = document.getElementById(`picContact${prevIndex}`).value;
-            document.getElementById(`picEmail${contactIndex}`).value = document.getElementById(`picEmail${prevIndex}`).value;
-            document.getElementById(`contactPremise${contactIndex}`).value = document.getElementById(`contactPremise${prevIndex}`).value;
+            document.getElementById(`picEmail${contactCount}`).value = document.getElementById(`picEmail${prevIndex}`).value;
+            document.getElementById(`contactPremise${contactCount}`).value = document.getElementById(`contactPremise${prevIndex}`).value;
         }
     }
 });
@@ -540,12 +755,12 @@ const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  //
                     <input type="number" class="form-control mb-2" name="E1Work${deviceCount}" id="E1Work${deviceCount}"  placeholder="Enter work duration" required>
                     <div class="invalid-feedback"> Field is required.</div>
 
-                   
+
                     <label class="form-label">#${deviceCount} - E1 - Pause</label>
                     <input type="number" class="form-control mb-2"  name="E1Pause${deviceCount}" id="E1Pause${deviceCount}" placeholder="Enter pause duration" required>
                     <div class="invalid-feedback"> Field is required.</div>
 
-                    
+
                     <h6 class="section-heading">Event 2</h6>
                     <label class="form-label">#${deviceCount} - E2 - Days</label>
                     <input type="text" class="form-control mb-2" name="E2Days${deviceCount}" id="E2Days${deviceCount}" placeholder="Enter days" >
@@ -563,7 +778,7 @@ const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  //
                     <label class="form-label">#${deviceCount} - E2 - Pause</label>
                     <input type="number" class="form-control mb-2" name="E2Pause${deviceCount}" id="E2Pause${deviceCount}" placeholder="Enter pause duration" >
 
-                   
+
                     <h6 class="section-heading">Event 3</h6>
                     <label class="form-label">#${deviceCount} - E3 - Days</label>
                     <input type="text" class="form-control mb-2" name="E3Days${deviceCount}" id="E3Days${deviceCount}" placeholder="Enter days" >
@@ -577,11 +792,11 @@ const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  //
                     <label class="form-label">#${deviceCount} - E3 - Work</label>
                     <input type="number" class="form-control mb-2" name="E3Work${deviceCount}" id="E3Work${deviceCount}"  placeholder="Enter work duration" >
 
-                    
+
                     <label class="form-label">#${deviceCount} - E3 - Pause</label>
                     <input type="number" class="form-control mb-2" name="E3Pause${deviceCount}" id="E3Pause${deviceCount}" placeholder="Enter pause duration" >
 
-                  
+
                     <h6 class="section-heading">Event 4</h6>
                     <label class="form-label">#${deviceCount} - E4 - Days</label>
                     <input type="text" class="form-control mb-2" name="E4Days${deviceCount}" id="E4Days${deviceCount}" placeholder="Enter days" >
@@ -599,13 +814,13 @@ const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  //
                     <label class="form-label">#${deviceCount} - E4 - Pause</label>
                     <input type="number" class="form-control mb-2" name="E4Pause${deviceCount}" id="E4Pause${deviceCount}" placeholder="Enter pause duration" >
 
-                   
+
                     <button type="button" class="remove-btn mt-2">Remove Device</button>
                 </div>`;
             deviceContainer.insertAdjacentHTML('beforeend', newDevice);
         });
 
-       
+
     </script>
 
     <script>
@@ -614,12 +829,20 @@ const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  //
             const dateInput = document.getElementById('dateCreated');
             const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
             dateInput.value = today;
+
+            // Initialize PIC1 controls and premise dropdown
+            updatePic1Controls();
+            const contactPremise1Select = document.getElementById('contactPremise1');
+            if (contactPremise1Select) {
+                contactPremise1Select.innerHTML = '<option selected disabled>Tie contact to:</option>' + getPremiseOptions();
+            }
+            updatePremiseDropdowns(); // Ensure all premise dropdowns are consistent
         });
 
         document.getElementById('customerForm').addEventListener('submit', function (event) {
     let isValid = true;
     const requiredFields = document.querySelectorAll('#customerForm input[required], #customerForm select[required]');
-    
+
     requiredFields.forEach(field => {
         if (!field.value.trim()) {
             isValid = false;
