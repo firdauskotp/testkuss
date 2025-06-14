@@ -144,30 +144,90 @@ def pre_service():
 
 @forms_bp.route('/service', methods=['GET', 'POST'])
 def service():
-    # Note: The original 'service' route in app.py had complex logic for processing devices.
-    # This is a simplified version based on the placeholder.
-    # The FULL logic from app.py's service() route should be copied here.
     technician_name = session["username"]
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     companies = services_collection.distinct('company')
-    # The original service route also fetched 'premises' for a dropdown, that might be needed.
-    # premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
-    # For now, passing only companies as per immediate context.
 
+    device_entries = []
     if request.method == 'POST':
-        # --- Full POST logic from app.py's service() route needs to be here ---
-        # This includes:
-        # premise_name = request.form.get("premiseName")
-        # Fetching premise_details, devices, pic_records
-        # Processing device_entries and their events
-        # Creating field_service_record
-        # change_form_collection.insert_one(field_service_record)
-        # log_activity(...)
-        # --- End of section to be copied and adapted ---
-        flash("Field service report submitted successfully! (Placeholder - Full logic to be copied)", "success")
-        return redirect(url_for(".service")) # Or dashboard
+        premise_name = request.form.get("premiseName")
+        actions_taken = request.form.getlist("actions")
+        remarks = request.form.get("remarks")
+        staff_name = request.form.get("staffName")
+        signature = request.form.get("signature")
 
-    return render_template("service.html", companies=companies, technician_name=technician_name, current_time=current_time)
+        # Fetch selected premise details
+        premise_details = profile_list_collection.find_one({"premise_name": premise_name})
+        if not premise_details:
+            flash("Invalid premise selected!", "danger")
+            return redirect(url_for("field_service"))
+
+        # Fetch devices linked to the premise
+        devices = list(device_list_collection.find({"tied_to_premise": premise_name}))
+
+        # Fetch PICs linked to the premise
+        pic_records = list(profile_list_collection.find({"tied_to_premise": premise_name}))
+
+        # Process devices
+        for i, device in enumerate(devices, start=1):
+            balance = int(request.form.get(f'balance{i}', 0))
+            volume_required = int(device.get("Volume", 0))
+            consumption = volume_required - balance
+
+            device_entry = {
+                "location": device.get("location"),
+                "serial_number": device.get("S/N"),
+                "model": device.get("Model"),
+                "scent": device.get("Current EO"),
+                "volume_required": volume_required,
+                "balance": balance,
+                "consumption": consumption,
+                "events": []
+            }
+
+            # Process events (E1 to E4)
+            for e in range(1, 5):
+                event_data = {
+                    "days": device.get(f"E{e} - DAYS"),
+                    "start_time": device.get(f"E{e} - START"),
+                    "end_time": device.get(f"E{e} - END"),
+                    "work": device.get(f"E{e} - WORK"),
+                    "pause": device.get(f"E{e} - PAUSE"),
+                }
+                device_entry["events"].append(event_data)
+
+            device_entries.append(device_entry)
+
+        # Create a record for MongoDB
+        field_service_record = {
+            "technician_name": technician_name,
+            "timestamp": current_time,
+            "premise_name": premise_name,
+            "client_pics": pic_records,
+            "devices": device_entries,
+            "actions_taken": actions_taken,
+            "remarks": remarks,
+            "staff_name": staff_name,
+            "signature": signature,
+        }
+
+        change_form_collection.insert_one(field_service_record)
+
+        flash("Field service report submitted successfully!", "success")
+        return redirect(url_for("field_service", companies=companies))
+
+    # Fetch all premises for dropdown
+    premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
+
+    # Fetch all devices for GET (optional: you may want to show all or none until a premise is selected)
+    # For now, just pass an empty list for devices
+    return render_template(
+        "service.html",
+        devices=device_entries,  # Always a list
+        companies=companies,
+        technician_name=technician_name,
+        current_time=current_time
+    )
 
 @forms_bp.route('/service2', methods=['GET', 'POST'])
 def service2():

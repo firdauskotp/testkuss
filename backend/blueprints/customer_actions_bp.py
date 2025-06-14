@@ -29,9 +29,7 @@ def require_customer_login():
         if not is_customer_logged_in():
             flash("Please log in to access this page.", "warning")
             return redirect(url_for('auth.client_login'))
-            return redirect(url_for('auth.client_login'))
 
-@customer_actions_bp.route("/help", methods=["GET", "POST"])
 @customer_actions_bp.route("/help", methods=["GET", "POST"])
 def customer_form():
     if not is_customer_logged_in(): 
@@ -91,7 +89,6 @@ def customer_form():
         collection.insert_one(case_document)
         
         mail_sender_address = current_app.config.get('MAIL_SENDER_ADDRESS')
-        if not mail_sender_address: # Fallback or error if not configured
         if not mail_sender_address: # Fallback or error if not configured
             flash("Email configuration error. Case submitted but notifications might fail.", "warning")
             # Log this for admin attention
