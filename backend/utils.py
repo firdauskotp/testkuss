@@ -3,12 +3,14 @@ from flask_mail import Mail, Message
 import calendar
 from flask import flash
 
-def log_activity(name, action, database):
+def log_activity(name, action, database, client_email=None):
     log_entry = {
         "user": name,
         "action": action,
         "timestamp": datetime.now(),
     }
+    if client_email:
+        log_entry["client_email"] = client_email
     database.insert_one(log_entry)
 def parse_date_safe(d):
     try:

@@ -105,6 +105,7 @@ def customer_form():
         })
         send_email_to_customer(case_no, user_email, app.config['MAIL_USERNAME'], mail)
         send_email_to_admin(case_no, user_email, app.config['MAIL_USERNAME'], mail)
+        log_activity(user_email, f"submitted help request, case #{case_no}", logs_collection, client_email=user_email)
         return redirect(url_for("case_success", case_no=case_no))
     return render_template("customer-complaint-form.html")
 
@@ -176,7 +177,7 @@ def register():
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
         login_cust_collection.insert_one({'email': email, 'password': hashed_password})
         flash("User registered successfully!", "success")
-        log_activity(session["username"],"added user : " +str(email),logs_collection)
+        log_activity(session["username"], f"registered new client: {email}", logs_collection, client_email=email)
         return redirect(url_for('register'))
     return render_template('register.html')
 
@@ -198,7 +199,7 @@ def register_admin():
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
         login_collection.insert_one({'username': username, 'password': hashed_password})
         flash("User registered successfully!", "success")
-        log_activity(session["username"],"added user : " +str(username),logs_collection)
+        log_activity(session["username"], f"registered new admin: {username}", logs_collection)
         return redirect(url_for('register_admin'))
     return render_template('register-admin.html')
 
@@ -211,7 +212,7 @@ def delete_user():
     email = user.get('email', 'Unknown')
     login_cust_collection.delete_one({'_id': ObjectId(user_id)})
     flash("User deleted successfully!", "success")
-    log_activity(session["username"], f"deleted user with email: {email}", logs_collection)
+    log_activity(session["username"], f"deleted client: {email}", logs_collection, client_email=email)
     return redirect(url_for('view_users'))
 
 @app.route('/delete_admin', methods=['POST'])
@@ -223,7 +224,7 @@ def delete_admin():
     username = user.get('username', 'Unknown')
     login_collection.delete_one({'_id': ObjectId(user_id)})
     flash("User deleted successfully!", "success")
-    log_activity(session["username"], f"deleted user with username: {username}", logs_collection)
+    log_activity(session["username"], f"deleted admin: {username}", logs_collection)
     return redirect(url_for('view_admins'))
 
 @app.route("/admin-login", methods=["GET", "POST"])
@@ -236,7 +237,7 @@ def admin_login():
             session["user_id"] = str(user["_id"])
             session["username"] = user["username"]
             flash("Login successful!", "success")
-            log_activity(session["username"],"login",logs_collection)
+            log_activity(session["username"], "admin login", logs_collection)
             return redirect(url_for("dashboard"))
         else:
             flash("Invalid username or password.", "danger")
@@ -516,10 +517,10 @@ def change_form():
                 except (ValueError, KeyError) as e:
                     flash(f"Invalid month or year provided for collect back date: {e}", "danger")
             discontinue_collection.insert_one(data_for_db)
-            log_activity(session["username"], f"collected back (discontinue_collection): {data_for_db.get('premises')} {data_for_db.get('devices')}", logs_collection)
+            log_activity(session["username"], f"marked for collection (discontinue_collection) for company {data_for_db.get('company')}: premises {data_for_db.get('premises')}, devices {data_for_db.get('devices')}", logs_collection) # Client email will be tricky here, added later if possible
         else:
             changed_models_collection.insert_one(data_for_db)
-            log_activity(session["username"], f"updated settings (changed_models_collection): {data_for_db.get('premises')} {data_for_db.get('devices')}", logs_collection)
+            log_activity(session["username"], f"updated settings (changed_models_collection) for company {data_for_db.get('company')}: premises {data_for_db.get('premises')}, devices {data_for_db.get('devices')}", logs_collection) # Client email will be tricky here, added later if possible
 
             # Update services_collection based on the change form
             if not data_for_db["collect_back"]:
@@ -560,6 +561,7 @@ def change_form():
 
                 if service_update_values["$set"]:
                     update_result = services_collection.update_many(service_update_query, service_update_values)
+                    # This log is more about system action, client email might not be directly relevant unless we want to notify them of this specific update.
                     log_activity(session["username"], f"Applied changes to services_collection: {update_result.modified_count} devices updated for company {data_for_db.get('company')}", logs_collection)
                     flash(f"{update_result.modified_count} devices updated in services records.", "info")
 
@@ -582,6 +584,8 @@ def change_form():
                 for c_email in client_emails:
                     send_email(to_email=c_email, from_email=app.config['MAIL_USERNAME'], subject=email_subject, body=email_body, mail=mail, attachments=[attachment_details])
                 flash(f"Change form submitted and email sent to client(s) at {', '.join(client_emails)}.", "success")
+                # Add client_email to previous log calls if possible, this is a bit late.
+                # For now, the specific log_activity calls for db changes won't have client_email directly from here.
             else:
                  flash("Change form submitted. No client email found for notification.", "warning")
             if admin_email: # Also send to admin
@@ -893,7 +897,8 @@ def new_customer():
             else:
                 test_collection.insert_many(master_list)
 
-        log_activity(session["username"], f"added new customer: {companyName}", logs_collection)
+        first_pic_email = pic_records[0].get("email") if pic_records and pic_records[0].get("email") else None
+        log_activity(session["username"], f"added new customer: {companyName}", logs_collection, client_email=first_pic_email)
         flash(f"Company {companyName} added successfully!", "success")
         return redirect(url_for("new_customer"))
 
@@ -1053,7 +1058,7 @@ def remark():
     if request.method == 'POST':
         remark_text = request.form['remark']
         is_urgent = 'urgent' in request.form
-        log_activity(session["username"],"added remarks : " +str(remark_text) + "urgent : " + str(is_urgent),logs_collection)
+        log_activity(session["username"], f"added remark: '{remark_text}', urgent: {is_urgent}", logs_collection)
         remark_collection.insert_one({'username': username, 'remark': remark_text, 'urgent': is_urgent})
         return redirect(url_for('dashboard'))
     return render_template('remark.html', username=username)
@@ -1109,7 +1114,7 @@ def post_service():
         query = {"essential_oil": essential_oil}
         update = {"$set": {"oil_balance": oil_balance, "balance_brought_back": balance_brought_back, "balance_brought_back_percent": balance_brought_back_percent, "refill_amount": refill_amount, "refill_amount_percent": refill_amount_percent, "month_year": month_year}}
         eo_pack_collection.update_one(query, update, upsert=True)
-        log_activity(username, f"Updated/added post-service record for essential oil: {essential_oil}", logs_collection)
+        log_activity(username, f"updated/added post-service record for essential oil: {essential_oil}", logs_collection)
         flash(f"Record for {essential_oil} updated successfully!", "success")
         return redirect(url_for("dashboard"))
     return render_template('post-service.html', username=username)
@@ -1326,12 +1331,12 @@ def delete_route():
 
     record = route_list_collection.find_one({'_id': obj_id})
     if record:
-        company = record.get('company', 'Unknown'); premise_val = record.get('premise', 'Unknown'); date_val = record.get('date', 'Unknown') # Renamed premise to premise_val
+            company = record.get('company', 'Unknown'); premise_val = record.get('premise', 'Unknown'); date_val = record.get('date', 'Unknown')
         route_list_collection.delete_one({'_id': obj_id})
-        log_activity(session["username"], f"deleted route for Company: {company} Premise: {premise_val} Date: {date_val}", logs_collection)
+            log_activity(session["username"], f"deleted route for Company: {company}, Premise: {premise_val}, Date: {date_val}", logs_collection)
         flash("Record deleted successfully!", "success")
     else:
-        flash("Record not found or failed to delete!", "error") # Clarified message
+            flash("Record not found or failed to delete!", "error")
     return redirect(url_for('route_table'))
 
 @app.route('/view-help-requestssss', methods=['POST','GET'])
@@ -1429,8 +1434,10 @@ def service():
             "client_staff_name": staff_name, "client_signature": signature,
             "month_year": datetime.now()
         }
-        service_reports_collection.insert_one(field_service_record) # Changed to service_reports_collection
-        log_activity(session["username"], f"submitted service report for: {log_company_name} - {premise_name}", logs_collection)
+        service_reports_collection.insert_one(field_service_record)
+
+        first_client_email = pic_records[0].get("email") if pic_records and pic_records[0].get("email") else None
+        log_activity(session["username"], f"submitted service report for: {log_company_name} - {premise_name}", logs_collection, client_email=first_client_email)
         flash("Field service report submitted successfully!", "success")
         return redirect(url_for("dashboard"))
 
