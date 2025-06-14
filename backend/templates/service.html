@@ -19,13 +19,36 @@
       width: 100%;
       height: 100%;
     }
+    #premise-checkboxes-container {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ced4da;
+      padding: 10px;
+      border-radius: .25rem;
+    }
+    .pic-info {
+      font-size: 0.9em;
+      margin-bottom: 10px;
+      padding: 5px;
+      background-color: #f8f9fa;
+      border-radius: .2rem;
+    }
+    .important-notes-section {
+        font-size: 0.85em;
+    }
+    .important-notes-section ul {
+        margin-bottom: 0;
+    }
+    .scent-details-section h6 {
+        margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body class="bg-light">
 <div class="container mt-5">
   <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">Back to Dashboard</a>
   <h1 class="text-center">SERVICE FORM</h1>
-  <form method="POST" action="/field-service">
+  <form method="POST" action="{{ url_for('service') }}">
     <div class="mb-3">
       <label class="form-label">Technician Name:</label>
       <input type="text" class="form-control" value="{{ technician_name }}" readonly>
@@ -36,7 +59,6 @@
       <input type="text" class="form-control" value="{{ current_time }}" readonly>
     </div>
 
-    <!-- New: Service Time Dropdowns -->
     <div class="row mb-3">
       <label class="form-label">Service Time:</label>
       <div class="col-md-4">
@@ -64,259 +86,394 @@
         </select>
       </div>
     </div>
-        <!-- Company Dropdown -->
+
         <div class="mb-3">
             <label for="company" class="form-label">Company</label>
             <select class="form-select" id="company" name="company" required>
-              <option value="" selected disabled>Select a company</option>
-              {% for company in companies %}
-              <option value="{{ company }}">{{ company }}</option>
+              <option value="" disabled {% if not initial_company %}selected{% endif %}>Select a company</option>
+              {% for company_item in companies %}
+              <option value="{{ company_item }}" {% if initial_company == company_item %}selected{% endif %}>{{ company_item }}</option>
               {% endfor %}
             </select>
           </div>
-      
-          <!-- Premise Dropdown -->
+
           <div class="mb-3">
-            <label for="premise" class="form-label">Premise</label>
-            <select class="form-select" id="premise" name="premise" required disabled>
-              <option value="" selected disabled>Select a premise</option>
-            </select>
+            <label class="form-label">Premises:</label>
+            <div id="premise-checkboxes-container">
+              <p class="text-muted">Please select a company to see premises.</p>
+            </div>
           </div>
-      
-          <!-- New: Change Notes (Overview) -->
-          <div class="mb-3">
-            <label for="change_notes" class="form-label">Change Notes (Overview)</label>
-            <textarea class="form-control" id="change_notes" name="change_notes" disabled placeholder="System will auto-fill notes based on device changes"></textarea>
-          </div>
-      
-          <!-- New: PIC Contact Info -->
-          <div class="mb-3">
-            <label class="form-label">PIC Contact</label>
-            <input type="text" class="form-control" id="pic_contact" name="pic_contact" readonly>
-          </div>
-      
+
           <hr>
-          <h4 class="text-primary">Device Details</h4>
+          <h4 class="text-primary">Device Details & PIC Information</h4>
           <div id="device-section">
-            <!-- This part will be dynamically filled for each device by backend or AJAX -->
-            <!-- Template shown below for ONE device -->
-            <div class="card mb-4 p-3 bg-white border rounded device-card">
-                <h5 class="text-secondary">Device {{ loop.index }}</h5>
-              
-                <!-- Model -->
-                <div class="mb-3">
-                  <label for="model{{ loop.index }}" class="form-label">Model</label>
-                  <select class="form-select" id="model{{ loop.index }}" name="model{{ loop.index }}" required>
-                    <option selected disabled>Select a model</option>
-                    {% for model in models %}
-                    <option value="{{ model }}">{{ model }}</option>
-                    {% endfor %}
-                  </select>
+            <p id="device-placeholder-message">Please select one or more premises to view devices and PIC information.</p>
+          </div>
+
+          <hr class="mt-4">
+          <h4>Acknowledgement</h4>
+          <hr>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Actions Done:</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Alcohol Cleaning" id="action_alcohol_cleaning">
+              <label class="form-check-label" for="action_alcohol_cleaning">Alcohol Cleaning</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Oil Refill" id="action_oil_refill">
+              <label class="form-check-label" for="action_oil_refill">Oil Refill</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Checked timer settings" id="action_checked_timer">
+              <label class="form-check-label" for="action_checked_timer">Checked timer settings</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced straw / mist heads" id="action_replaced_straw">
+              <label class="form-check-label" for="action_replaced_straw">Replaced straw / mist heads</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced batteries" id="action_replaced_batteries">
+              <label class="form-check-label" for="action_replaced_batteries">Replaced batteries</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced faulty machine (same model)" id="action_replaced_faulty_same">
+              <label class="form-check-label" for="action_replaced_faulty_same">Replaced faulty machine (same model)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Changed machine (different model)" id="action_changed_machine_diff">
+              <label class="form-check-label" for="action_changed_machine_diff">Changed machine (different model)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced faulty power adapter" id="action_replaced_adapter">
+              <label class="form-check-label" for="action_replaced_adapter">Replaced faulty power adapter</label>
+            </div>
+          </div>
+
+          <div class="mb-3 mt-3">
+            <label for="acknowledgement_remarks" class="form-label fw-bold">Remarks (if any):</label>
+            <textarea class="form-control" id="acknowledgement_remarks" name="acknowledgement_remarks" rows="3"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="acknowledgement_staff_name" class="form-label fw-bold">Staff Name:</label>
+            <input type="text" class="form-control" id="acknowledgement_staff_name" name="acknowledgement_staff_name" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="signature" class="form-label fw-bold">Signature:</label>
+            <div class="signature-container">
+              <canvas id="signature-pad" class="signature-pad"></canvas>
+            </div>
+            <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
+            <input type="hidden" name="signature" id="signature-input">
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Submit Service Report</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
+
+<script>
+  const EO_LIST_JS = {{ eo_list | default([], true) | tojson | safe }};
+  const ALL_PREMISES_LIST_JS = {{ all_premises_list | default([], true) | tojson | safe }};
+
+
+  const canvas = document.getElementById("signature-pad");
+  const signaturePad = new SignaturePad(canvas, { minWidth: 1, maxWidth: 3, penColor: "black" });
+
+  function resizeCanvas() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    canvas.getContext("2d").scale(ratio, ratio);
+    signaturePad.clear();
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  document.getElementById("clear-signature").addEventListener("click", () => signaturePad.clear());
+  document.querySelector("form").addEventListener("submit", () => {
+    if (!signaturePad.isEmpty()) {
+      document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+    }
+  });
+
+  function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+
+  function createDeviceCardHTML(device, eoList, allPremisesList) {
+    const originalSNValue = device['S/N'] || device['_id']; // Use S/N first, fallback to _id
+    const deviceId = escapeHTML(originalSNValue); // Used for HTML attributes
+    const displaySN = escapeHTML(device['S/N'] || 'N/A');
+
+    let eventsHTML = '';
+    for (let i = 1; i <= 4; i++) {
+        eventsHTML += `
+            <div class="border p-2 mb-2">
+                <strong>Event ${i}</strong>
+                <div class="row">
+                    <div class="col-md-6"><label>Current E${i} Days:</label><input type="text" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - DAYS'] || '')}" readonly></div>
+                    <div class="col-md-6"><label>New E${i} Days:</label><input type="text" class="form-control form-control-sm" name="event_${deviceId}_days${i}" value="${escapeHTML(device['E' + i + ' - DAYS'] || '')}"></div>
                 </div>
-              
-                <!-- Colour -->
-                <div class="mb-3">
-                  <label for="color{{ loop.index }}" class="form-label">Color</label>
-                  <select class="form-select" id="color{{ loop.index }}" name="color{{ loop.index }}" required>
-                    <option selected disabled>Select a color</option>
-                  </select>
+                <div class="row mt-2">
+                    <div class="col"><label>Start</label><input type="time" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - START'] || '')}" readonly><input type="time" class="form-control form-control-sm mt-1" name="event_${deviceId}_start${i}" value="${escapeHTML(device['E' + i + ' - START'] || '')}"></div>
+                    <div class="col"><label>End</label><input type="time" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - END'] || '')}" readonly><input type="time" class="form-control form-control-sm mt-1" name="event_${deviceId}_end${i}" value="${escapeHTML(device['E' + i + ' - END'] || '')}"></div>
+                    <div class="col"><label>Work</label><input type="text" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - WORK'] || '')}" readonly><input type="text" class="form-control form-control-sm mt-1" name="event_${deviceId}_work${i}" value="${escapeHTML(device['E' + i + ' - WORK'] || '')}"></div>
+                    <div class="col"><label>Pause</label><input type="text" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - PAUSE'] || '')}" readonly><input type="text" class="form-control form-control-sm mt-1" name="event_${deviceId}_pause${i}" value="${escapeHTML(device['E' + i + ' - PAUSE'] || '')}"></div>
                 </div>
-              
-                <!-- EO -->
-                <div class="mb-3">
-                  <label for="eo{{ loop.index }}" class="form-label">EO</label>
-                  <select class="form-select" id="eo{{ loop.index }}" name="eo{{ loop.index }}" required>
-                    <option selected disabled>Select an EO</option>
-                  </select>
+            </div>`;
+    }
+    let eoOptions = eoList.map(eo => `<option value="${escapeHTML(eo)}">${escapeHTML(eo)}</option>`).join('');
+    let premiseOptions = allPremisesList.map(p => `<option value="${escapeHTML(p)}">${escapeHTML(p)}</option>`).join('');
+
+    let notesHTML = '<div class="mt-3 border-top pt-2 important-notes-section">';
+    notesHTML += '<h6>Important Notes:</h6>';
+    if (device.important_notes && device.important_notes.length > 0) {
+        notesHTML += '<ul class="list-unstyled small" style="padding-left: 10px;">';
+        device.important_notes.forEach(note => {
+            notesHTML += `<li>- ${escapeHTML(note)}</li>`;
+        });
+        notesHTML += '</ul>';
+    } else {
+        notesHTML += '<p class="small"><em>No important notes for this device.</em></p>';
+    }
+    notesHTML += '</div>';
+
+    const lastRecordedScentVolume = device.last_recorded_scent_volume || device.current_scent_fill_level;
+    const scentVolumeValue = (lastRecordedScentVolume && parseFloat(lastRecordedScentVolume) !== 0) ? escapeHTML(lastRecordedScentVolume) : '';
+
+    // Add hidden input for serviced_device_sns
+    const hiddenSNInput = `<input type="hidden" name="serviced_device_sns" value="${escapeHTML(originalSNValue)}">`;
+
+    return `
+        <div class="card mb-4 p-3 bg-white border rounded device-card" data-device-id="${deviceId}">
+            ${hiddenSNInput}
+            <h5 class="text-secondary">Device S/N (Editable): <input type="text" class="form-control form-control-sm d-inline-block w-auto" name="sn_${deviceId}" id="sn_${deviceId}" value="${displaySN}"></h5>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="model_${deviceId}" class="form-label">Model</label><input type="text" class="form-control form-control-sm" id="model_${deviceId}" name="model_${deviceId}" value="${escapeHTML(device.Model || 'N/A')}" readonly></div>
                 </div>
-              
-                <!-- Location -->
-                <div class="mb-3">
-                  <label for="location{{ loop.index }}" class="form-label">Location</label>
-                  <input type="text" class="form-control" name="location{{ loop.index }}" required>
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="color_${deviceId}" class="form-label">Color (Editable)</label><input type="text" class="form-control form-control-sm" id="color_${deviceId}" name="color_${deviceId}" value="${escapeHTML(device.Color || '')}"></div>
                 </div>
-              
-                <!-- Special Controls -->
-                <div class="mb-3">
-                  <label class="form-label">Change Scent</label>
-                  <select class="form-select" name="scent_change{{ loop.index }}">
-                    <option value="">No Change</option>
-                    {% for eo in eo_list %}
-                    <option value="{{ eo }}">{{ eo }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              
-                <!-- Device Inactive -->
-                <div class="form-check mb-3">
-                  <input class="form-check-input device-inactive" type="checkbox" value="1" id="inactive{{ loop.index }}" name="inactive{{ loop.index }}">
-                  <label class="form-check-label text-danger" for="inactive{{ loop.index }}">
-                    Mark Device as Inactive (remove from system on selected date)
-                  </label>
-                </div>
-              
-                <!-- Relocate Device -->
-                <div class="mb-3">
-                  <label for="relocate{{ loop.index }}" class="form-label">Relocate Device To:</label>
-                  <select class="form-select" name="relocate{{ loop.index }}">
-                    <option value="">Do not relocate</option>
-                    {% for p in premises %}
-                    <option value="{{ p.premise_name }}">{{ p.premise_name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              
-                <!-- Events (E1–E4) -->
-                {% for e in range(1, 5) %}
-                <div class="border p-2 mb-2">
-                  <strong>Event {{ e }}</strong>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <label>Current E{{ e }} Days:</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - DAYS'] }}" readonly>
+            </div>
+            <div class="mb-3"><label for="device_capacity_${deviceId}" class="form-label">Device Capacity (Volume)</label><input type="text" class="form-control form-control-sm" id="device_capacity_${deviceId}" name="device_capacity_${deviceId}" value="${escapeHTML(device.Volume || 'N/A')}" readonly></div>
+            <div class="mb-3"><label for="eo_${deviceId}" class="form-label">Current EO</label><input type="text" class="form-control form-control-sm" id="eo_${deviceId}" name="eo_${deviceId}" value="${escapeHTML(device['Current EO'] || 'N/A')}" readonly></div>
+            <div class="mb-3"><label for="location_${deviceId}" class="form-label">Location</label><input type="text" class="form-control form-control-sm" id="location_${deviceId}" name="location_${deviceId}" value="${escapeHTML(device.location || '')}"></div>
+
+            ${notesHTML}
+
+            <div class="mt-3 border-top pt-2 scent-details-section">
+                <h6>Scent Service Details (for Current Scent: ${escapeHTML(device['Current EO'] || 'N/A')})</h6>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="scent_volume_${deviceId}" class="form-label">Scent Volume (Actual)</label>
+                        <input type="number" class="form-control form-control-sm scent-volume-input" name="scent_volume_${deviceId}" id="scent_volume_${deviceId}" value="${scentVolumeValue}" placeholder="Enter actual volume">
                     </div>
-                    <div class="col-md-6">
-                      <label>New E{{ e }} Days:</label>
-                      <input type="text" class="form-control" name="event{{ loop.index }}_days{{ e }}">
+                    <div class="col-md-4 mb-3">
+                        <label for="scent_balance_${deviceId}" class="form-label">Scent Balance</label>
+                        <input type="number" class="form-control form-control-sm scent-balance-input" name="scent_balance_${deviceId}" id="scent_balance_${deviceId}" placeholder="Enter balance">
                     </div>
-                  </div>
-                  <div class="row mt-2">
-                    <div class="col"><label>Start</label>
-                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - START'] }}" readonly>
-                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_start{{ e }}">
+                    <div class="col-md-4 mb-3">
+                        <label for="scent_consumption_${deviceId}" class="form-label">Scent Consumption</label>
+                        <input type="number" class="form-control form-control-sm scent-consumption-output" name="scent_consumption_${deviceId}" id="scent_consumption_${deviceId}" placeholder="Auto-calculated" readonly>
                     </div>
-                    <div class="col"><label>End</label>
-                      <input type="time" class="form-control" value="{{ device['E' ~ e ~ ' - END'] }}" readonly>
-                      <input type="time" class="form-control mt-1" name="event{{ loop.index }}_end{{ e }}">
-                    </div>
-                    <div class="col"><label>Work</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - WORK'] }}" readonly>
-                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_work{{ e }}">
-                    </div>
-                    <div class="col"><label>Pause</label>
-                      <input type="text" class="form-control" value="{{ device['E' ~ e ~ ' - PAUSE'] }}" readonly>
-                      <input type="text" class="form-control mt-1" name="event{{ loop.index }}_pause{{ e }}">
-                    </div>
-                  </div>
                 </div>
-                {% endfor %}
-              </div>
-              <hr>
-              <h4>Acknowledgement</h4>
-              <label>Actions Done:</label><br>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="action1">
-                <label class="form-check-label" for="action1">Alcohol Cleaning</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="actions" value="Oil Refill" id="action2">
-                <label class="form-check-label" for="action2">Oil Refill</label>
-              </div>
-              <!-- Add more checkboxes as needed -->
-              
-              <div class="mb-3 mt-3">
-                <label class="form-label">Remarks:</label>
-                <textarea class="form-control" name="remarks"></textarea>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">Staff Name:</label>
-                <input type="text" class="form-control" name="staffName" required>
-              </div>
-              
-              <!-- Signature Pad -->
-              <div class="mb-3">
-                <label for="signature">Signature:</label>
-                <div class="signature-container">
-                  <canvas id="signature-pad" class="signature-pad"></canvas>
-                </div>
-                <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
-                <input type="hidden" name="signature" id="signature-input">
-              </div>
-              
-              <button type="submit" class="btn btn-primary">Submit</button>
-              </form>
-              </div> <!-- .container -->
-              
-              <!-- Bootstrap Bundle -->
-              <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-              <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-              <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
-              
-              <!-- ✅ Script Section -->
-              <script>
-                // SignaturePad logic
-                const canvas = document.getElementById("signature-pad");
-                const signaturePad = new SignaturePad(canvas, {
-                  minWidth: 1,
-                  maxWidth: 3,
-                  penColor: "black"
-                });
-              
-                function resizeCanvas() {
-                  const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                  canvas.width = canvas.offsetWidth * ratio;
-                  canvas.height = canvas.offsetHeight * ratio;
-                  canvas.getContext("2d").scale(ratio, ratio);
-                  signaturePad.clear();
-                }
-              
-                window.addEventListener("resize", resizeCanvas);
-                resizeCanvas();
-              
-                document.getElementById("clear-signature").addEventListener("click", function () {
-                  signaturePad.clear();
-                });
-              
-                document.querySelector("form").addEventListener("submit", function () {
-                  if (!signaturePad.isEmpty()) {
-                    document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
-                  }
-                });
-              
-                // Disable all inputs in a device block if 'Device Inactive' is checked
-                document.querySelectorAll('.device-inactive').forEach((checkbox) => {
-                  checkbox.addEventListener('change', function () {
-                    const card = this.closest('.device-card');
-                    const inputs = card.querySelectorAll('input, select, textarea');
-                    inputs.forEach(input => {
-                      if (input !== this && input.name.includes('inactive') === false) {
-                        input.disabled = this.checked;
-                      }
-                    });
+            </div>
+
+            <div class="mt-3 border-top pt-2"><h6>Device Controls:</h6></div>
+            <div class="mb-3"><label class="form-label">Change Scent</label><select class="form-select form-select-sm" name="scent_change_${deviceId}" id="scent_change_${deviceId}"><option value="">No Change</option>${eoOptions}</select></div>
+            <div class="form-check mb-3"><input class="form-check-input device-inactive" type="checkbox" value="1" id="inactive_${deviceId}" name="inactive_${deviceId}"><label class="form-check-label text-danger" for="inactive_${deviceId}">Mark Device as Inactive</label></div>
+            <div class="mb-3"><label for="relocate_${deviceId}" class="form-label">Relocate Device To:</label><select class="form-select form-select-sm" name="relocate_${deviceId}" id="relocate_${deviceId}"><option value="">Do not relocate</option>${premiseOptions}</select></div>
+
+            <div class="mt-3 border-top pt-2"><h6>Event Settings:</h6></div>
+            ${eventsHTML}
+        </div>`;
+  }
+
+  function populatePremises(company) {
+      const premiseCheckboxContainer = document.getElementById('premise-checkboxes-container');
+      premiseCheckboxContainer.innerHTML = '<p class="text-muted">Loading premises...</p>';
+      axios.get(`/get-premises-json/${company}`)
+          .then(response => {
+              premiseCheckboxContainer.innerHTML = '';
+              if (response.data && response.data.premises && response.data.premises.length > 0) {
+                  response.data.premises.forEach(premiseName => {
+                      const checkboxId = `premise_${escapeHTML(premiseName.replace(/\s+/g, '_'))}`;
+                      const div = document.createElement('div');
+                      div.className = 'form-check';
+                      div.innerHTML = `<input class="form-check-input premise-checkbox" type="checkbox" name="selected_premises" value="${escapeHTML(premiseName)}" id="${checkboxId}"><label class="form-check-label" for="${checkboxId}">${escapeHTML(premiseName)}</label>`;
+                      premiseCheckboxContainer.appendChild(div);
                   });
-                });
-              
-                // Company → Premises
-                document.getElementById('company').addEventListener('change', function () {
-                  let company = this.value;
-                  axios.get(`/get-premises/${company}`)
-                    .then(response => {
-                      let premiseDropdown = document.getElementById('premise');
-                      premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
-                      response.data.forEach(p => {
-                        premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`;
-                      });
-                      premiseDropdown.disabled = false;
+              } else {
+                  premiseCheckboxContainer.innerHTML = '<p class="text-muted">No premises found for this company.</p>';
+              }
+          })
+          .catch(error => {
+              console.error("Error fetching premises:", error);
+              premiseCheckboxContainer.innerHTML = '<p class="text-danger">Error loading premises. Please try again.</p>';
+          });
+  }
+
+  const initialCompany = "{{ initial_company or '' }}";
+  if (initialCompany) {
+      populatePremises(initialCompany);
+  }
+
+  document.getElementById('company').addEventListener('change', function () {
+    const selectedCompany = this.value;
+    document.getElementById("device-section").innerHTML = '<p id="device-placeholder-message">Please select one or more premises to view devices and PIC information.</p>';
+    if (selectedCompany) {
+      populatePremises(selectedCompany);
+    } else {
+      document.getElementById('premise-checkboxes-container').innerHTML = '<p class="text-muted">Please select a company to see premises.</p>';
+    }
+  });
+
+  const deviceSection = document.getElementById('device-section');
+  const premiseCheckboxContainer = document.getElementById('premise-checkboxes-container');
+
+  premiseCheckboxContainer.addEventListener('change', function(event) {
+    if (event.target.classList.contains('premise-checkbox')) {
+        const checkedPremises = Array.from(document.querySelectorAll('.premise-checkbox:checked')).map(cb => cb.value);
+        const companyName = document.getElementById('company').value;
+
+        if (!companyName) {
+            deviceSection.innerHTML = '<p id="device-placeholder-message">Please select a company first.</p>';
+            return;
+        }
+
+        if (checkedPremises.length > 0) {
+            deviceSection.innerHTML = '<p class="text-muted">Loading devices and PIC information...</p>';
+
+            axios.post('/get-devices-for-premises', {
+                selected_premises: checkedPremises,
+                company_name: companyName
+            })
+            .then(deviceResponse => {
+                const devicesByPremise = deviceResponse.data;
+
+                axios.post('/get-pics-for-premises', {
+                    selected_premises: checkedPremises,
+                    company_name: companyName
+                })
+                .then(picResponse => {
+                    deviceSection.innerHTML = '';
+                    const picsByPremise = picResponse.data;
+                    let contentRenderedOverall = false;
+
+                    checkedPremises.forEach(premiseName => {
+                        const devicesForThisPremise = devicesByPremise[premiseName] || [];
+                        const picData = picsByPremise[premiseName];
+
+                        if (devicesForThisPremise.length > 0 || picData) {
+                            contentRenderedOverall = true;
+                            const premiseHeadingId = `devices-heading-${escapeHTML(premiseName.replace(/\s+/g, '_'))}`;
+                            const premiseHeader = document.createElement('h3');
+                            premiseHeader.id = premiseHeadingId;
+                            premiseHeader.textContent = `Premise: ${escapeHTML(premiseName)}`;
+                            deviceSection.appendChild(premiseHeader);
+
+                            if (picData) {
+                                const picHtml = `<div class="pic-info"><strong>PIC:</strong> ${escapeHTML(picData.name || 'N/A')} - ${escapeHTML(picData.designation || 'N/A')} (Contact: ${escapeHTML(picData.contact || 'N/A')}, Email: ${escapeHTML(picData.email || 'N/A')})</div>`;
+                                premiseHeader.insertAdjacentHTML('afterend', picHtml);
+                            } else {
+                                const noPicHtml = `<div class="pic-info"><strong>PIC:</strong> Not found for this premise.</div>`;
+                                premiseHeader.insertAdjacentHTML('afterend', noPicHtml);
+                            }
+
+                            let devicesHtmlBuffer = '';
+                            devicesForThisPremise.forEach(device => {
+                                devicesHtmlBuffer += createDeviceCardHTML(device, EO_LIST_JS, ALL_PREMISES_LIST_JS);
+                            });
+                            const picInfoDiv = premiseHeader.nextElementSibling;
+                            if (picInfoDiv) { picInfoDiv.insertAdjacentHTML('afterend', devicesHtmlBuffer); }
+                            else { premiseHeader.insertAdjacentHTML('afterend', devicesHtmlBuffer); }
+                        }
                     });
+
+                    if (!contentRenderedOverall) {
+                        deviceSection.innerHTML = '<p>No devices or PIC information found for the selected premise(s).</p>';
+                    }
+                })
+                .catch(picError => {
+                    console.error('Error fetching PIC data:', picError);
+                    deviceSection.innerHTML = '';
+                    let foundDevicesAtAll = false;
+                    for (const premiseName in devicesByPremise) {
+                        if (devicesByPremise[premiseName] && devicesByPremise[premiseName].length > 0) {
+                            foundDevicesAtAll = true;
+                            const premiseHeader = document.createElement('h3');
+                            premiseHeader.textContent = `Devices for ${escapeHTML(premiseName)}`;
+                            deviceSection.appendChild(premiseHeader);
+                            const errorPicHtml = `<div class="pic-info"><strong>PIC:</strong> Error loading PIC data.</div>`;
+                            premiseHeader.insertAdjacentHTML('afterend', errorPicHtml);
+
+                            let devicesHtmlBuffer = '';
+                            devicesByPremise[premiseName].forEach(device => {
+                                devicesHtmlBuffer += createDeviceCardHTML(device, EO_LIST_JS, ALL_PREMISES_LIST_JS);
+                            });
+                            const picInfoDiv = premiseHeader.nextElementSibling;
+                            if (picInfoDiv) picInfoDiv.insertAdjacentHTML('afterend', devicesHtmlBuffer);
+                            else premiseHeader.insertAdjacentHTML('afterend', devicesHtmlBuffer);
+                        }
+                    }
+                    if (!foundDevicesAtAll) {
+                         deviceSection.innerHTML = '<p>No devices found and error loading PIC data.</p>';
+                    }
                 });
-              
-                // Premise → PIC Contact + Change Notes
-                document.getElementById('premise').addEventListener('change', function () {
-                  const premise = this.value;
-                  axios.get(`/get-pic/${premise}`)
-                    .then(response => {
-                      const pic = response.data;
-                      document.getElementById("pic_contact").value = `${pic.name} (${pic.contact})`;
-                    });
-              
-                  axios.get(`/get-change-notes/${premise}`)
-                    .then(response => {
-                      document.getElementById("change_notes").value = response.data.notes;
-                    });
-                });
-              
-              </script>
-              </body>
-              </html>
-              
+            })
+            .catch(error => {
+                console.error('Error fetching devices:', error);
+                deviceSection.innerHTML = '<p class="text-danger">Error loading devices. Please try again.</p>';
+            });
+        } else {
+            deviceSection.innerHTML = '<p id="device-placeholder-message">Please select one or more premises to view devices and PIC information.</p>';
+        }
+    }
+  });
+
+  deviceSection.addEventListener('input', function(event) {
+      if (event.target.classList.contains('scent-volume-input') || event.target.classList.contains('scent-balance-input')) {
+          const card = event.target.closest('.device-card');
+          if (!card) return;
+          const deviceId = card.dataset.deviceId;
+
+          const volumeInput = card.querySelector(`#scent_volume_${deviceId}`);
+          const balanceInput = card.querySelector(`#scent_balance_${deviceId}`);
+          const consumptionOutput = card.querySelector(`#scent_consumption_${deviceId}`);
+
+          const volume = parseFloat(volumeInput.value) || 0;
+          const balance = parseFloat(balanceInput.value) || 0;
+
+          if (volumeInput.value === '' && balanceInput.value === '') {
+            consumptionOutput.value = '';
+          } else {
+            consumptionOutput.value = volume - balance;
+          }
+      }
+  });
+
+  deviceSection.addEventListener('change', function(event) {
+    if (event.target.classList.contains('device-inactive')) {
+        const isChecked = event.target.checked;
+        const card = event.target.closest('.device-card');
+        if (!card) return;
+
+        const elementsToDisable = card.querySelectorAll('input:not(.device-inactive), select, textarea');
+        elementsToDisable.forEach(el => {
+            el.disabled = isChecked;
+        });
+    }
+  });
+
+</script>
+</body>
+</html>
