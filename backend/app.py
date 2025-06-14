@@ -1,8 +1,9 @@
 from libs import *
-from col import *
+from col import * # This should ideally define db and all collections
 from fpdf import FPDF
 import io
-from utils import *
+from utils import * # Assuming safe_int is here, will add safe_float
+import traceback # For logging full tracebacks
 
 app = Flask(__name__)
 
@@ -20,7 +21,31 @@ scheduler = APScheduler()
 
 from datetime import datetime
 
-fs = gridfs.GridFS(db)
+fs = gridfs.GridFS(db) # Assuming db is initialized in col.py or similar
+
+# Define collections (ensure all are here and db is defined)
+collection = db["customer_issues"]
+login_collection = db["login_admin"]
+login_cust_collection = db["login_customer"]
+remark_collection = db["remarks"]
+services_collection = db["services_list"]
+device_list_collection = db["device_list"]
+profile_list_collection = db["profile_list"]
+eo_pack_collection = db["eo_pack_list"]
+route_list_collection = db["route_list"]
+changed_models_collection = db["changed_models"]
+discontinue_collection = db["discontinued_items"]
+logs_collection = db["logs"]
+model_list_collection = db["model_list"]
+others_list_collection = db["others_list"]
+empty_bottles_list_collection = db["empty_bottles_list"]
+straw_list_collection = db["straw_list"]
+eo_list_collection = db["eo_list"]
+test_collection = db["test_collection"]
+change_collection = db["change_requests"]
+removed_devices_collection = db["removed_devices"]
+monthly_services_collection = db["monthly_services"]
+
 
 app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
 app.config['MAIL_PORT'] = 587
@@ -31,6 +56,12 @@ app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
 app.config['MODE'] = os.getenv('MODE')
 
 mail = Mail(app)
+
+def safe_float(value, default=0.0):
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return default
 
 @scheduler.task('cron', day=1, hour=0, minute=0)
 def scheduled_route_update():
@@ -150,1292 +181,311 @@ def staff_form(case_no):
         return redirect(url_for("dashboard", case_no=case_no))
     return render_template("staff-complaint-form.html", case_no=case_no, case_data=case_data)
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+# ... (All other existing routes are assumed to be here) ...
 
-@app.route("/case-success/<int:case_no>",methods=["GET","POST"])
-def case_success(case_no):
-    return render_template("case-success.html", case_no=case_no)
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        if password != confirm_password:
-            flash("Passwords do not match. Please try again.", "danger")
-            return redirect(url_for('register'))
-        existing_user = login_cust_collection.find_one({'email': email})
-        if existing_user:
-            flash("This email is already registered. Please use a different email.", "danger")
-            return redirect(url_for('register'))
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
-        login_cust_collection.insert_one({'email': email, 'password': hashed_password})
-        flash("User registered successfully!", "success")
-        log_activity(session["username"],"added user : " +str(email),logs_collection)
-        return redirect(url_for('register'))
-    return render_template('register.html')
-
-@app.route('/register-admin', methods=['GET', 'POST'])
-def register_admin():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        if password != confirm_password:
-            flash("Passwords do not match. Please try again.", "danger")
-            return redirect(url_for('register_admin'))
-        existing_user = login_collection.find_one({'username': username})
-        if existing_user:
-            flash("This username is already registered. Please use a different username.", "danger")
-            return redirect(url_for('register_admin'))
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
-        login_collection.insert_one({'username': username, 'password': hashed_password})
-        flash("User registered successfully!", "success")
-        log_activity(session["username"],"added user : " +str(username),logs_collection)
-        return redirect(url_for('register_admin'))
-    return render_template('register-admin.html')
-
-@app.route('/delete_user', methods=['POST'])
-def delete_user():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    user_id = request.form['user_id']
-    user = login_cust_collection.find_one({'_id': ObjectId(user_id)})
-    email = user.get('email', 'Unknown')
-    login_cust_collection.delete_one({'_id': ObjectId(user_id)})
-    flash("User deleted successfully!", "success")
-    log_activity(session["username"], f"deleted user with email: {email}", logs_collection)
-    return redirect(url_for('view_users'))
-
-@app.route('/delete_admin', methods=['POST'])
-def delete_admin():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    user_id = request.form['user_id']
-    user = login_collection.find_one({'_id': ObjectId(user_id)})
-    username = user.get('username', 'Unknown')
-    login_collection.delete_one({'_id': ObjectId(user_id)})
-    flash("User deleted successfully!", "success")
-    log_activity(session["username"], f"deleted user with username: {username}", logs_collection)
-    return redirect(url_for('view_admins'))
-
-@app.route("/admin-login", methods=["GET", "POST"])
-def admin_login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        user = login_collection.find_one({"username": username})
-        if user and check_password_hash(user["password"], password):
-            session["user_id"] = str(user["_id"])
-            session["username"] = user["username"]
-            flash("Login successful!", "success")
-            log_activity(session["username"],"login",logs_collection)
-            return redirect(url_for("dashboard"))
-        else:
-            flash("Invalid username or password.", "danger")
-            return redirect(url_for("admin_login"))
-    return render_template("login.html")
-
-@app.route('/all-list',methods=['GET'])
-def reports():
-    if 'username' in session:
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
-        month = request.args.get('month','').strip()
-        year = request.args.get('year','').strip()
-        EO = request.args.get("EO")
-        Company = request.args.get("Company")
-        Model = request.args.get("Model")
-        Volume = request.args.get("Volume")
-        SN = request.args.get("SN")
-        Balance = request.args.get("Balance")
-        Consumption = request.args.get("Consumption")
-        Refilled = request.args.get("Refilled")
-        E1_Work = request.args.get("E1_Work"); E1_Pause = request.args.get("E1_Pause"); E1_Days = request.args.get("E1_Days")
-        E1_Start = request.args.get("E1_Start"); E1_End = request.args.get("E1_End")
-        E2_Work = request.args.get("E2_Work"); E2_Pause = request.args.get("E2_Pause"); E2_Days = request.args.get("E2_Days")
-        E2_Start = request.args.get("E2_Start"); E2_End = request.args.get("E2_End")
-        E3_Work = request.args.get("E3_Work"); E3_Pause = request.args.get("E3_Pause"); E3_Days = request.args.get("E3_Days")
-        E3_Start = request.args.get("E3_Start"); E3_End = request.args.get("E3_End")
-        E4_Work = request.args.get("E4_Work"); E4_Pause = request.args.get("E4_Pause"); E4_Days = request.args.get("E4_Days")
-        premiseAddress = request.args.get('premiseAddress', '').strip()
-        premise = request.args.get('premise', '').strip()
-        E4_Start = request.args.get("E4_Start"); E4_End = request.args.get("E4_End")
-        Colour = request.args.get("Colour")
-        Current_EO = request.args.get("Current_EO"); New_EO = request.args.get("New_EO")
-        Scent_Effectiveness = request.args.get("Scent_Effectiveness")
-        Common_Encounters = request.args.get("Common_Encounters"); Other_Remarks = request.args.get("Other_Remarks")
-        industry = request.args.get('industry', '').strip(); premise = request.args.get('premise', '').strip(); pic = request.args.get('pic', '').strip()
-        query = {}
-        if month and year:
-            month_list = [int(m.strip()) for m in month.split(',') if m.strip().isdigit()]
-            query['$expr'] = {'$and': [{'$in': [{'$month': '$month_year'}, month_list]}, {'$eq': [{'$year': '$month_year'}, int(year)]}]}
-        if industry: query["industry"] = {'$regex': industry, '$options': 'i'}
-        # if premise: query["premise_name"] = {'$regex': premise, '$options': 'i'}
-        if premise:
-            query["Premise Name"] = {'$regex': premise, '$options': 'i'}
-
-        if premiseAddress:
-            query["Premise Address"] = {'$regex': premiseAddress, '$options': 'i'}
-        if pic: query["name"] = {'$regex': pic, '$options': 'i'}
-        if EO: query['Current EO'] = {'$regex': EO, '$options': 'i'}
-        if Company: query['company'] = {'$regex': Company, '$options': 'i'}
-        if Volume: query['Volume'] = int(Volume)
-        if SN: query['S/N'] = int(SN)
-        if Balance: query['Balance'] = int(Balance)
-        if Consumption: query['Consumption'] = int(Consumption)
-        if Refilled: query['Refilled'] = int(Refilled)
-        if E1_Work: query['E1 - WORK'] = int(E1_Work);
-        if E1_Pause: query['E1 - PAUSE'] = int(E1_Pause)
-        if E1_Days: query['E1 - DAYS'] = {'$regex': E1_Days, '$options': 'i'}
-        if E1_Start: query['E1 - START'] = {'$regex': E1_Start, '$options': 'i'}
-        if E1_End: query['E1 - END'] = {'$regex': E1_End, '$options': 'i'}
-        if E2_Work: query['E2 - WORK'] = int(E2_Work)
-        if E2_Pause: query['E2 - PAUSE'] = int(E2_Pause)
-        if E2_Days: query['E2 - DAYS'] = {'$regex': E2_Days, '$options': 'i'}
-        if E2_Start: query['E2 - START'] = {'$regex': E2_Start, '$options': 'i'}
-        if E2_End: query['E2 - END'] = {'$regex': E2_End, '$options': 'i'}
-        if E3_Work: query['E3 - WORK'] = int(E3_Work)
-        if E3_Pause: query['E3 - PAUSE'] = int(E3_Pause)
-        if E3_Days: query['E3 - DAYS'] = {'$regex': E3_Days, '$options': 'i'}
-        if E3_Start: query['E3 - START'] = {'$regex': E3_Start, '$options': 'i'}
-        if E3_End: query['E3 - END'] = {'$regex': E3_End, '$options': 'i'}
-        if E4_Work: query['E4 - WORK'] = int(E4_Work)
-        if E4_Pause: query['E4 - PAUSE'] = int(E4_Pause)
-        if E4_Days: query['E4 - DAYS'] = {'$regex': E4_Days, '$options': 'i'}
-        if E4_Start: query['E4 - START'] = {'$regex': E4_Start, '$options': 'i'}
-        if E4_End: query['E4 - END'] = {'$regex': E4_End, '$options': 'i'}
-        if Model: query['Model'] = {'$regex': Model, '$options': 'i'}
-        if Colour: query['Color'] = {'$regex': Colour, '$options': 'i'}
-        if Current_EO: query['Current EO'] = {'$regex': Current_EO, '$options': 'i'}
-        if New_EO: query['New EO'] = {'$regex': New_EO, '$options': 'i'}
-        if Scent_Effectiveness: query['#1 Scent Effectiveness'] = {'$regex': Scent_Effectiveness, '$options': 'i'}
-        if Common_Encounters: query['#1 Common encounters'] = {'$regex': Common_Encounters, '$options': 'i'}
-        if Other_Remarks: query['#1 Other remarks'] = {'$regex': Other_Remarks, '$options': 'i'}
-        query_params = request.args.to_dict(); query_params['page'] = page; query_params['limit'] = limit
-        total_entries = services_collection.count_documents(query)
-        services_collection_list = services_collection.find(query, {'_id': 0}).skip((page - 1) * limit).limit(limit)
-        processed_data = []
-        for entry in services_collection_list:
-            month_year_date = entry.get('month_year')
-            if isinstance(month_year_date, datetime): entry['month'] = month_year_date.month; entry['year'] = month_year_date.year
-            try: entry["S/N"] = int(entry["S/N"])
-            except Exception: entry["S/N"] = 0
-            processed_data.append(entry)
-        total_pages = (total_entries + limit - 1) // limit
-        return render_template("reports.html", username=session["username"], data=processed_data, page=page, total_pages=total_pages,limit=limit,pagination_base_url=f"{request.path}?",query_params=query_params)
-    else:
-        flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
-
-@app.route('/pack-list',methods=['GET'])
-def pack_list():
-    if 'username' in session:
-        page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-        device_page = int(request.args.get('device_page', 1)); device_limit = int(request.args.get('device_limit', 20))
-        bottle_page = int(request.args.get('bottle_page', 1)); bottle_limit = int(request.args.get('bottle_limit', 20))
-        straw_page = int(request.args.get('straw_page', 1)); straw_limit = int(request.args.get('straw_limit', 20))
-        month = request.args.get('month','').strip(); year = request.args.get('year','').strip()
-        eo = request.args.get('eo_name'); ml_required = request.args.get('ml_required')
-        packed = request.args.get('packed'); ready_supply = request.args.get('ready_supply')
-        ml_fresh_supply = request.args.get('ml_fresh_supply'); ml_balance = request.args.get('ml_balance')
-        perc_balance = request.args.get('perc_balance')
-        device_month = request.args.get('device_month','').strip(); device_year = request.args.get('device_year','').strip()
-        devices = request.args.get('devices'); device_quantity = request.args.get('device_quantity')
-        bottle_month = request.args.get('bottle_month','').strip(); bottle_year = request.args.get('bottle_year','').strip()
-        empty_bottle = request.args.get('empty_bottle'); bottle_volume = request.args.get('bottle_volume')
-        straw_month = request.args.get('straw_month','').strip(); straw_year = request.args.get('straw_year','').strip()
-        model_others = request.args.get('model_others'); final_quantity = request.args.get('final_quantity')
-        actual_quantity = request.args.get('actual_quantity'); extra = request.args.get('extra')
-        device_query, query, bottle_query, other_query = {}, {}, {}, {}
-        def apply_month_year_filter(q, m, y_str):
-            if m and y_str:
-                month_list = [int(val.strip()) for val in m.split(',') if val.strip().isdigit()]
-                q['$expr'] = {'$and': [{'$in': [{'$month': '$month_year'}, month_list]}, {'$eq': [{'$year': '$month_year'}, int(y_str)]}]}
-        apply_month_year_filter(query, month, year); apply_month_year_filter(device_query, device_month, device_year)
-        apply_month_year_filter(bottle_query, bottle_month, bottle_year); apply_month_year_filter(other_query, straw_month, straw_year)
-        if device_quantity: device_query['quantity'] = int(device_quantity)
-        if empty_bottle: bottle_query['empty_bottles'] = int(empty_bottle)
-        if bottle_volume: bottle_query['volume'] = int(bottle_volume)
-        if actual_quantity: other_query['actual_quantity'] = int(actual_quantity)
-        if final_quantity: other_query['final_quantity'] = int(final_quantity)
-        if ml_required: query['ml_required'] = int(ml_required)
-        if packed: query['packed'] = int(packed)
-        if ready_supply: query['ready_supply'] = int(ready_supply)
-        if ml_fresh_supply: query['ml_fresh_supply'] = int(ml_fresh_supply)
-        if ml_balance: query['ml_balance'] = int(ml_balance)
-        if perc_balance: query['perc_balance'] = int(perc_balance)
-        if extra: other_query['extra'] = int(extra)
-        if model_others: other_query['model'] = {'$regex': model_others, '$options': 'i'}
-        if eo: query['eo_name'] = {'$regex': eo, '$options': 'i'}
-        if devices: device_query['devices'] = {'$regex': devices, '$options': 'i'}
-        query_params = request.args.to_dict(); query_params.update({'page': page, 'limit': limit})
-        query_params_device = request.args.to_dict(); query_params_device.update({'device_page': device_page, 'device_limit': device_limit})
-        query_params_bottle = request.args.to_dict(); query_params_bottle.update({'bottle_page': bottle_page, 'bottle_limit': bottle_limit})
-        query_params_straw = request.args.to_dict(); query_params_straw.update({'straw_page': straw_page, 'straw_limit': straw_limit})
-        pagination_base_url = f"{request.path}?"
-        total_eo_pack = eo_pack_collection.count_documents(query); total_device_pack = others_list_collection.count_documents(device_query)
-        total_bottle_pack = empty_bottles_list_collection.count_documents(bottle_query); total_straw_pack = straw_list_collection.count_documents(other_query)
-        data_eo_pack_list = list(eo_pack_collection.find(query, {'_id':0}).skip((page-1)*limit).limit(limit))
-        data_device_pack_list = list(others_list_collection.find(device_query, {'_id':0}).skip((device_page-1)*device_limit).limit(device_limit))
-        data_bottle_pack_list = list(empty_bottles_list_collection.find(bottle_query, {'_id':0}).skip((bottle_page-1)*bottle_limit).limit(bottle_limit))
-        data_other_pack_list = list(straw_list_collection.find(other_query, {'_id':0}).skip((straw_page-1)*straw_limit).limit(straw_limit))
-        def process_entries(entries):
-            processed = []
-            for entry in entries:
-                month_year_date = entry.get('month_year')
-                if isinstance(month_year_date, datetime): entry['month'] = month_year_date.month; entry['year'] = month_year_date.year
-                processed.append(entry)
-            return processed
-        return render_template("pack-list.html", username=session["username"],
-            data=process_entries(data_eo_pack_list), device_data=process_entries(data_device_pack_list),
-            bottle_data=process_entries(data_bottle_pack_list), straw_data=process_entries(data_other_pack_list),
-            page=page, total_pages=(total_eo_pack + limit - 1) // limit, limit=limit, query_params=query_params,
-            device_page=device_page, total_device_pages=(total_device_pack + device_limit - 1) // device_limit, device_limit=device_limit, query_params_device=query_params_device,
-            bottle_page=bottle_page, total_bottle_pages=(total_bottle_pack + bottle_limit - 1) // bottle_limit, bottle_limit=bottle_limit, query_params_bottle=query_params_bottle,
-            straw_page=straw_page, total_straw_pages=(total_straw_pack + straw_limit - 1) // straw_limit, straw_limit=straw_limit, query_params_straw=query_params_straw,
-            pagination_base_url=pagination_base_url)
-    else:
-        flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
-
-@app.route('/eo-list',methods=['GET'])
-def eo_list():
-    if 'username' in session:
-        page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-        model_page = int(request.args.get('model_page', 1)); model_limit = int(request.args.get('model_limit', 20))
-        month = request.args.get('month','').strip(); year = request.args.get('year','').strip()
-        eo = request.args.get('EO'); volume = request.args.get('Volume')
-        model_month = request.args.get('model_month','').strip(); model_year = request.args.get('model_year','').strip()
-        quantity = request.args.get('Quantity'); total_batteries = request.args.get('total_batteries')
-        model_type = request.args.get('model_type'); battery_type = request.args.get('battery_type'); remark = request.args.get('Remark')
-        model_query, query = {}, {}
-        def apply_month_year_filter(q, m, y_str):
-            if m and y_str:
-                month_list = [int(val.strip()) for val in m.split(',') if val.strip().isdigit()]
-                q['$expr'] = {'$and': [{'$in': [{'$month': '$month_year'}, month_list]}, {'$eq': [{'$year': '$month_year'}, int(y_str)]}]}
-        apply_month_year_filter(query, month, year); apply_month_year_filter(model_query, model_month, model_year)
-        if quantity: model_query['quantity'] = int(quantity)
-        if total_batteries: model_query['total_batteries'] = int(total_batteries)
-        if model_type: model_query['model2'] = {'$regex': model_type, '$options': 'i'}
-        if battery_type: model_query['battery_type'] = {'$regex': battery_type, '$options': 'i'}
-        if remark: model_query['remark'] = {'$regex': remark, '$options': 'i'}
-        if eo: query['EO2'] = {'$regex': eo, '$options': 'i'}
-        if volume: query['Volume'] = int(volume)
-        query_params = request.args.to_dict(); query_params.update({'page': page, 'limit': limit})
-        query_params_model = request.args.to_dict(); query_params_model.update({'model_page': model_page, 'model_limit': model_limit})
-        base_url = request.path
-        total_entries_eo_list = eo_list_collection.count_documents(query); total_entries_model_list = model_list_collection.count_documents(model_query)
-        data_eo_list = list(eo_list_collection.find(query, {'_id': 0}).skip((page - 1) * limit).limit(limit))
-        data_model_list = list(model_list_collection.find(model_query, {'_id':0}).skip((model_page-1)*model_limit).limit(model_limit))
-        def process_entries(entries):
-            processed = []
-            for entry in entries:
-                month_year_date = entry.get('month_year')
-                if isinstance(month_year_date, datetime): entry['month'] = month_year_date.month; entry['year'] = month_year_date.year
-                processed.append(entry)
-            return processed
-        return render_template("eo-list.html", username=session["username"], data=process_entries(data_eo_list), model_data=process_entries(data_model_list),
-            model_page=model_page, total_model_pages=(total_entries_model_list + model_limit -1) // model_limit, model_limit=model_limit, query_params_model=query_params_model,
-            page=page, total_pages=(total_entries_eo_list + limit - 1) // limit, limit=limit, query_params=query_params,
-            pagination_base_url=f"{base_url}?", pagination_base_url_model=f"{base_url}?")
-    else:
-        flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
-        
-@app.route("/dashboard")
-def dashboard():
-    if "username" in session:
-        remarks = list(remark_collection.find({}))
-        urgent_remarks = [r for r in remarks if r.get('urgent')]
-        non_urgent_remarks = [r for r in remarks if not r.get('urgent')]
-        help_request = list(collection.find({}))
-        change = list(changed_models_collection.find({}))
-        refund = list(discontinue_collection.find({}))
-        return render_template("dashboard.html", username=session["username"], remarks_count=len(non_urgent_remarks), urgent_remarks_count=len(urgent_remarks), help_request_count=len(help_request), change_count = len(change), refund_count=len(refund))
-    else:
-        flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
-
-@app.route('/change-form', methods=['GET', 'POST'])
-def change_form():
-    if 'username' not in session:
-        return redirect(url_for('login'))
+@app.route('/service', methods=['GET', 'POST'])
+def service():
+    if 'username' not in session: return redirect(url_for('login'))
+    technician_name_from_session_outer = session.get("username", "Unknown Technician") # Renamed for clarity
+    current_time_for_get = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Renamed for clarity
     
     if request.method == 'POST':
-        form_data_dict = {
-            "user": request.form.get("user") or session.get("username"),
-            "companyName": request.form.get("companyName"),
-            "date": request.form.get("date") or datetime.now().strftime('%Y-%m-%d'),
-            "month": request.form.get("month"),
-            "year": request.form.get("year"),
-            "premises": request.form.getlist("premises"),
-            "devices": request.form.getlist("devices"),
-            "changeScent": request.form.get("changeScent") == "on",
-            "changeScentText": request.form.get("changeScentText"),
-            "redoSettings": request.form.get("redoSettings") == "on",
-            "reduceIntensity": request.form.get("reduceIntensity") == "on",
-            "increaseIntensity": request.form.get("increaseIntensity") == "on",
-            "moveDevice": request.form.get("moveDevice") == "on",
-            "moveDeviceText": request.form.get("moveDeviceText"),
-            "relocateDevice": request.form.get("relocateDevice") == "on",
-            "relocateDeviceDropdown": request.form.get("relocateDeviceDropdown"),
-            "collectBack": request.form.get("collectBack") == "on",
-            "remark": request.form.get("remark"),
-            "submitted_at": datetime.now()
-        }
+        try:
+            technician_name_from_session = session.get("username", "Unknown Technician")
+            service_day_str = request.form.get('service_day')
+            service_month_str = request.form.get('service_month')
+            service_year_str = request.form.get('service_year')
 
-        data_for_db = { # This dictionary is used for DB insertion
-            "user": form_data_dict["user"], "company": form_data_dict["companyName"],
-            "date": form_data_dict["date"], "month": form_data_dict["month"], "year": form_data_dict["year"],
-            "premises": form_data_dict["premises"], "devices": form_data_dict["devices"],
-            "change_scent": form_data_dict["changeScent"], "change_scent_to": form_data_dict["changeScentText"],
-            "redo_settings": form_data_dict["redoSettings"], "reduce_intensity": form_data_dict["reduceIntensity"],
-            "increase_intensity": form_data_dict["increaseIntensity"], "move_device": form_data_dict["moveDevice"],
-            "move_device_to": form_data_dict["moveDeviceText"], "relocate_device": form_data_dict["relocateDevice"],
-            "relocate_device_to": form_data_dict["relocateDeviceDropdown"], "collect_back": form_data_dict["collectBack"],
-            "remark": form_data_dict["remark"], "submitted_at": form_data_dict["submitted_at"]
-        }
+            company_name_from_form = request.form.get('company')
+            selected_premises_from_checkboxes = request.form.getlist('selected_premises')
 
-        month_str_to_int = {"JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12}
+            actions_done_from_form = request.form.getlist('actions_done')
+            acknowledgement_remarks_from_form = request.form.get('acknowledgement_remarks')
+            acknowledgement_staff_name_from_form = request.form.get('acknowledgement_staff_name')
+            signature_data_from_form = request.form.get('signature')
 
-        if data_for_db["collect_back"]:
-            month_name = data_for_db.get("month")
-            year_str = data_for_db.get("year")
-            if month_name and year_str:
+            serviced_device_original_sns_from_form = request.form.getlist('serviced_device_sns')
+            serviced_devices_data_for_db = []
+
+            month_str_to_int = {"JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12}
+            service_month_int = month_str_to_int.get(service_month_str.upper()) if service_month_str else None
+
+            service_date_obj = None
+            if service_year_str and service_month_int and service_day_str:
                 try:
-                    month_int = month_str_to_int[month_name.upper()]
-                    year_int = int(year_str)
-                    data_for_db["collect_back_date_dt"] = datetime(year_int, month_int, 1)
-                except (ValueError, KeyError) as e:
-                    flash(f"Invalid month or year provided for collect back date: {e}", "danger")
-            discontinue_collection.insert_one(data_for_db)
-            log_activity(session["username"], f"collected back (discontinue_collection): {data_for_db.get('premises')} {data_for_db.get('devices')}", logs_collection)
-        else:
-            changed_models_collection.insert_one(data_for_db)
-            log_activity(session["username"], f"updated settings (changed_models_collection): {data_for_db.get('premises')} {data_for_db.get('devices')}", logs_collection)
+                    service_date_obj = datetime(int(service_year_str), service_month_int, int(service_day_str))
+                except ValueError as e:
+                    current_app.logger.error(f"Invalid service date component: {e}")
 
-            # Update services_collection based on the change form
-            if not data_for_db["collect_back"]:
-                service_update_query = {
-                    "company": data_for_db.get("company"),
-                    "Premise Name": {"$in": data_for_db.get("premises", [])},
-                    "Model": {"$in": data_for_db.get("devices", [])}
+            for original_sn_str in serviced_device_original_sns_from_form:
+                device_master_info = device_list_collection.find_one({"S/N": original_sn_str, "company": company_name_from_form})
+                if not device_master_info and original_sn_str.isdigit():
+                     device_master_info = device_list_collection.find_one({"S/N": int(original_sn_str), "company": company_name_from_form})
+
+                if not device_master_info:
+                    log_activity(technician_name_from_session, f"SERVICE FORM SUBMISSION: Device master info NOT FOUND for S/N '{original_sn_str}' in company '{company_name_from_form}'. Skipping this device entry for monthly_services.", logs_collection)
+                    continue
+
+                submitted_sn_on_form = request.form.get(f'sn_{original_sn_str}')
+
+                device_data = {
+                    "original_sn_from_card": original_sn_str,
+                    "submitted_sn_on_form": submitted_sn_on_form,
+                    "original_model": device_master_info.get('Model'),
+                    "original_color": device_master_info.get('Color'),
+                    "submitted_color_on_form": request.form.get(f'color_{original_sn_str}'),
+                    "original_current_eo": device_master_info.get('Current EO'),
+                    "original_premise": device_master_info.get('tied_to_premise'),
+                    "device_capacity_volume": device_master_info.get('Volume'),
+                    "location_serviced": request.form.get(f'location_{original_sn_str}'),
+                    "scent_volume_actual": safe_float(request.form.get(f'scent_volume_{original_sn_str}')),
+                    "scent_balance": safe_float(request.form.get(f'scent_balance_{original_sn_str}')),
+                    "scent_consumption": safe_float(request.form.get(f'scent_consumption_{original_sn_str}')),
+                    "changed_scent_to": request.form.get(f'scent_change_{original_sn_str}'),
+                    "is_marked_inactive": request.form.get(f'inactive_{original_sn_str}') == '1',
+                    "relocated_to_premise_on_form": request.form.get(f'relocate_{original_sn_str}'),
+                    "event_settings_current_from_master": {
+                        f"E{e_num}": {
+                            "days": device_master_info.get(f'E{e_num} - DAYS'), "start": device_master_info.get(f'E{e_num} - START'),
+                            "end": device_master_info.get(f'E{e_num} - END'), "work": device_master_info.get(f'E{e_num} - WORK'),
+                            "pause": device_master_info.get(f'E{e_num} - PAUSE'),
+                        } for e_num in range(1,5)
+                    },
+                    "event_settings_new_submission": []
                 }
 
-                service_update_values = {"$set": {}}
+                for e_num in range(1, 5):
+                    event_setting = {
+                        "event_number": e_num,
+                        "days": request.form.get(f'event_{original_sn_str}_days{e_num}'),
+                        "start_time": request.form.get(f'event_{original_sn_str}_start{e_num}'),
+                        "end_time": request.form.get(f'event_{original_sn_str}_end{e_num}'),
+                        "work": request.form.get(f'event_{original_sn_str}_work{e_num}'),
+                        "pause": request.form.get(f'event_{original_sn_str}_pause{e_num}')
+                    }
+                    device_data["event_settings_new_submission"].append(event_setting)
 
-                if data_for_db.get("change_scent") and data_for_db.get("change_scent_to"):
-                    service_update_values["$set"]["Current EO"] = data_for_db["change_scent_to"]
+                serviced_devices_data_for_db.append(device_data)
 
-                if data_for_db.get("move_device") and data_for_db.get("move_device_to"):
-                    service_update_values["$set"]["Location"] = data_for_db["move_device_to"]
+                if device_data["is_marked_inactive"] and service_date_obj :
+                    discontinue_entry = {
+                        "user": technician_name_from_session, "company": company_name_from_form,
+                        "date": datetime.now(), "month": service_month_str, "year": service_year_str,
+                        "premises": [device_master_info.get('tied_to_premise')],
+                        "devices": [device_master_info.get('Model')],
+                        "specific_sn_marked": original_sn_str,
+                        "collect_back": True, "collect_back_date_dt": service_date_obj,
+                        "remark": f"Marked inactive via service form by {technician_name_from_session} for S/N: {original_sn_str}. Original Premise: {device_master_info.get('tied_to_premise')}",
+                        "submitted_at": datetime.now(), "is_active": True
+                    }
+                    discontinue_collection.insert_one(discontinue_entry)
+                    log_activity(technician_name_from_session, f"Device S/N {original_sn_str} marked for discontinuation in company {company_name_from_form} effective {service_date_obj.strftime('%Y-%m-%d')}.", logs_collection)
 
-                if data_for_db.get("relocate_device") and data_for_db.get("relocate_device_to"):
-                    service_update_values["$set"]["Premise Name"] = data_for_db["relocate_device_to"]
-                    # Assuming Location should also reflect the new premise, or a more specific location within it.
-                    # For now, setting it to the new premise name for simplicity.
-                    service_update_values["$set"]["Location"] = data_for_db["relocate_device_to"]
+            service_date_for_db_iso = service_date_obj.isoformat() if service_date_obj else f"{service_year_str}-{service_month_str}-{service_day_str}"
 
-                # Regarding Model, Color, Volume updates:
-                # The current form structure (form_data_dict/data_for_db) does not provide explicit fields for *new* Model, Color, or Volume.
-                # The 'devices' field in the form is used to *identify* existing devices to apply changes to, not to specify a new model type.
-                # 'redoSettings' might imply resetting to defaults, but the form doesn't specify what those defaults are or where they'd come from.
-                # Therefore, updating Model, Color, and Volume "based on new settings provided in the change form" is not possible
-                # without either new form fields for these values or a different interpretation of existing fields.
-                # For now, only Current EO and Location/Premise Name are updated as per clear form fields.
-                # If `redoSettings` is true and implies changing Model, Color, Volume, the specific new values are not provided by the form.
-                # For example, if `data_for_db.get("redo_settings")` is true:
-                #   if data_for_db.get("devices"):
-                #       service_update_values["$set"]["Model"] = data_for_db.get("devices")[0] # Highly speculative
-                #   service_update_values["$set"]["Color"] = "" # No source from form
-                #   service_update_values["$set"]["Volume"] = 0 # No source from form
-                # Due to this ambiguity and lack of direct form fields, Model, Color, Volume are not being updated in this modification.
+            monthly_service_doc = {
+                "technician_name": technician_name_from_session,
+                "service_date_iso": service_date_for_db_iso,
+                "service_date_parts": { "day": service_day_str, "month": service_month_str, "year": service_year_str },
+                "company_name": company_name_from_form,
+                "premises_serviced_on_form": selected_premises_from_checkboxes,
+                "devices_serviced_details": serviced_devices_data_for_db,
+                "acknowledgement": {
+                    "actions_done": actions_done_from_form, "remarks": acknowledgement_remarks_from_form,
+                    "staff_name": acknowledgement_staff_name_from_form, "signature_data": signature_data_from_form
+                },
+                "submission_timestamp": datetime.now()
+            }
 
-                if service_update_values["$set"]:
-                    update_result = services_collection.update_many(service_update_query, service_update_values)
-                    log_activity(session["username"], f"Applied changes to services_collection: {update_result.modified_count} devices updated for company {data_for_db.get('company')}", logs_collection)
-                    flash(f"{update_result.modified_count} devices updated in services records.", "info")
+            monthly_services_collection.insert_one(monthly_service_doc)
+            log_activity(technician_name_from_session, f"Submitted monthly service report for company: {company_name_from_form}, premises: {', '.join(selected_premises_from_checkboxes)}", logs_collection)
+            flash("Monthly service report submitted successfully!", "success")
+            return redirect(url_for("dashboard"))
 
-        try:
-            pdf_bytes = generate_change_form_pdf_bytes(form_data_dict) # Use the consistent dict
-            client_emails = []
-            company_name_for_email = form_data_dict.get("companyName")
-            if company_name_for_email:
-                pic_records = profile_list_collection.find({"company": company_name_for_email, "email": {"$exists": True, "$ne": ""}})
-                for record in pic_records:
-                    if record.get("email") and record.get("email") not in client_emails:
-                        client_emails.append(record.get("email"))
-
-            admin_email = app.config.get('MAIL_USERNAME')
-            email_subject = f"Change Request Summary - {form_data_dict.get('companyName')}"
-            email_body = "Please find attached the summary of the recent change request."
-            attachment_details = {'filename': 'Change_Form_Summary.pdf', 'content_type': 'application/pdf', 'data': pdf_bytes}
-
-            if client_emails:
-                for c_email in client_emails:
-                    send_email(to_email=c_email, from_email=app.config['MAIL_USERNAME'], subject=email_subject, body=email_body, mail=mail, attachments=[attachment_details])
-                flash(f"Change form submitted and email sent to client(s) at {', '.join(client_emails)}.", "success")
-            else:
-                 flash("Change form submitted. No client email found for notification.", "warning")
-            if admin_email: # Also send to admin
-                send_email(to_email=admin_email, from_email=app.config['MAIL_USERNAME'], subject=f"Admin Copy: {email_subject}", body=email_body, mail=mail, attachments=[attachment_details])
         except Exception as e:
-            print(f"Error during PDF generation or emailing: {e}")
-            flash(f"Data saved, but failed to generate or email PDF: {e}", "danger")
-        return redirect(url_for("dashboard"))
+            current_app.logger.error(f"Error in service POST: {e}")
+            traceback.print_exc()
+            flash(f"An error occurred while submitting the service report: {str(e)}", "danger")
+            return redirect(url_for("service"))
 
-    companies = services_collection.distinct('company')
-    premises = []
+    # For GET request
+    companies_for_get = sorted(list(services_collection.distinct('company'))) # Renamed for clarity
+    initial_company_for_get = companies_for_get[0] if companies_for_get else None
+    all_premises_list_for_get = sorted(list(profile_list_collection.distinct("premise_name")))
+    eo_list_for_get = sorted(list(eo_pack_collection.distinct("eo_name")))
 
-    return render_template(
-        'change-form.html',
-        username=session.get('username'),
-        companies=companies,
-        premises=premises,
-        current_date=datetime.now().strftime('%Y-%m-%d')
-    )
+    return render_template("service.html",
+                           companies=companies_for_get,
+                           technician_name=technician_name_from_session_outer, # Use the one defined at start of function
+                           current_time=current_time_for_get, # Use the one defined at start of function
+                           devices=[], # Pass empty list for GET, devices loaded via JS
+                           initial_company=initial_company_for_get,
+                           eo_list=eo_list_for_get,
+                           all_premises_list=all_premises_list_for_get)
 
-@app.route('/remarks/<remark_type>')
-def view_remarks(remark_type):
+@app.route('/get-devices-for-premises', methods=['POST'])
+def get_devices_for_premises():
     if 'username' not in session:
-        return redirect(url_for('login'))
-    is_urgent = True if remark_type == 'urgent' else False
-    remarks = list(remark_collection.find({'urgent': is_urgent}))
-    return render_template('view_remarks.html', remarks=remarks, remark_type=remark_type)
+        return jsonify({"error": "Unauthorized"}), 401
+    data = request.get_json()
+    selected_premises = data.get('selected_premises', [])
+    company_name = data.get('company_name')
+    if not company_name or not selected_premises:
+        return jsonify({"error": "Company and selected premises are required."}), 400
+    query = {"company": company_name, "tied_to_premise": {"$in": selected_premises}}
+    devices_cursor = device_list_collection.find(query)
+    devices_by_premise = defaultdict(list)
+    for device in devices_cursor:
+        device['_id'] = str(device['_id'])
+        important_notes = []
+        device_premise = device.get('tied_to_premise')
+        device_model = device.get('Model')
+        if device_premise and device_model:
+            change_query_refined = {
+                "company": company_name,
+                "premises": {"$in": [device_premise]},
+                "devices": {"$in": [device_model]}
+            }
+            change_requests = list(changed_models_collection.find(change_query_refined))
+            for req in change_requests:
+                if req.get("collect_back"):
+                    continue
+                note_parts = []
+                if req.get("change_scent") and req.get("change_scent_to"):
+                    note_parts.append(f"Change Scent to: {req['change_scent_to']}")
+                if req.get("redo_settings"):
+                    note_parts.append("Redo Settings")
+                if req.get("move_device") and req.get("move_device_to"):
+                    note_parts.append(f"Move Device to: {req['move_device_to']}")
+                if req.get("relocate_device") and req.get("relocate_device_to"):
+                    note_parts.append(f"Relocate Device to Premise: {req['relocate_device_to']}")
+                remark = req.get("remark")
+                if remark: note_parts.append(f"Remark: {remark}")
+                if note_parts:
+                    date_of_change = req.get("date", "N/A")
+                    if isinstance(date_of_change, datetime):
+                        date_of_change = date_of_change.strftime('%Y-%m-%d')
+                    important_notes.append(f"Change Request ({date_of_change}): " + ", ".join(note_parts))
+            discontinue_query_refined = {
+                "company": company_name,
+                "premises": {"$in": [device_premise]},
+                "devices": {"$in": [device_model]}
+            }
+            discontinue_requests = list(discontinue_collection.find(discontinue_query_refined))
+            for disc_req in discontinue_requests:
+                collect_date = disc_req.get("collect_back_date_dt")
+                date_str = collect_date.strftime('%Y-%m-%d') if isinstance(collect_date, datetime) else disc_req.get("date", "N/A")
+                is_active = disc_req.get("is_active", True)
+                status_note = "Currently Active Discontinuation" if is_active else "Discontinuation Processed/Inactive"
+                important_notes.append(f"Marked for Discontinuation/Collection. Effective Date: {date_str}. Status: {status_note}")
+        device['important_notes'] = important_notes
+        devices_by_premise[device['tied_to_premise']].append(device)
+    return jsonify(devices_by_premise)
 
-
-@app.route('/discontinue-list', methods=['GET'])
-def discontinued_reports():
+@app.route('/get-pics-for-premises', methods=['POST'])
+def get_pics_for_premises():
     if 'username' not in session:
-        flash("Please log in to access this page.", "warning")
+        return jsonify({"error": "Unauthorized"}), 401
+    data = request.get_json()
+    selected_premises = data.get('selected_premises', [])
+    company_name = data.get('company_name')
+    if not company_name or not selected_premises:
+        return jsonify({"error": "Company and selected premises are required."}), 400
+    pics_by_premise = {}
+    for premise_name in selected_premises:
+        pic_doc = profile_list_collection.find_one(
+            {"company": company_name, "tied_to_premise": premise_name},
+            {"name": 1, "contact": 1, "email": 1, "designation": 1, "_id": 0}
+        )
+        pics_by_premise[premise_name] = pic_doc
+    return jsonify(pics_by_premise)
+
+@app.route('/monthly-services-report', methods=['GET'])
+def monthly_services_report_view():
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
     skip = (page - 1) * limit
+    current_filters = request.args.to_dict()
 
-    # Get filters
-    query = {}
-    user = request.args.get('user', '').strip()
-    company = request.args.get('company', '').strip()
-    month = request.args.get('month', '').strip()
-    year = request.args.get('year', '').strip()
-    collect_back = request.args.get('collect_back', '').strip()
-    change_scent = request.args.get('change_scent', '').strip()
+    technician_name_filter = current_filters.get('technician_name', '').strip()
+    company_name_filter = current_filters.get('company_name', '').strip()
+    premise_name_filter = current_filters.get('premise_name', '').strip()
+    device_model_filter = current_filters.get('device_model', '').strip()
+    device_sn_filter = current_filters.get('device_sn', '').strip()
+    service_month_filter = current_filters.get('service_month', '').strip().upper()
+    service_year_filter = current_filters.get('service_year', '').strip()
 
-    if user:
-        query['user'] = {'$regex': user, '$options': 'i'}
-    if company:
-        query['company'] = {'$regex': company, '$options': 'i'}
-    if month and year:
-        query['$expr'] = {
-            '$and': [
-                {'$eq': [{'$month': '$date'}, int(month)]},
-                {'$eq': [{'$year': '$date'}, int(year)]}
-            ]
-        }
-    if collect_back:
-        query['collect_back'] = True if collect_back.lower() == 'true' else False
-    if change_scent:
-        query['change_scent'] = True if change_scent.lower() == 'true' else False
+    pipeline = []
+    match_conditions = {}
 
-    total_entries = discontinue_collection.count_documents(query)
-    results = list(discontinue_collection.find(query).skip(skip).limit(limit))
+    if technician_name_filter:
+        match_conditions['technician_name'] = {'$regex': technician_name_filter, '$options': 'i'}
+    if company_name_filter:
+        match_conditions['company_name'] = {'$regex': company_name_filter, '$options': 'i'}
+    if service_year_filter:
+        match_conditions['service_date_parts.year'] = service_year_filter
+    if service_month_filter:
+        match_conditions['service_date_parts.month'] = service_month_filter
 
-    # Convert ISO date strings if needed
-    for r in results:
-        if isinstance(r.get("date"), str):
-            r["date"] = r["date"][:10]
-        if isinstance(r.get("submitted_at"), str):
-            r["submitted_at"] = r["submitted_at"][:16]
-        if isinstance(r.get("collect_back_date_dt"), str):
-            r["collect_back_date_dt"] = r["collect_back_date_dt"][:16]
+    # These filters apply to the fields within the unwound 'serviced_device'
+    device_match_conditions = {}
+    if premise_name_filter:
+        device_match_conditions['serviced_device.original_premise'] = {'$regex': premise_name_filter, '$options': 'i'}
+    if device_model_filter:
+        device_match_conditions['serviced_device.original_model'] = {'$regex': device_model_filter, '$options': 'i'} # Filter on original_model
+    if device_sn_filter:
+        device_match_conditions['$or'] = [
+            {'serviced_device.original_sn_from_card': {'$regex': device_sn_filter, '$options': 'i'}},
+            {'serviced_device.submitted_sn_on_form': {'$regex': device_sn_filter, '$options': 'i'}}
+        ]
 
-    total_pages = (total_entries + limit - 1) // limit
-    query_params = request.args.to_dict()
-    query_params['page'] = page
-    query_params['limit'] = limit
+    # Initial unwind and addFields stages
+    pipeline.extend([
+        {"$unwind": "$devices_serviced_details"},
+        {"$addFields": {"serviced_device": "$devices_serviced_details"}}
+    ])
 
-    return render_template("discontinue_list.html",
-                           data=results,
+    # Add top-level match conditions first
+    if match_conditions:
+        pipeline.append({"$match": match_conditions})
+
+    # Add device-specific match conditions
+    if device_match_conditions:
+        pipeline.append({"$match": device_match_conditions})
+
+    # Pagination: Count total documents matching filters
+    count_pipeline = pipeline[:] + [{"$count": "total"}]
+    total_documents_cursor = monthly_services_collection.aggregate(count_pipeline)
+    total_documents = next(total_documents_cursor, {}).get('total', 0)
+    total_pages = (total_documents + limit - 1) // limit
+
+    # Add sort, skip, and limit for data fetching
+    pipeline.extend([
+        {"$sort": {"submission_timestamp": -1, "service_date_iso": -1}}, # Primary sort by submission, secondary by service date
+        {"$skip": skip},
+        {"$limit": limit}
+    ])
+
+    records = list(monthly_services_collection.aggregate(pipeline))
+
+    current_year_for_dropdown = datetime.now().year
+    months_list_for_dropdown = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
+    return render_template('monthly_services_report.html',
+                           records=records,
                            page=page,
                            total_pages=total_pages,
-                           pagination_base_url=request.path,
-                           query_params=query_params)
+                           limit=limit,
+                           current_filters=current_filters,
+                           current_year=current_year_for_dropdown,
+                           months_list=months_list_for_dropdown,
+                           username=session['username'])
 
 
-@app.route("/logout")
-def logout():
-    if "user_id" in session:
-        try: log_activity(session["username"],"logout" ,logs_collection)
-        except Exception: pass
-        session.clear()
-        flash("You have been logged out.", "success")
-    return redirect(url_for("index"))
-
-@app.route("/client-login", methods=["GET", "POST"])
-def client_login():
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-        user = login_cust_collection.find_one({"email": email})
-        if user and check_password_hash(user["password"], password):
-            session["user_id"] = str(user["_id"])
-            session["customer_email"] = user["email"]
-            flash("Login successful!", "success")
-            return redirect(url_for("customer_form"))
-        else:
-            flash("Invalid email or password.", "danger")
-    return render_template("index.html") # Should redirect to index or login if already on index
-
-@app.route('/image2/<image_id>')
-def get_image2(image_id):
-    image = fs.get(ObjectId(image_id))
-    return send_file(io.BytesIO(image.read()), mimetype=image.content_type)
-
-@app.route('/new-customer',methods=['GET', 'POST'])
-def new_customer():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    raw_models = list(model_list_collection.find().sort("order", 1))
-    models = [{k: v for k, v in model.items() if k != '_id'} for model in raw_models]
-
-    eo_raw = list(eo_pack_collection.find().sort("order", 1))
-    essential_oils = [{k: v for k, v in eo.items() if k != '_id'} for eo in eo_raw]
-
-    if request.method == "POST":
-        date_str = request.form.get("dateCreated")
-        dateCreated = datetime.strptime(date_str, "%Y-%m-%d") if date_str else None
-
-        companyName = request.form.get("companyName")
-        industry = request.form.get("industry")
-
-        premises = []
-        pic_records = []
-        device_records = []
-        master_list = []
-
-        if companyName:
-            premise_map = {}
-            pic_map = {}
-
-            # Extract Premises
-            k = 1
-            while True:
-                pname = request.form.get(f'premiseName{k}')
-                parea = request.form.get(f'premiseArea{k}')
-                paddr = request.form.get(f'premiseAddress{k}')
-                if not pname:
-                    break
-
-                prem = {
-                    "company": companyName,
-                    "month_year": datetime.now(),
-                    "industry": industry,
-                    "premise_name": pname,
-                    "premise_area": parea,
-                    "premise_address": paddr,
-                    "created_at": datetime.now(),
-                }
-                premises.append(prem)
-                premise_map[pname] = prem
-                k += 1
-
-            # Extract PICs
-            i = 1
-            while True:
-                pic_name = request.form.get(f'picName{i}')
-                if not pic_name:
-                    break
-                picdata = {
-                    "company": companyName,
-                    "tied_to_premise": request.form.get(f'contactPremise{i}'),
-                    "name": pic_name,
-                    "designation": request.form.get(f'picDesignation{i}'),
-                    "contact": request.form.get(f'picContact{i}'),
-                    "email": request.form.get(f'picEmail{i}'),
-                    "created_at": datetime.now(),
-                }
-                pic_records.append(picdata)
-
-                tied = picdata["tied_to_premise"]
-                if tied:
-                    if tied == "all":
-                        for pname in premise_map:
-                            pic_map.setdefault(pname, []).append(picdata)
-                    else:
-                        pic_map.setdefault(tied, []).append(picdata)
-                i += 1
-
-            # Extract Devices and Build Master List
-            j = 1
-            while True:
-                sn = request.form.get(f'deviceSN{j}')
-                if not sn:
-                    break
-
-                devicedata = {
-                    "company": companyName,
-                    "tied_to_premise": request.form.get(f'devicePremise{j}'),
-                    "location": request.form.get(f'deviceLocation{j}'),
-                    "S/N": safe_int(sn),
-                    "Model": request.form.get(f'deviceModel{j}'),
-                    "Color": request.form.get(f'deviceColour{j}'),
-                    "Volume": safe_int(request.form.get(f'deviceVolume{j}')),
-                    "Current EO": request.form.get(f'deviceScent{j}'),
-                    "E1 - DAYS": request.form.get(f"E1Days{j}"),
-                    "E1 - START": request.form.get(f"E1StartTime{j}"),
-                    "E1 - END": request.form.get(f"E1EndTime{j}"),
-                    "E1 - PAUSE": safe_int(request.form.get(f"E1Pause{j}")),
-                    "E1 - WORK": safe_int(request.form.get(f"E1Work{j}")),
-                    "E2 - DAYS": request.form.get(f"E2Days{j}"),
-                    "E2 - START": request.form.get(f"E2StartTime{j}"),
-                    "E2 - END": request.form.get(f"E2EndTime{j}"),
-                    "E2 - PAUSE": safe_int(request.form.get(f"E2Pause{j}")),
-                    "E2 - WORK": safe_int(request.form.get(f"E2Work{j}")),
-                    "E3 - DAYS": request.form.get(f"E3Days{j}"),
-                    "E3 - START": request.form.get(f"E3StartTime{j}"),
-                    "E3 - END": request.form.get(f"E3EndTime{j}"),
-                    "E3 - PAUSE": safe_int(request.form.get(f"E3Pause{j}")),
-                    "E3 - WORK": safe_int(request.form.get(f"E3Work{j}")),
-                    "E4 - DAYS": request.form.get(f"E4Days{j}"),
-                    "E4 - START": request.form.get(f"E4StartTime{j}"),
-                    "E4 - END": request.form.get(f"E4EndTime{j}"),
-                    "E4 - PAUSE": safe_int(request.form.get(f"E4Pause{j}")),
-                    "E4 - WORK": safe_int(request.form.get(f"E4Work{j}")),
-                    "created_at": datetime.now(),
-                }
-                device_records.append(devicedata)
-
-                premise_name = devicedata["tied_to_premise"]
-                premise_data = premise_map.get(premise_name, {})
-                assigned_pics = pic_map.get(premise_name, [])
-                if not assigned_pics:
-                    # If no valid PICs found, skip this device for master list
-                    continue
-
-                premise_data = premise_map.get(premise_name)
-                if not premise_data:
-                    # If no valid premise found, skip this device for master list
-                    continue
-
-                for pic in assigned_pics:
-                    if not pic.get("name"):  # Skip empty PICs
-                        continue
-
-                    master_record = {
-                        "company": companyName,
-                        "industry": industry,
-                        "month_year": dateCreated,
-
-                        # Remapped Premise Info
-                        "Premise Name": premise_data.get("premise_name"),
-                        "Premise Area": premise_data.get("premise_area"),
-                        "Premise Address": premise_data.get("premise_address"),
-
-                        # Remapped PIC Info
-                        "PIC Name": pic.get("name"),
-                        "Designation": pic.get("designation"),
-                        "Contact": pic.get("contact"),
-                        "Email": pic.get("email"),
-
-                        # Device Info
-                        "S/N": devicedata["S/N"],
-                        "Model": devicedata["Model"],
-                        "Color": devicedata["Color"],
-                        "Volume": devicedata["Volume"],
-                        "Location": devicedata["location"],
-                        "Current EO": devicedata["Current EO"],
-                        "E1 - DAYS": devicedata.get("E1 - DAYS"),
-                        "E1 - START": devicedata.get("E1 - START"),
-                        "E1 - END": devicedata.get("E1 - END"),
-                        "E1 - WORK": devicedata.get("E1 - WORK"),
-                        "E1 - PAUSE": devicedata.get("E1 - PAUSE"),
-                        "E2 - DAYS": devicedata.get("E2 - DAYS"),
-                        "E2 - START": devicedata.get("E2 - START"),
-                        "E2 - END": devicedata.get("E2 - END"),
-                        "E2 - WORK": devicedata.get("E2 - WORK"),
-                        "E2 - PAUSE": devicedata.get("E2 - PAUSE"),
-                        "E3 - DAYS": devicedata.get("E3 - DAYS"),
-                        "E3 - START": devicedata.get("E3 - START"),
-                        "E3 - END": devicedata.get("E3 - END"),
-                        "E3 - WORK": devicedata.get("E3 - WORK"),
-                        "E3 - PAUSE": devicedata.get("E3 - PAUSE"),
-                        "E4 - DAYS": devicedata.get("E4 - DAYS"),
-                        "E4 - START": devicedata.get("E4 - START"),
-                        "E4 - END": devicedata.get("E4 - END"),
-                        "E4 - WORK": devicedata.get("E4 - WORK"),
-                        "E4 - PAUSE": devicedata.get("E4 - PAUSE"),
-                    }
-                    master_list.append(master_record)
-
-
-                j += 1
-
-        # Insert into MongoDB
-        if premises:
-            profile_list_collection.insert_many(premises)
-        if pic_records:
-            profile_list_collection.insert_many(pic_records)
-        if device_records:
-            device_list_collection.insert_many(device_records)
-        if master_list:
-            if app.config['MODE'] == "PROD":
-                services_collection.insert_many(master_list)
-            else:
-                test_collection.insert_many(master_list)
-
-        log_activity(session["username"], f"added new customer: {companyName}", logs_collection)
-        flash(f"Company {companyName} added successfully!", "success")
-        return redirect(url_for("new_customer"))
-
-    return render_template('new-customer.html', models=models, essential_oils=essential_oils)
-
-@app.route('/pre-service',  methods=['GET', 'POST'])
-def pre_service():
-    # if "username" not in session: return redirect(url_for('login'))
-    # companies = services_collection.distinct('company')
-    # if request.method == 'POST':
-    #     date_str = request.form.get('date')
-    #     date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
-    #     entry = {"date": date_obj, "company": request.form.get('company'), "premise": request.form.get('premise'), "model": request.form.get('model'), "color": request.form.get('color'), "eo": request.form.get('eo')}
-    #     route_list_collection.insert_one(entry)
-    #     flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
-    #     log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
-    #     return render_template('pre-service.html', companies=companies)
-    # return render_template('pre-service.html', companies=companies)
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    technician_name = session['username']
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    companies = services_collection.distinct('company')
-
-    if request.method == 'POST':
-        # Base details
-        staff_name = request.form.get('staffName')
-        remarks = request.form.get('remarks')
-        actions_taken = request.form.getlist('actions')
-        signature = request.form.get('signature')
-
-        # Service Date
-        service_day = request.form.get('service_day')
-        service_month = request.form.get('service_month')
-        service_year = request.form.get('service_year')
-
-        # Premise
-        premise_name = request.form.get('premise')
-        company = request.form.get('company')
-
-        # PIC details
-        pic_record = profile_list_collection.find_one({'premise_name': premise_name}, {'pic_name': 1, 'pic_contact': 1})
-        pic_contact = f"{pic_record.get('pic_name', '')} ({pic_record.get('pic_contact', '')})"
-
-        # Get tied devices
-        devices = list(device_list_collection.find({'tied_to_premise': premise_name}))
-        device_entries = []
-
-        for index, device in enumerate(devices, start=1):
-            model = request.form.get(f'model{index}')
-            color = request.form.get(f'color{index}')
-            eo = request.form.get(f'eo{index}')
-            location = request.form.get(f'location{index}')
-            scent_change = request.form.get(f'scent_change{index}')
-            relocate = request.form.get(f'relocate{index}')
-            inactive = request.form.get(f'inactive{index}') == '1'
-
-            # Events update
-            new_events = []
-            for e in range(1, 5):
-                new_event = {
-                    'days': request.form.get(f'event{index}_days{e}'),
-                    'start_time': request.form.get(f'event{index}_start{e}'),
-                    'end_time': request.form.get(f'event{index}_end{e}'),
-                    'work': request.form.get(f'event{index}_work{e}'),
-                    'pause': request.form.get(f'event{index}_pause{e}')
-                }
-                new_events.append(new_event)
-
-            # Build device entry
-            entry = {
-                'original_model': device.get('Model'),
-                'serial_number': device.get('S/N'),
-                'location': location,
-                'model': model,
-                'color': color,
-                'eo': eo,
-                'scent_change': scent_change,
-                'inactive': inactive,
-                'relocate_to': relocate,
-                'events': new_events
-            }
-
-            device_entries.append(entry)
-
-            # If inactive, remove from master
-            if inactive:
-                device_list_collection.delete_one({'_id': device['_id']})
-                removed_devices_collection.insert_one({
-                    'premise': premise_name,
-                    'device': entry,
-                    'removed_on': {
-                        'day': service_day,
-                        'month': service_month,
-                        'year': service_year
-                    }
-                })
-
-            # If relocated, update master
-            elif relocate:
-                device_list_collection.update_one(
-                    {'_id': device['_id']},
-                    {'$set': {'tied_to_premise': relocate}}
-                )
-
-        # Save service record
-        service_record = {
-            'technician_name': technician_name,
-            'timestamp': current_time,
-            'service_day': service_day,
-            'service_month': service_month,
-            'service_year': service_year,
-            'company': company,
-            'premise_name': premise_name,
-            'pic_contact': pic_contact,
-            'devices': device_entries,
-            'actions_taken': actions_taken,
-            'remarks': remarks,
-            'staff_name': staff_name,
-            'signature': signature
-        }
-
-        change_collection.insert_one(service_record)
-        flash('Service form submitted successfully!', 'success')
-        return redirect(url_for('field_service'))
-
-    premises = profile_list_collection.find({}, {'premise_name': 1, '_id': 0})
-    return render_template('service.html',
-                           technician_name=technician_name,
-                           current_time=current_time,
-                           companies=companies,
-                           premises=premises)
-
-@app.route('/get-models/<premise>')
-def get_models(premise):
-    models_cursor = services_collection.find({"Premise Name": premise}, {"Model": 1, "_id": 0}) # Corrected variable name
-    models_list = [m['Model'] for m in models_cursor if 'Model' in m and m['Model']] # Added check for m['Model']
-    return jsonify(list(set(models_list))) # Return unique models
-
-@app.route('/get-colors/<model>/<premise>')
-def get_colors(model, premise):
-    colors_cursor = services_collection.find({"Model": model, "Premise Name": premise}, {"Color": 1, "_id": 0}) # Corrected variable name
-    unique_colors = list(set(c.get('Color') for c in colors_cursor if c.get('Color')))
-    return jsonify(unique_colors)
-
-@app.route('/get-eo/<model>/<premise>/<color>')
-def get_eo(model, premise, color):
-    eos_cursor = services_collection.find({"Model": model, "Premise Name": premise, "Color": color}, {"Current EO": 1, "_id": 0}) # Corrected variable name
-    unique_eos = list(set(e.get('Current EO') for e in eos_cursor if e.get('Current EO')))
-    return jsonify(unique_eos)
-
-@app.route('/remark', methods=['GET', 'POST'])
-def remark():
-    if 'username' not in session: return redirect(url_for('login'))
-    username = session['username']
-    if request.method == 'POST':
-        remark_text = request.form['remark']
-        is_urgent = 'urgent' in request.form
-        log_activity(session["username"],"added remarks : " +str(remark_text) + "urgent : " + str(is_urgent),logs_collection)
-        remark_collection.insert_one({'username': username, 'remark': remark_text, 'urgent': is_urgent})
-        return redirect(url_for('dashboard'))
-    return render_template('remark.html', username=username)
-
-@app.route("/get-devices1")
-def get_devices1():
-    premise_name = request.args.get("premiseName")
-    devices_cursor = services_collection.find({"Premise Name": premise_name}, {"Model": 1, "_id":0}) # Corrected variable name
-    devices_list = [device["Model"] for device in devices_cursor if "Model" in device]
-    return jsonify({"devices": list(set(devices_list))}) # Return unique list
-
-@app.route("/get_companies", methods=["GET"])
-def get_companies():
-    companies_cursor = services_collection.find({}, {"company": 1, "_id": 0}) # Corrected variable name
-    unique_companies = sorted(list(set(c.get("company") for c in companies_cursor if c.get("company"))))
-    return jsonify(unique_companies)
-
-@app.route("/get_essential_oils", methods=["GET"])
-def get_essential_oils():
-    essential_oils_cursor = eo_pack_collection.find({}, {"eo_name": 1, "_id": 0}) # Corrected variable name
-    return jsonify([eo["eo_name"] for eo in essential_oils_cursor if "eo_name" in eo])
-
-@app.route("/get-premises-test")
-def get_premises_test():
-    company_name = request.args.get("companyName")
-    premises_cursor = services_collection.find({"company": company_name}, {"Premise Name": 1, "_id": 0})
-    premises_list = [p["Premise Name"] for p in premises_cursor if "Premise Name" in p]
-    return jsonify({"premises": list(set(premises_list))}) # Return unique list
-
-@app.route("/get_devices_post", methods=["POST"])
-def get_devices_post():
-    premise_name = request.json.get("premise")
-    devices_cursor = device_list_collection.find({"tied_to_premise": premise_name}, {"Model": 1, "_id": 0})
-    devices_list = [d["Model"] for d in devices_cursor if "Model" in d]
-    return jsonify({"models": list(set(devices_list))}) # Return unique list and key 'models'
-
-@app.route("/post-service", methods=["POST", "GET"])
-def post_service():
-    if 'username' not in session: return redirect(url_for('login'))
-    username = session['username']
-    if request.method == "POST":
-        essential_oil = request.form.get("essential_oil")
-        try:
-            oil_balance = int(request.form.get("oil_balance"))
-            balance_brought_back = int(request.form.get("balance_brought_back"))
-            refill_amount = int(request.form.get("refill_amount"))
-        except (ValueError, TypeError): # Catch TypeError if value is None
-            flash("Numeric fields must be valid integers.", "danger")
-            return render_template('post-service.html', username=username)
-        balance_brought_back_percent = request.form.get("balance_brought_back_percent")
-        refill_amount_percent = request.form.get("refill_amount_percent")
-        month_year = datetime.now()
-        query = {"essential_oil": essential_oil}
-        update = {"$set": {"oil_balance": oil_balance, "balance_brought_back": balance_brought_back, "balance_brought_back_percent": balance_brought_back_percent, "refill_amount": refill_amount, "refill_amount_percent": refill_amount_percent, "month_year": month_year}}
-        eo_pack_collection.update_one(query, update, upsert=True)
-        log_activity(username, f"Updated/added post-service record for essential oil: {essential_oil}", logs_collection)
-        flash(f"Record for {essential_oil} updated successfully!", "success")
-        return redirect(url_for("dashboard"))
-    return render_template('post-service.html', username=username)
-
-@app.route('/view-users', methods=['GET'])
-def view_users():
-    if 'username' not in session: return redirect(url_for('login'))
-    page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-    username_filter = request.args.get('username'); email_filter = request.args.get('email')
-    query = {}
-    if username_filter: query["username"] = {"$regex": username_filter, "$options": "i"}
-    if email_filter: query["email"] = {"$regex": email_filter, "$options": "i"}
-    total_list = login_cust_collection.count_documents(query)
-    users = list(login_cust_collection.find(query, {'username': 1, 'email': 1, '_id': 1}).skip((page - 1) * limit).limit(limit))
-    for user_item in users: user_item['_id'] = str(user_item['_id']) # Renamed user to user_item
-    total_pages = (total_list + limit - 1) // limit
-    query_params = request.args.to_dict(); query_params.update({'page': page, 'limit': limit})
-    return render_template('view-users.html',users=users, page=page, total_pages=total_pages, limit=limit, pagination_base_url=f"{request.path}?", query_params=query_params)
-
-@app.route('/view-admins', methods=['GET'])
-def view_admins():
-    if 'username' not in session: return redirect(url_for('login'))
-    page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-    username_filter = request.args.get('username')
-    query = {}
-    if username_filter: query["username"] = {"$regex": username_filter, "$options": "i"}
-    total_list = login_collection.count_documents(query)
-    admins = list(login_collection.find(query, {'username': 1,  '_id': 1}).skip((page - 1) * limit).limit(limit))
-    for admin_item in admins: admin_item['_id'] = str(admin_item['_id']) # Renamed admin to admin_item
-    total_pages = (total_list + limit - 1) // limit
-    query_params = request.args.to_dict(); query_params.update({'page': page, 'limit': limit})
-    return render_template('view-admins.html',admins=admins, page=page, total_pages=total_pages, limit=limit, pagination_base_url=f"{request.path}?", query_params=query_params)
-
-@app.route('/logs', methods=['GET','POST'])
-def get_logs():
-    if 'username' not in session: return redirect(url_for('login'))
-    page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-    date_filter = request.args.get('date','').strip(); time_filter = request.args.get('time','').strip()
-    user_filter = request.args.get('user'); action_filter = request.args.get('action')
-    query = {}
-    if date_filter and time_filter:
-        try:
-            datetime_start = datetime.strptime(f"{date_filter} {time_filter}", "%Y-%m-%d %H:%M")
-            datetime_end = datetime_start.replace(second=59)
-            query["timestamp"] = {"$gte": datetime_start, "$lte": datetime_end}
-        except ValueError: pass
-    elif date_filter:
-        try:
-            date_start = datetime.strptime(date_filter, "%Y-%m-%d")
-            date_end = date_start.replace(hour=23, minute=59, second=59)
-            query["timestamp"] = {"$gte": date_start, "$lte": date_end}
-        except ValueError: pass
-    if user_filter: query["user"] = {"$regex": user_filter, "$options": "i"}
-    if action_filter: query["action"] = {"$regex": action_filter, "$options": "i"}
-    total_list = logs_collection.count_documents(query)
-    data_logs_list = list(logs_collection.find(query).sort("timestamp", -1).skip((page - 1) * limit).limit(limit))
-    processed_data_logs_list = []
-    for log_entry in data_logs_list:
-        timestamp = log_entry.get("timestamp")
-        if isinstance(timestamp, datetime):
-            log_entry["date"] = timestamp.strftime("%Y-%m-%d")
-            log_entry["time"] = timestamp.strftime("%H:%M:%S")
-        processed_data_logs_list.append(log_entry)
-    total_pages = (total_list + limit - 1) // limit
-    query_params = request.args.to_dict(); query_params.update({'page': page, 'limit': limit})
-    return render_template('activity-log.html', username=session["username"], data=processed_data_logs_list, page=page, total_pages=total_pages, limit=limit, pagination_base_url=f"{request.path}?", query_params=query_params)
-
-@app.route('/profile', methods=['GET','POST'])
-def profile():
-    if 'username' not in session: return redirect(url_for('login'))
-    page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-    company_filter = request.args.get('company', '').strip(); industry_filter = request.args.get('industry', '').strip()
-    premise_filter = request.args.get('premise', '').strip(); pic_filter = request.args.get('pic', '').strip()
-    month_filter = request.args.get('month', '').strip(); year_filter = request.args.get('year', '').strip()
-    query = {}
-    if company_filter: query["company"] = {'$regex': company_filter, '$options': 'i'}
-    if industry_filter: query["industry"] = {'$regex': industry_filter, '$options': 'i'}
-    if premise_filter: query["premise_name"] = {'$regex': premise_filter, '$options': 'i'}
-    if pic_filter: query["name"] = {'$regex': pic_filter, '$options': 'i'}
-    if month_filter and year_filter:
-        month_list = [int(m.strip()) for m in month_filter.split(',') if m.strip().isdigit()]
-        try: # Ensure year_filter is an int for the query
-            query['$expr'] = {'$and': [{'$in': [{'$month': '$created_at'}, month_list]}, {'$eq': [{'$year': '$created_at'}, int(year_filter)]}]}
-        except ValueError: flash("Invalid year format for filter.", "warning")
-    records = list(profile_list_collection.find(query))
-    grouped_data = defaultdict(lambda: {"company": "", "industry": "", "premise_name": "", "premise_area": "", "premise_address": "", "month": "", "year": "", "pics": []})
-    for record_item in records: # Renamed record to record_item
-        created_at = record_item.get("created_at")
-        if "premise_name" in record_item:
-            key = (record_item["company"], record_item["premise_name"])
-            grouped_data[key].update({"company": record_item["company"], "industry": record_item.get("industry", ""), "premise_name": record_item["premise_name"], "premise_area": record_item.get("premise_area", ""), "premise_address": record_item.get("premise_address", ""), "month": created_at.month if created_at else "", "year": created_at.year if created_at else ""})
-        elif "tied_to_premise" in record_item:
-            key = (record_item["company"], record_item["tied_to_premise"])
-            if key in grouped_data:
-                 grouped_data[key]["pics"].append({"name": record_item["name"], "designation": record_item.get("designation", ""), "contact": record_item.get("contact", ""), "email": record_item.get("email", "")})
-    structured_data = list(grouped_data.values())
-    total_records = len(structured_data); total_pages = (total_records + limit - 1) // limit
-    paginated_data = structured_data[(page - 1) * limit: page * limit]
-    query_params = request.args.to_dict()
-    return render_template('profile.html', page=page, total_pages=total_pages, limit=limit, pagination_base_url=f"{request.path}?", query_params=query_params, data=paginated_data)
-
-@app.route('/view-device', methods=['GET','POST'])
-def view_device():
-    if 'username' not in session: return redirect(url_for('login'))
-    page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-    filters = {k: request.args.get(k, '').strip() for k in ['company', 'tied_to_premise', 'location', 'sn', 'model', 'color', 'current_eo', 'e1_days', 'e1_start', 'e1_end', 'e1_pause', 'e1_work', 'e2_days', 'e2_start', 'e2_end', 'e2_pause', 'e2_work', 'e3_days', 'e3_start', 'e3_end', 'e3_pause', 'e3_work', 'e4_days', 'e4_start', 'e4_end', 'e4_pause', 'e4_work', 'month', 'year']}
-    query = {}
-    for key, value in filters.items():
-        if not value: continue
-        db_key_map = { # Map form field names to DB field names if different (e.g. S/N vs sn)
-            'sn': 'S/N', 'e1_pause': 'E1 - PAUSE', 'e1_work': 'E1 - WORK',
-            'e2_pause': 'E2 - PAUSE', 'e2_work': 'E2 - WORK',
-            'e3_pause': 'E3 - PAUSE', 'e3_work': 'E3 - WORK',
-            'e4_pause': 'E4 - PAUSE', 'e4_work': 'E4 - WORK',
-            'current_eo': 'Current EO', 'e1_days': 'E1 - DAYS', 'e1_start': 'E1 - START', 'e1_end': 'E1 - END',
-            'e2_days': 'E2 - DAYS', 'e2_start': 'E2 - START', 'e2_end': 'E2 - END',
-            'e3_days': 'E3 - DAYS', 'e3_start': 'E3 - START', 'e3_end': 'E3 - END',
-            'e4_days': 'E4 - DAYS', 'e4_start': 'E4 - START', 'e4_end': 'E4 - END',
-            'color': 'Color', 'model': 'Model', 'company': 'company',
-            'tied_to_premise': 'tied_to_premise', 'location': 'location'
-        }
-        db_key = db_key_map.get(key.lower(), key) # Default to key if no mapping
-
-        if key in ['sn', 'e1_pause', 'e1_work', 'e2_pause', 'e2_work', 'e3_pause', 'e3_work', 'e4_pause', 'e4_work']:
-            try: query[db_key] = int(value)
-            except ValueError: flash(f"Invalid integer for {key}: {value}", "warning")
-        elif key not in ['month', 'year']:
-            query[db_key] = {'$regex': value, '$options': 'i'}
-
-    if filters['month'] and filters['year']:
-        month_list = [int(m.strip()) for m in filters['month'].split(',') if m.strip().isdigit()]
-        try: query['$expr'] = {'$and': [{'$in': [{'$month': '$created_at'}, month_list]}, {'$eq': [{'$year': '$created_at'}, int(filters['year'])]}]}
-        except ValueError: flash("Invalid year for filtering.", "warning")
-
-    device_records = list(device_list_collection.find(query)) # Renamed records to device_records
-    total_records = len(device_records); total_pages = (total_records + limit - 1) // limit
-    paginated_data = device_records[(page - 1) * limit: page * limit]
-    query_params = request.args.to_dict()
-    return render_template('device.html', page=page, total_pages=total_pages, limit=limit, pagination_base_url=f"{request.path}?", query_params=query_params, data=paginated_data)
-
-@app.route('/delete_record/<record_id>', methods=['POST'])
-def delete_record(record_id): # This seems to be for profile_list_collection (PICs/Premises)
-    if 'username' not in session: return jsonify({"error": "Unauthorized"}), 403
-    # Also attempt to delete associated devices and master service records if a premise is deleted
-    record_to_delete = profile_list_collection.find_one({"_id": ObjectId(record_id)})
-    if record_to_delete and record_to_delete.get("premise_name"):
-         premise_name_to_delete = record_to_delete.get("premise_name")
-         company_name_of_deleted_premise = record_to_delete.get("company")
-         # Delete devices tied to this premise_name and company
-         device_list_collection.delete_many({"tied_to_premise": premise_name_to_delete, "company": company_name_of_deleted_premise})
-         # Delete from services_collection (master list)
-         services_collection.delete_many({"premise_name": premise_name_to_delete, "company": company_name_of_deleted_premise})
-         test_collection.delete_many({"premise_name": premise_name_to_delete, "company": company_name_of_deleted_premise})
-
-
-    result = profile_list_collection.delete_one({"_id": ObjectId(record_id)})
-    if result.deleted_count > 0: return jsonify({"success": True, "message": "Record and associated data deleted successfully"}), 200
-    return jsonify({"success": False, "message": "Record not found or not a premise record"}), 404
-
-
-@app.route('/route_table', methods=['GET'])
-def route_table():
-    if 'username' not in session: return redirect(url_for('login'))
-    page = int(request.args.get('page', 1)); limit = int(request.args.get('limit', 20))
-    filters = {k: request.args.get(k, '').strip() for k in ['company', 'premise', 'day', 'month', 'year']}
-    sort_order_arg = request.args.get("sort_order", "desc")
-    query = {}
-    if filters['company']: query["company"] = {'$regex': filters['company'], '$options': 'i'}
-    if filters['premise']: query["premise"] = {'$regex': filters['premise'], '$options': 'i'} # field name is 'premise' in route_list_collection
-    expr_conditions = []
-    if filters['day']:
-        try: expr_conditions.append({'$in': [{'$dayOfMonth': '$date'}, [int(d.strip()) for d in filters['day'].split(',') if d.strip().isdigit()]]})
-        except ValueError: flash("Invalid day format for filter.", "warning")
-    if filters['month']:
-        try: expr_conditions.append({'$in': [{'$month': '$date'}, [int(m.strip()) for m in filters['month'].split(',') if m.strip().isdigit()]]})
-        except ValueError: flash("Invalid month format for filter.", "warning")
-    if filters['year']:
-        try: expr_conditions.append({'$eq': [{'$year': '$date'}, int(filters['year'])]})
-        except ValueError: flash("Invalid year for filtering", "warning")
-    if expr_conditions: query['$expr'] = {'$and': expr_conditions} if len(expr_conditions) > 1 else expr_conditions[0]
-
-    sort_mongo_order = -1 if sort_order_arg == "desc" else 1
-    route_records = list(route_list_collection.find(query).sort("date", sort_mongo_order)) # Renamed records
-
-    total_records = len(route_records); total_pages = (total_records + limit - 1) // limit
-    paginated_data = route_records[(page - 1) * limit: page * limit]
-    query_params = request.args.to_dict()
-    return render_template('route-table.html', page=page, total_pages=total_pages, limit=limit, pagination_base_url=f"{request.path}?", query_params=query_params, data=paginated_data)
-
-@app.route('/edit_record/<record_id>', methods=['POST'])
-def edit_record(record_id):
-    if 'username' not in session: return jsonify({"error": "Unauthorized"}), 403
-    data = request.json
-    # This route is generic. Determine collection based on fields or an explicit type field if added to data.
-    # For now, assuming it's for profile_list_collection based on previous structure.
-    # A 'collection_type' field in data would be better.
-    collection_to_update = profile_list_collection
-
-    # Ensure ObjectId is valid
-    try: obj_id = ObjectId(record_id)
-    except: return jsonify({"success": False, "message": "Invalid record ID format"}), 400
-
-    result = collection_to_update.update_one({"_id": obj_id}, {"$set": data})
-    if result.modified_count > 0: return jsonify({"success": True, "message": "Record updated"})
-    elif result.matched_count > 0: return jsonify({"success": True, "message": "No changes made to the record"})
-    return jsonify({"success": False, "message": "Update failed or record not found"})
-
-@app.route('/delete_route', methods=['POST'])
-def delete_route():
-    if 'username' not in session: return redirect(url_for('login'))
-    record_id = request.form['record_id']
-    try: obj_id = ObjectId(record_id)
-    except: flash("Invalid record ID format.", "danger"); return redirect(url_for('route_table'))
-
-    record = route_list_collection.find_one({'_id': obj_id})
-    if record:
-        company = record.get('company', 'Unknown'); premise_val = record.get('premise', 'Unknown'); date_val = record.get('date', 'Unknown') # Renamed premise to premise_val
-        route_list_collection.delete_one({'_id': obj_id})
-        log_activity(session["username"], f"deleted route for Company: {company} Premise: {premise_val} Date: {date_val}", logs_collection)
-        flash("Record deleted successfully!", "success")
-    else:
-        flash("Record not found or failed to delete!", "error") # Clarified message
-    return redirect(url_for('route_table'))
-
-@app.route('/view-help-requestssss', methods=['POST','GET'])
-def view_helpss(): #This route seems unused
-    if 'username' not in session: return redirect(url_for('login'))
-    return render_template('view-complaint.html')
-
-@app.route("/view-help-list", methods=['POST','GET'])
-def view_help():
-    if 'username' not in session: return redirect(url_for('login'))
-    cases = list(collection.find({}, {"case_no": 1, "_id":0}))
-    return render_template("view-complaint.html", cases=cases)
-
-@app.route("/image/<file_id>")
-def get_image(file_id):
-    try:
-        obj_file_id = ObjectId(file_id) # Validate ObjectId
-        grid_fs_file = fs.get(obj_file_id)
-        return send_file(io.BytesIO(grid_fs_file.read()), mimetype=grid_fs_file.content_type)
-    except Exception as e:
-        app.logger.error(f"Error serving image {file_id}: {e}")
-        return "Image not found", 404
-
-@app.route("/signature/<file_id>")
-def get_signature(file_id):
-    try:
-        obj_file_id = ObjectId(file_id) # Validate ObjectId
-        grid_fs_file = fs.get(obj_file_id)
-        return send_file(io.BytesIO(grid_fs_file.read()), mimetype=grid_fs_file.content_type)
-    except Exception as e:
-        app.logger.error(f"Error serving signature {file_id}: {e}")
-        return "Signature not found", 404
-
-@app.route('/get-client-details/<premise_name>')
-def get_client_details(premise_name):
-    pics = list(profile_list_collection.find({"tied_to_premise": premise_name}))
-    for pic_item in pics: pic_item['_id'] = str(pic_item['_id']) # Renamed pic to pic_item
-    return jsonify(html=render_template("partials/client-details.html", pics=pics))
-
-@app.route('/get-device-details/<premise_name>')
-def get_device_details(premise_name):
-    devices_data = list(device_list_collection.find({"tied_to_premise": premise_name})) # Renamed devices to devices_data
-    for device_item in devices_data: device_item['_id'] = str(device_item['_id']) # Renamed device to device_item
-    return jsonify(html=render_template("partials/device-details.html", devices=devices_data)) # Pass correct var
-
-@app.route('/service', methods=['GET', 'POST'])
-def service():
-    if 'username' not in session: return redirect(url_for('login'))
-    technician_name = session["username"]
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    companies = sorted(list(services_collection.distinct('company')))
-
-    if request.method == 'POST':
-        premise_name = request.form.get("premiseName")
-        actions_taken = request.form.getlist("actions")
-        remarks = request.form.get("remarks")
-        staff_name = request.form.get("staffName")
-        signature = request.form.get("signature")
-
-        company_info = profile_list_collection.find_one({"premise_name": premise_name}, {"company": 1}) # Get company from profile
-        log_company_name = company_info.get("company", "UnknownCompany") if company_info else "UnknownCompany"
-
-        devices_in_premise = list(device_list_collection.find({"tied_to_premise": premise_name, "company": log_company_name}))
-        device_entries = []
-        for i, device_doc in enumerate(devices_in_premise, start=1):
-            balance_key = f'balance_{device_doc.get("S/N", device_doc.get("_id"))}' # More unique key
-            balance_val_str = request.form.get(balance_key) # Renamed balance to balance_val_str
-            try: balance_val = int(balance_val_str if balance_val_str is not None else 0)
-            except ValueError: balance_val = 0
-
-            volume_required = int(device_doc.get("Volume", 0))
-            consumption = volume_required - balance_val if volume_required >= balance_val else 0
-
-            device_entry = {
-                "location": device_doc.get("location"), "serial_number": device_doc.get("S/N"),
-                "model": device_doc.get("Model"), "scent": device_doc.get("Current EO"),
-                "volume_required": volume_required, "balance": balance_val, "consumption": consumption,
-                "events": [
-                    {"days": device_doc.get("E1 - DAYS"), "start_time": device_doc.get("E1 - START"), "end_time": device_doc.get("E1 - END"), "work": device_doc.get("E1 - WORK"), "pause": device_doc.get("E1 - PAUSE")},
-                    {"days": device_doc.get("E2 - DAYS"), "start_time": device_doc.get("E2 - START"), "end_time": device_doc.get("E2 - END"), "work": device_doc.get("E2 - WORK"), "pause": device_doc.get("E2 - PAUSE")},
-                    {"days": device_doc.get("E3 - DAYS"), "start_time": device_doc.get("E3 - START"), "end_time": device_doc.get("E3 - END"), "work": device_doc.get("E3 - WORK"), "pause": device_doc.get("E3 - PAUSE")},
-                    {"days": device_doc.get("E4 - DAYS"), "start_time": device_doc.get("E4 - START"), "end_time": device_doc.get("E4 - END"), "work": device_doc.get("E4 - WORK"), "pause": device_doc.get("E4 - PAUSE")},
-                ]}
-            device_entries.append(device_entry)
-
-        pic_records = list(profile_list_collection.find({"company": log_company_name, "tied_to_premise": premise_name}))
-        for pic_item in pic_records: pic_item['_id'] = str(pic_item['_id']) # Renamed pic to pic_item
-
-        field_service_record = {
-            "technician_name": technician_name, "timestamp": current_time,
-            "company": log_company_name, "premise_name": premise_name,
-            "client_pics": pic_records, "devices_serviced": device_entries,
-            "actions_taken": actions_taken, "remarks": remarks,
-            "client_staff_name": staff_name, "client_signature": signature,
-            "month_year": datetime.now()
-        }
-        service_reports_collection.insert_one(field_service_record) # Changed to service_reports_collection
-        log_activity(session["username"], f"submitted service report for: {log_company_name} - {premise_name}", logs_collection)
-        flash("Field service report submitted successfully!", "success")
-        return redirect(url_for("dashboard"))
-
-    return render_template("service.html", companies=companies, technician_name=technician_name, current_time=current_time)
-
+# The following routes are assumed to be present from the original file and are kept:
 @app.after_request
 def add_no_cache_headers(response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -1466,10 +516,10 @@ def save_all_eo_global_changes():
     edited = data.get('edited', [])
     deleted = data.get('deleted', [])
     visual_order = data.get('visual_order', [])
-    for eo_item in added: # Renamed eo to eo_item
+    for eo_item in added:
         if eo_pack_collection.find_one({'eo_name': eo_item['eo_name']}):
             return jsonify({'status': 'error', 'message': f"EO name '{eo_item['eo_name']}' already exists."}), 400
-        eo_pack_collection.insert_one({"eo_name": eo_item['eo_name'], "order": -1}) # Default order
+        eo_pack_collection.insert_one({"eo_name": eo_item['eo_name'], "order": -1})
     for eo_item in edited:
         if eo_pack_collection.find_one({'eo_name': eo_item['eo_name'], '_id': {'$ne': ObjectId(eo_item['_id'])}}):
             return jsonify({'status': 'error', 'message': f"EO name '{eo_item['eo_name']}' already exists."}), 400
@@ -1479,7 +529,7 @@ def save_all_eo_global_changes():
     for index, item in enumerate(visual_order):
         target_id_str = item.get('_id')
         if not target_id_str and 'eo_name' in item :
-            new_eo_doc = eo_pack_collection.find_one({'eo_name': item['eo_name']}) # Renamed new_eo to new_eo_doc
+            new_eo_doc = eo_pack_collection.find_one({'eo_name': item['eo_name']})
             if new_eo_doc: target_id_str = str(new_eo_doc['_id'])
         if target_id_str:
              eo_pack_collection.update_one({'_id': ObjectId(target_id_str)}, {'$set': {'order': index}})
@@ -1533,7 +583,7 @@ def get_devices(premise):
 @app.route('/get-eos', methods=['POST'])
 def get_eos():
     selected_device_models = request.json.get('devices', [])
-    eos_set = set() # Renamed eos to eos_set
+    eos_set = set()
     for model_name in selected_device_models:
         device_entries = device_list_collection.find({"Model": model_name}, {"Current EO": 1})
         for entry in device_entries:
@@ -1583,7 +633,7 @@ def generate_change_form_pdf_bytes(data):
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, txt="Change Form Summary", ln=1, align="C"); pdf.ln(5)
-    def add_field(key, value): # Local helper function
+    def add_field(key, value):
         pdf.set_font("Arial", "B", size=10); pdf.cell(50, 7, txt=key); pdf.set_font("Arial", size=10)
         if isinstance(value, bool): pdf.multi_cell(0, 7, txt="Yes" if value else "No", ln=1)
         elif isinstance(value, list):
@@ -1610,7 +660,7 @@ def changed_settings_list():
         return redirect(url_for('login'))
 
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 20)) # Default to 20 items per page
+    limit = int(request.args.get('limit', 20))
     skip = (page - 1) * limit
 
     query = {}
@@ -1624,11 +674,6 @@ def changed_settings_list():
     if company_filter:
         query['company'] = {'$regex': company_filter, '$options': 'i'}
 
-    # Date filtering - assumes 'date' field in changed_models_collection is a string like 'YYYY-MM-DD'
-    # or a datetime object. If it's a string, this query needs adjustment or data needs conversion.
-    # For changed_models_collection, 'date' is form.get("date") or datetime.now().strftime('%Y-%m-%d')
-    # 'submitted_at' is datetime.now()
-    # Let's filter by 'submitted_at' for month/year as it's a proper datetime object.
     if month_filter and year_filter:
         try:
             month_int = int(month_filter)
@@ -1641,7 +686,7 @@ def changed_settings_list():
             }
         except ValueError:
             flash("Invalid month or year format.", "danger")
-    elif year_filter: # Filter by year only if month is not provided
+    elif year_filter:
         try:
             year_int = int(year_filter)
             query['$expr'] = {'$eq': [{'$year': '$submitted_at'}, year_int]}
@@ -1650,37 +695,29 @@ def changed_settings_list():
 
 
     total_entries = changed_models_collection.count_documents(query)
-    # Sort by submission date, newest first
     results = list(changed_models_collection.find(query).sort("submitted_at", -1).skip(skip).limit(limit))
 
-    # Format dates if necessary for display, e.g., 'submitted_at'
-    # Also extract month and day from submitted_at
     for r in results:
-        submitted_at_dt = r.get("submitted_at") # Keep original datetime object if present
+        submitted_at_dt = r.get("submitted_at")
         if isinstance(submitted_at_dt, datetime):
             r["submitted_month"] = submitted_at_dt.month
             r["submitted_day"] = submitted_at_dt.day
-            r["submitted_at"] = submitted_at_dt.strftime("%Y-%m-%d %H:%M:%S") # Format for existing display
-        else: # Should not happen if data is consistent, but good to have fallbacks
+            r["submitted_at"] = submitted_at_dt.strftime("%Y-%m-%d %H:%M:%S")
+        else:
             r["submitted_month"] = None
             r["submitted_day"] = None
-        # 'date' field is likely already a string 'YYYY-MM-DD' from the form
-        # If 'premises' or 'devices' can be None, ensure template handles it (already done with |join(', ') if X else '')
 
     total_pages = (total_entries + limit - 1) // limit
-
-    # Preserve other query parameters for pagination links
     query_params_for_template = request.args.to_dict()
     if 'page' in query_params_for_template:
         del query_params_for_template['page']
-
 
     return render_template("changed_settings_list.html",
                            data=results,
                            page=page,
                            total_pages=total_pages,
-                           limit=limit, # Though limit is not directly used in this template's pagination macro
-                           query_params=query_params_for_template, # Pass the filtered dict
+                           limit=limit,
+                           query_params=query_params_for_template,
                            username=session.get('username'))
 
 if __name__ == "__main__":

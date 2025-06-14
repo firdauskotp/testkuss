@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Field Service Report</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-responsive {
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        .table th, .table td {
+            white-space: nowrap; /* Prevent wrapping for better readability */
+            font-size: 0.85rem; /* Smaller font for more columns */
+        }
+        .filter-form .form-control, .filter-form .form-select {
+            margin-bottom: 0.5rem;
+        }
+        .filter-form .row {
+            align-items: flex-end; /* Align filter button nicely */
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">Back to Dashboard</a>
+        <h1 class="text-center mb-4">Monthly Field Service Report</h1>
+
+        <form method="GET" action="{{ url_for('monthly_services_report_view') }}" class="filter-form mb-4 p-3 border rounded bg-light">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <label for="technician_name" class="form-label form-label-sm">Technician</label>
+                    <input type="text" class="form-control form-control-sm" id="technician_name" name="technician_name" placeholder="Technician Name" value="{{ current_filters.get('technician_name', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="company_name" class="form-label form-label-sm">Company</label>
+                    <input type="text" class="form-control form-control-sm" id="company_name" name="company_name" placeholder="Company Name" value="{{ current_filters.get('company_name', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="premise_name" class="form-label form-label-sm">Premise (Device)</label>
+                    <input type="text" class="form-control form-control-sm" id="premise_name" name="premise_name" placeholder="Premise Name" value="{{ current_filters.get('premise_name', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="device_model" class="form-label form-label-sm">Model</label>
+                    <input type="text" class="form-control form-control-sm" id="device_model" name="device_model" placeholder="Device Model" value="{{ current_filters.get('device_model', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="device_sn" class="form-label form-label-sm">S/N</label>
+                    <input type="text" class="form-control form-control-sm" id="device_sn" name="device_sn" placeholder="Device S/N" value="{{ current_filters.get('device_sn', '') }}">
+                </div>
+            </div>
+            <div class="row g-2 mt-2">
+                 <div class="col-md-2">
+                    <label for="service_month" class="form-label form-label-sm">Month</label>
+                    <select name="service_month" id="service_month" class="form-select form-select-sm">
+                        <option value="">All Months</option>
+                        {% for month_item in months_list %}
+                            <option value="{{ month_item }}" {% if current_filters.get('service_month') == month_item %}selected{% endif %}>{{ month_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="service_year" class="form-label form-label-sm">Year</label>
+                     <select name="service_year" id="service_year" class="form-select form-select-sm">
+                        <option value="">All Years</option>
+                        {% for year_item in range(current_year, current_year - 7, -1) %} {# Show last 7 years #}
+                            <option value="{{ year_item }}" {% if current_filters.get('service_year') == str(year_item) %}selected{% endif %}>{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-auto mt-3">
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                    <a href="{{ url_for('monthly_services_report_view') }}" class="btn btn-outline-secondary btn-sm">Clear Filters</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Service Date</th>
+                        <th>Tech</th>
+                        <th>Company</th>
+                        <th>Orig. Premise (Device)</th>
+                        <th>Device Model</th>
+                        <th>Orig. S/N</th>
+                        <th>Sub. S/N</th>
+                        <th>Serviced Loc.</th>
+                        <th>Sub. Color</th>
+                        <th>Curr. EO</th>
+                        <th>Scent Vol.</th>
+                        <th>Scent Bal.</th>
+                        <th>Scent Cons.</th>
+                        <th>Scent Change</th>
+                        <th>Inactive?</th>
+                        <th>Relocated To</th>
+                        <th>Actions Done</th>
+                        <th>Ack. Staff</th>
+                        <th>Ack. Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ record.get('service_date_iso', record.get('service_date_parts', {}).get('year', '') + '-' + record.get('service_date_parts', {}).get('month', '') + '-' + record.get('service_date_parts', {}).get('day', ''))[:10] }}</td>
+                        <td>{{ record.technician_name | default('', true) }}</td>
+                        <td>{{ record.company_name | default('', true) }}</td>
+                        <td>{{ record.serviced_device.original_premise | default('', true) }}</td>
+                        <td>{{ record.serviced_device.original_model | default('', true) }}</td>
+                        <td>{{ record.serviced_device.original_sn_from_card | default('', true) }}</td>
+                        <td>{{ record.serviced_device.submitted_sn_on_form | default('', true) }}</td>
+                        <td>{{ record.serviced_device.location_serviced | default('', true) }}</td>
+                        <td>{{ record.serviced_device.submitted_color_on_form | default('', true) }}</td>
+                        <td>{{ record.serviced_device.original_current_eo | default('', true) }}</td>
+                        <td>{{ record.serviced_device.scent_volume_actual | default('', true) }}</td>
+                        <td>{{ record.serviced_device.scent_balance | default('', true) }}</td>
+                        <td>{{ record.serviced_device.scent_consumption | default('', true) }}</td>
+                        <td>{{ record.serviced_device.changed_scent_to | default('', true) }}</td>
+                        <td>{{ 'Yes' if record.serviced_device.is_marked_inactive else 'No' }}</td>
+                        <td>{{ record.serviced_device.relocated_to_premise_on_form | default('', true) }}</td>
+                        <td>{{ record.acknowledgement.actions_done | join(', ') if record.acknowledgement.actions_done else '' }}</td>
+                        <td>{{ record.acknowledgement.staff_name | default('', true) }}</td>
+                        <td>{{ record.acknowledgement.remarks | default('', true) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not records %}
+                    <tr><td colspan="19" class="text-center">No records found matching your criteria.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if total_pages > 1 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center flex-wrap">
+                {# Previous Page Link #}
+                <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('monthly_services_report_view', page=page-1, **current_filters) if page > 1 else '#'}}">Previous</a>
+                </li>
+
+                {# Page Number Links - simplified version #}
+                {% set page_window = 2 %} {# Number of pages to show before/after current page #}
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == 1 or p == total_pages or (p >= page - page_window and p <= page + page_window) %}
+                        {% if p == page %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ p }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('monthly_services_report_view', page=p, **current_filters) }}">{{ p }}</a></li>
+                        {% endif %}
+                    {% elif p == page - page_window - 1 or p == page + page_window + 1 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {# Next Page Link #}
+                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('monthly_services_report_view', page=page+1, **current_filters) if page < total_pages else '#'}}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
