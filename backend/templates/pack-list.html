@@ -321,24 +321,7 @@
             }
         });
 
-        // Apply pagination styles (more specific selectors might be needed if there are other uls)
-        document.querySelectorAll('nav[aria-label="Page navigation"] ul.pagination a.page-link, nav[aria-label="Page navigation"] ul.pagination span.page-link').forEach(el => {
-            // Remove old Bootstrap classes
-            el.classList.remove('page-link');
-            if(el.parentNode.classList.contains('disabled')) {
-                 el.classList.add(...tailwindPaginationDisabled.split(' '));
-            }
-            if(el.parentNode.classList.contains('active')) {
-                 el.classList.add(...tailwindPaginationActive.split(' '));
-            }
-            el.classList.add(...tailwindPaginationButton.split(' '));
-            if (el.innerHTML.includes('&laquo;')) { // Previous
-                el.classList.add('rounded-l-lg');
-            } else if (el.innerHTML.includes('&raquo;')) { // Next
-                el.classList.add('rounded-r-lg');
-            }
-        });
-
+        // Redundant pagination styling JS removed. Styles are applied via Jinja macros/HTML.
 
     });
 </script>

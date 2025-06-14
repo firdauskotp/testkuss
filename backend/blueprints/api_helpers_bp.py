@@ -1,5 +1,5 @@
 # backend/blueprints/api_helpers_bp.py
-from flask import Blueprint, request, jsonify, current_app, send_file, render_template, Response, session
+from flask import Blueprint, request, jsonify, current_app, send_file, render_template, Response, session, redirect, url_for, flash
 import io # For send_file with BytesIO for GridFS
 from bson import ObjectId # For GridFS file IDs
 from werkzeug.utils import secure_filename # Though not used in these specific routes, good for general API file handling
@@ -25,8 +25,22 @@ api_helpers_bp = Blueprint(
     url_prefix='/api' # All routes here will be prefixed with /api
 )
 
-# No universal before_request for auth on these API routes for now.
-# Assumed to be public or handled by original logic if any.
+# Helper to check admin session
+def is_admin_logged_in():
+    return 'username' in session
+
+@api_helpers_bp.before_request
+def require_admin_login():
+    # Protect all routes in this blueprint by default
+    # Specific public routes would need to be handled differently if any exist
+    # (e.g. by checking request.endpoint against a list of public endpoints)
+    if not is_admin_logged_in():
+        # For API routes, returning a JSON error is often preferred over redirecting to HTML login page
+        # However, if these are typically called by frontend JS that expects a redirect on auth failure,
+        # then a redirect might be what the existing frontend JS expects.
+        # The other admin blueprints redirect to 'auth.admin_login'. Let's be consistent.
+        flash("Admin access required for this API.", "warning")
+        return redirect(url_for('auth.admin_login')) # Or return jsonify(error="Unauthorized"), 401/403
 
 @api_helpers_bp.route('/update-data', methods=['POST'])
 def update_data():
@@ -186,10 +200,7 @@ def get_eos(): # Used in change-form.html
 
 @api_helpers_bp.route('/profile/edit/<record_id>', methods=['POST'])
 def edit_profile_record(record_id):
-    # Add authentication/authorization if necessary:
-    if 'username' not in session: # Basic admin check
-        return jsonify({"error": "Unauthorized"}), 403
-
+    # Individual session check removed, handled by before_request
     data = request.json
     # Prevent editing month and year if these were specific to profile list view and not actual data fields
     # Or, if they are actual data fields, this pop might be removed.
@@ -216,10 +227,7 @@ def edit_profile_record(record_id):
 
 @api_helpers_bp.route('/profile/delete/<record_id>', methods=['POST']) # Using POST for delete as per original JS
 def delete_profile_record(record_id):
-    # Add authentication/authorization if necessary:
-    if 'username' not in session: # Basic admin check
-        return jsonify({"error": "Unauthorized"}), 403
-
+    # Individual session check removed, handled by before_request
     try:
         obj_id = ObjectId(record_id)
     except Exception:
@@ -234,10 +242,7 @@ def delete_profile_record(record_id):
 
 @api_helpers_bp.route('/pic-details/<premise_name>') # Changed from /get-pic/ to be more descriptive
 def get_pic_details_for_premise(premise_name):
-    # Assuming 'username' in session is required to access this API
-    if 'username' not in session:
-        return jsonify({"error": "Unauthorized"}), 403
-
+    # Individual session check removed, handled by before_request
     # Fetch the first PIC found for that premise for simplicity
     # In reality, a premise might have multiple PICs; the JS might need to handle a list
     pic_data = profile_list_collection.find_one(
@@ -250,9 +255,7 @@ def get_pic_details_for_premise(premise_name):
 
 @api_helpers_bp.route('/change-notes-for-premise/<premise_name>')
 def get_change_notes_for_premise(premise_name):
-    if 'username' not in session:
-        return jsonify({"error": "Unauthorized"}), 403
-
+    # Individual session check removed, handled by before_request
     # Placeholder logic for change notes.
     # This needs to be implemented based on how change notes are stored and retrieved.
     # Example: query 'change_collection' or 'refund_collection' for entries related to premise_name.

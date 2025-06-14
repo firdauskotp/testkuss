@@ -71,3 +71,11 @@ a {
   color: var(--gh-link-primary);
 }
 */
+
+/* Added from base.html */
+.mobile-nav-link {
+    @apply block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700 dark:hover:bg-gray-700;
+}
+.mobile-nav-heading {
+    @apply px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider;
+}

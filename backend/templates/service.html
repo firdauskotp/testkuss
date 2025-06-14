@@ -117,83 +117,83 @@
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Device Details</h3>
                 <div id="device-section" class="space-y-6">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Device details will load here once a premise is selected. Or, if this is a static template for one device, style the elements below.</p>
-                    {# --- Start of example for ONE device card (to be dynamically populated or repeated) --- #}
-                    <div class="device-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device [Device Loop Index/ID]</h5>
+                    <div class="device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                        <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device 1</h5> {# Assuming static or will be looped #}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                             <div>
-                                <label for="model_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-                                <select name="model_idx" id="model_idx" required class="tailwind-input-class">
+                                <label for="model_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                                <select name="model_1" id="model_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                     <option selected disabled value="">Select a model</option>
-                                    {# {% for model_item in models %} <option value="{{ model_item }}">{{ model_item }}</option> {% endfor %} #}
+                                    {# Populate with actual model options if available from context, else leave as is #}
+                                    {% for model_item in models_context_variable_if_it_exists %} <option value="{{ model_item }}">{{ model_item }}</option> {% endfor %}
                                 </select>
                             </div>
                             <div>
-                                <label for="color_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
-                                <select name="color_idx" id="color_idx" required class="tailwind-input-class">
+                                <label for="color_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                                <select name="color_1" id="color_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                      <option selected disabled value="">Select a color</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="eo_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
-                                <select name="eo_idx" id="eo_idx" required class="tailwind-input-class">
+                                <label for="eo_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
+                                <select name="eo_1" id="eo_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                     <option selected disabled value="">Select an EO</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="location_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                                <input type="text" name="location_idx" required class="tailwind-input-class">
+                                <label for="location_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                <input type="text" name="location_1" id="location_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50" placeholder="Device Location">
                             </div>
                             <div class="md:col-span-2">
-                                <label for="scent_change_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
-                                <select name="scent_change_idx" class="tailwind-input-class">
+                                <label for="scent_change_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
+                                <select name="scent_change_1" id="scent_change_1" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                     <option value="">No Change</option>
-                                    {# {% for eo_item in eo_list %} <option value="{{ eo_item }}">{{ eo_item }}</option> {% endfor %} #}
+                                    {# Populate with EO options if available #}
                                 </select>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="relocate_idx" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
-                                <select name="relocate_idx" class="tailwind-input-class">
+                                <label for="relocate_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
+                                <select name="relocate_1" id="relocate_1" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                     <option value="">Do not relocate</option>
-                                    {# {% for p_item in premises_list_for_relocation %} <option value="{{ p_item.premise_name }}">{{ p_item.premise_name }}</option> {% endfor %} #}
+                                    {# Populate with premise options if available #}
                                 </select>
                             </div>
                             <div class="md:col-span-2 flex items-center mt-2">
-                                <input id="inactive_idx" name="inactive_idx" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
-                                <label for="inactive_idx" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive (remove from system on selected date)</label>
+                                <input id="inactive_1" name="inactive_1" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
+                                <label for="inactive_1" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive</label>
                             </div>
                         </div>
-                        <!-- Events (E1–E4) -->
+                        <!-- Events for Device 1 -->
                         {% for e_num in range(1, 5) %}
                         <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                             <h6 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Event {{ e_num }} Settings</h6>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-3">
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Current E{{ e_num }} Days: <span class="font-normal text-gray-900 dark:text-gray-100">{ device['E' ~ e_num ~ ' - DAYS'] | default('N/A') }</span></label>
-                                    <input type="text" name="event_idx_days{{ e_num }}" placeholder="New Days (Mon-Fri)" class="tailwind-input-class text-xs mt-1">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3"> {# Adjusted grid for 5 items #}
+                                <div class="lg:col-span-1"> {# Days can take more space if needed, or keep all equal #}
+                                    <label for="event_1_days_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Current Days: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - DAYS'] | default('N/A') }}</span></label>
+                                    <input type="text" name="event_1_days_{{ e_num }}" id="event_1_days_{{ e_num }}" placeholder="New Days" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Start: <span class="font-normal">{ device['E' ~ e_num ~ ' - START'] | default('N/A') }</span></label>
-                                    <input type="time" name="event_idx_start{{ e_num }}" class="tailwind-input-class text-xs mt-1">
+                                    <label for="event_1_start_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Start: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - START'] | default('N/A') }}</span></label>
+                                    <input type="time" name="event_1_start_{{ e_num }}" id="event_1_start_{{ e_num }}" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">End: <span class="font-normal">{ device['E' ~ e_num ~ ' - END'] | default('N/A') }</span></label>
-                                    <input type="time" name="event_idx_end{{ e_num }}" class="tailwind-input-class text-xs mt-1">
+                                    <label for="event_1_end_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">End: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - END'] | default('N/A') }}</span></label>
+                                    <input type="time" name="event_1_end_{{ e_num }}" id="event_1_end_{{ e_num }}" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Work: <span class="font-normal">{ device['E' ~ e_num ~ ' - WORK'] | default('N/A') }</span></label>
-                                    <input type="number" name="event_idx_work{{ e_num }}" placeholder="New Work (s)" class="tailwind-input-class text-xs mt-1">
+                                    <label for="event_1_work_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Work (s): <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - WORK'] | default('N/A') }}</span></label>
+                                    <input type="number" name="event_1_work_{{ e_num }}" id="event_1_work_{{ e_num }}" placeholder="Work" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400">Pause: <span class="font-normal">{ device['E' ~ e_num ~ ' - PAUSE'] | default('N/A') }</span></label>
-                                    <input type="number" name="event_idx_pause{{ e_num }}" placeholder="New Pause (s)" class="tailwind-input-class text-xs mt-1">
+                                    <label for="event_1_pause_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Pause (s): <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - PAUSE'] | default('N/A') }}</span></label>
+                                    <input type="number" name="event_1_pause_{{ e_num }}" id="event_1_pause_{{ e_num }}" placeholder="Pause" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
                                 </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
-                    {# --- End of example for ONE device card --- #}
+                    {# Add button for more devices if this section is meant to be dynamic via JS later #}
+                    {# <button type="button" id="addAnotherDeviceBtn" class="tailwind-button-dashed-fullwidth mt-4">+ Add Another Device</button> #}
                 </div>
             </div>
 

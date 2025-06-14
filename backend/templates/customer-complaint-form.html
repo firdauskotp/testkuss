@@ -37,59 +37,54 @@
                                   sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                 </div>
 
-                <div>
-                    <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location (e.g., 1st Floor, Toilet)</label>
-                    <input type="text" id="location" name="location" required
-                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
-                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
-                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
-                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                </div>
-
-                <div>
-                    <label for="image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload Device Image</label>
-                    <input type="file" id="image" name="image" accept="image/*"
-                           class="block w-full text-sm text-gray-900 dark:text-gray-50 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-gray-600 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-gray-500">
-                    <div id="imageError" class="hidden mt-1 text-sm text-red-600 dark:text-red-400">Please upload an image of your device.</div>
-                </div>
-
-                <div>
-                    <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-                    <input type="text" id="model" name="model" required
-                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
-                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
-                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
-                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                </div>
-
-                <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issues (Select at least one):</label>
-                    <div id="checkboxError" class="hidden mb-2 text-sm text-red-600 dark:text-red-400">Please select at least one issue.</div>
-                    {% for issue_val, issue_text in [
-                        ('Weak Scent', 'Weak Scent'),
-                        ('No Oil', 'No Oil'),
-                        ('No Mist', 'No Mist'),
-                        ('Weak Batteries', 'Weak Batteries'),
-                        ('Faulty Power Adapter', 'Faulty Power Adapter')
-                    ] %}
-                    <div class="flex items-center">
-                        <input id="{{ issue_val.lower().replace(' ', '_') }}" name="issues" value="{{ issue_val }}" type="checkbox"
-                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                        <label for="{{ issue_val.lower().replace(' ', '_') }}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ issue_text }}</label>
+                <!-- Container for repeatable device entries -->
+                <div id="devices-container" class="space-y-8">
+                    <div class="device-entry mt-6 pt-6 border-t border-gray-300 dark:border-gray-700 space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Device <span class="device-index">1</span></h4>
+                            <button type="button" class="remove-device-btn py-1 px-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 dark:focus:ring-offset-gray-900" style="display:none;">Remove Device</button>
+                        </div>
+                        <div>
+                            <label for="devices[0][location]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location (e.g., 1st Floor, Toilet)</label>
+                            <input type="text" name="devices[0][location]" id="devices[0][location]" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        </div>
+                        <div>
+                            <label for="devices[0][image]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload Device Image</label>
+                            <input type="file" name="devices[0][image]" id="devices[0][image]" accept="image/*" class="block w-full text-sm text-gray-900 dark:text-gray-50 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-gray-600 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-gray-500">
+                            <div id="imageError_0" class="hidden mt-1 text-sm text-red-600 dark:text-red-400">Please upload an image of your device.</div>
+                        </div>
+                        <div>
+                            <label for="devices[0][model]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                            <input type="text" name="devices[0][model]" id="devices[0][model]" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issues (Select at least one):</label>
+                            <div id="checkboxError_0" class="hidden mb-2 text-sm text-red-600 dark:text-red-400">Please select at least one issue for this device.</div>
+                            {% for issue_val, issue_text in [
+                                ('Weak Scent', 'Weak Scent'),
+                                ('No Oil', 'No Oil'),
+                                ('No Mist', 'No Mist'),
+                                ('Weak Batteries', 'Weak Batteries'),
+                                ('Faulty Power Adapter', 'Faulty Power Adapter')
+                            ] %}
+                            <div class="flex items-center">
+                                <input id="devices[0][issues]_{{issue_val.lower().replace(' ', '_')}}" name="devices[0][issues]" value="{{ issue_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                                <label for="devices[0][issues]_{{issue_val.lower().replace(' ', '_')}}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ issue_text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <label for="devices[0][remarks]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks (if any)</label>
+                            <textarea name="devices[0][remarks]" id="devices[0][remarks]" rows="2" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"></textarea>
+                        </div>
                     </div>
-                    {% endfor %}
                 </div>
 
-                <div>
-                    <label for="remarks" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks (if any)</label>
-                    <textarea id="remarks" name="remarks" rows="3"
-                              class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
-                                     rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
-                                     focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
-                                     sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"></textarea>
-                </div>
+                <button type="button" id="addDeviceBtn" class="mt-4 w-full flex justify-center py-2.5 px-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                    + Add Another Device
+                </button>
 
-                <div>
+                <div class="mt-6">
                     <button type="submit"
                             class="w-full flex justify-center py-2.5 px-4 border border-transparent
                                    rounded-md shadow-sm text-sm font-medium text-white
@@ -106,30 +101,104 @@
 
 {% block scripts %}
 <script>
+  let deviceIndex = 0; // Start with 0 for the first device, will be incremented for new devices
+
+  function updateRemoveButtons() {
+    const deviceEntries = document.querySelectorAll('.device-entry');
+    deviceEntries.forEach((entry, index) => {
+      const removeBtn = entry.querySelector('.remove-device-btn');
+      if (deviceEntries.length > 1) {
+        removeBtn.style.display = 'inline-flex';
+      } else {
+        removeBtn.style.display = 'none';
+      }
+      // Update device index text
+      entry.querySelector('.device-index').textContent = index + 1;
+    });
+  }
+
+  document.getElementById('addDeviceBtn').addEventListener('click', function() {
+    deviceIndex++;
+    const devicesContainer = document.getElementById('devices-container');
+    const firstDeviceEntry = document.querySelector('.device-entry'); // Clone the first one as a template
+    const newDeviceEntry = firstDeviceEntry.cloneNode(true);
+
+    newDeviceEntry.querySelectorAll('[id]').forEach(el => {
+        const oldId = el.id;
+        const newId = oldId.replace(/\[0\]/g, `[${deviceIndex}]`).replace(/_0/g, `_${deviceIndex}`);
+        if (el.name && el.name.includes('[issues]')) { // Special handling for checkbox IDs to keep them unique
+             el.id = oldId.replace(/devices\[0\]\[issues\]_/g, `devices[${deviceIndex}][issues]_`);
+        } else {
+             el.id = newId;
+        }
+    });
+    newDeviceEntry.querySelectorAll('[name]').forEach(el => {
+        el.name = el.name.replace(/\[0\]/g, `[${deviceIndex}]`);
+    });
+    newDeviceEntry.querySelectorAll('label[for]').forEach(el => {
+        const oldFor = el.getAttribute('for');
+        const newFor = oldFor.replace(/\[0\]/g, `[${deviceIndex}]`).replace(/_0/g, `_${deviceIndex}`);
+         if (el.previousElementSibling && el.previousElementSibling.name && el.previousElementSibling.name.includes('[issues]')) {
+             el.setAttribute('for', oldFor.replace(/devices\[0\]\[issues\]_/g, `devices[${deviceIndex}][issues]_`));
+        } else {
+            el.setAttribute('for', newFor);
+        }
+    });
+
+    // Clear values and error messages in the new entry
+    newDeviceEntry.querySelectorAll('input[type="text"], input[type="file"], textarea, input[type="checkbox"]').forEach(input => {
+        if (input.type === 'checkbox') {
+            input.checked = false;
+        } else {
+            input.value = '';
+        }
+    });
+    newDeviceEntry.querySelectorAll('.hidden[id^="imageError_"], .hidden[id^="checkboxError_"]').forEach(errorDiv => {
+        errorDiv.classList.add('hidden'); // Ensure they are hidden
+    });
+
+    // Add remove button listener
+    newDeviceEntry.querySelector('.remove-device-btn').addEventListener('click', function() {
+        this.closest('.device-entry').remove();
+        updateRemoveButtons();
+    });
+
+    devicesContainer.appendChild(newDeviceEntry);
+    updateRemoveButtons();
+  });
+
+  // Initial call to set up remove buttons correctly if there's only one device initially
+  updateRemoveButtons();
+
   document.getElementById('caseForm').addEventListener('submit', function(event) {
-    const checkboxes = document.querySelectorAll('input[name="issues"]:checked');
-    const checkboxError = document.getElementById('checkboxError');
-    let isValid = true;
+    let overallIsValid = true;
+    const deviceEntries = document.querySelectorAll('.device-entry');
 
-    if (checkboxes.length === 0) {
-      checkboxError.classList.remove('hidden'); // Show error message
-      isValid = false;
-    } else {
-      checkboxError.classList.add('hidden'); // Hide error message
-    }
+    deviceEntries.forEach((entry, index) => {
+        const checkboxes = entry.querySelectorAll(`input[name="devices[${index}][issues]"]:checked`);
+        const checkboxError = entry.querySelector(`#checkboxError_${index}`);
 
-    const imageInput = document.getElementById('image');
-    const imageError = document.getElementById('imageError');
+        if (checkboxes.length === 0) {
+            if(checkboxError) checkboxError.classList.remove('hidden');
+            overallIsValid = false;
+        } else {
+            if(checkboxError) checkboxError.classList.add('hidden');
+        }
 
-    if (!imageInput.files.length) {
-      imageError.classList.remove('hidden'); // Show error message
-      isValid = false;
-    } else {
-      imageError.classList.add('hidden'); // Hide error message
-    }
+        const imageInput = entry.querySelector(`input[name="devices[${index}][image]"]`);
+        const imageError = entry.querySelector(`#imageError_${index}`);
+        if (imageInput && imageError) { // image input is not required for all devices, only if added
+            if (!imageInput.files.length) { // For simplicity, making image required if field exists
+                imageError.classList.remove('hidden');
+                overallIsValid = false;
+            } else {
+                imageError.classList.add('hidden');
+            }
+        }
+    });
 
-    if (!isValid) {
-      event.preventDefault(); // Prevent form submission
+    if (!overallIsValid) {
+      event.preventDefault();
     }
   });
 </script>

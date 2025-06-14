@@ -104,37 +104,5 @@ app.register_blueprint(global_settings_bp)
 app.register_blueprint(api_helpers_bp)
 # Add other blueprints here as they are created
 
-# The dashboard route is the only one remaining directly in app.py
+# The dashboard route is the only one remaining directly in app.py.
 # All other routes have been moved to their respective blueprints.
-# Comments below were kept for historical reference during refactoring but can be removed.
-# # customer_form() route is now in customer_actions_bp
-# # get_case_details() is now in staff_actions_bp
-# # staff_form() is now in staff_actions_bp
-# # index() route is now in auth_bp
-# # case_success() route is now in customer_actions_bp
-# # register() route is now in auth_bp
-# # register_admin() route is now in auth_bp
-# # delete_user() is now in user_management_bp
-# # delete_admin() is now in user_management_bp
-# # admin_login() route is now in auth_bp
-# # reports() route is now in data_reports_bp
-# # pack_list() route is now in data_reports_bp
-# # eo_list() route is now in data_reports_bp
-# # dashboard() route remains for now, but its login redirect is to auth.admin_login
-# # change_form() route is now in forms_bp
-# # view_remarks() route is now in data_reports_bp
-# # new_customer() route is now in forms_bp
-# # pre_service() route is now in forms_bp
-# # remark() route is now in forms_bp
-# # post_service() route is now in forms_bp
-# # view_users() is now in user_management_bp
-# # view_admins() is now in user_management_bp
-# # get_logs() is now in data_reports_bp
-# # profile() is now in data_reports_bp
-# # view_device() is now in data_reports_bp
-# # route_table() is now in data_reports_bp
-# # view_helpss() and view_help() are now in data_reports_bp (renamed to view_complaints_list)
-# # service() route is now in forms_bp
-# # eo_global() and device_global() routes are now in global_settings_bp
-# # save_all_eo_global_changes and save_model1_changes are now in global_settings_bp
-# # API routes like get-premises, get_image etc. are in api_helpers_bp
