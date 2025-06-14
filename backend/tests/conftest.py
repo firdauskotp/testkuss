@@ -1,6 +1,6 @@
 # backend/tests/conftest.py
 import pytest
-from backend.app import app as flask_app # Import your Flask app instance
+from app import app as flask_app # Import your Flask app instance
 
 @pytest.fixture(scope='function') # Changed from 'module' to 'function'
 def app():

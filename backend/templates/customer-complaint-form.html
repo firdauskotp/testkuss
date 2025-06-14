@@ -31,12 +31,53 @@
                 <div>
                     <label for="premise_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Name</label>
                     <input type="text" id="premise_name" name="premise_name" required
-                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
-                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
-                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 
                                   sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                 </div>
 
+                <!-- Container for repeatable device entries -->
+                <div id="devices-container" class="space-y-8">
+                    <div class="device-entry mt-6 pt-6 border-t border-gray-300 dark:border-gray-700 space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Device <span class="device-index">1</span></h4>
+                            <button type="button" class="remove-device-btn py-1 px-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 dark:focus:ring-offset-gray-900" style="display:none;">Remove Device</button>
+                        </div>
+                        <div>
+                            <label for="devices[0][location]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location (e.g., 1st Floor, Toilet)</label>
+                            <input type="text" name="devices[0][location]" id="devices[0][location]" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        </div>
+                        <div>
+                            <label for="devices[0][image]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload Device Image</label>
+                            <input type="file" name="devices[0][image]" id="devices[0][image]" accept="image/*" class="block w-full text-sm text-gray-900 dark:text-gray-50 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-gray-600 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-gray-500">
+                            <div id="imageError_0" class="hidden mt-1 text-sm text-red-600 dark:text-red-400">Please upload an image of your device.</div>
+                        </div>
+                        <div>
+                            <label for="devices[0][model]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                            <input type="text" name="devices[0][model]" id="devices[0][model]" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issues (Select at least one):</label>
+                            <div id="checkboxError_0" class="hidden mb-2 text-sm text-red-600 dark:text-red-400">Please select at least one issue for this device.</div>
+                            {% for issue_val, issue_text in [
+                                ('Weak Scent', 'Weak Scent'),
+                                ('No Oil', 'No Oil'),
+                                ('No Mist', 'No Mist'),
+                                ('Weak Batteries', 'Weak Batteries'),
+                                ('Faulty Power Adapter', 'Faulty Power Adapter')
+                            ] %}
+                            <div class="flex items-center">
+                                <input id="devices[0][issues]_{{issue_val.lower().replace(' ', '_')}}" name="devices[0][issues]" value="{{ issue_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                                <label for="devices[0][issues]_{{issue_val.lower().replace(' ', '_')}}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ issue_text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <label for="devices[0][remarks]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks (if any)</label>
+                            <textarea name="devices[0][remarks]" id="devices[0][remarks]" rows="2" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"></textarea>
+                        </div>
+                    </div>
                 <!-- Container for repeatable device entries -->
                 <div id="devices-container" class="space-y-8">
                     <div class="device-entry mt-6 pt-6 border-t border-gray-300 dark:border-gray-700 space-y-6">
@@ -85,9 +126,14 @@
                 </button>
 
                 <div class="mt-6">
+                <button type="button" id="addDeviceBtn" class="mt-4 w-full flex justify-center py-2.5 px-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                    + Add Another Device
+                </button>
+
+                <div class="mt-6">
                     <button type="submit"
-                            class="w-full flex justify-center py-2.5 px-4 border border-transparent
-                                   rounded-md shadow-sm text-sm font-medium text-white
+                            class="w-full flex justify-center py-2.5 px-4 border border-transparent 
+                                   rounded-md shadow-sm text-sm font-medium text-white 
                                    bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
                                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
                         Submit Case
@@ -156,7 +202,7 @@
     newDeviceEntry.querySelectorAll('.hidden[id^="imageError_"], .hidden[id^="checkboxError_"]').forEach(errorDiv => {
         errorDiv.classList.add('hidden'); // Ensure they are hidden
     });
-
+    
     // Add remove button listener
     newDeviceEntry.querySelector('.remove-device-btn').addEventListener('click', function() {
         this.closest('.device-entry').remove();
@@ -177,7 +223,7 @@
     deviceEntries.forEach((entry, index) => {
         const checkboxes = entry.querySelectorAll(`input[name="devices[${index}][issues]"]:checked`);
         const checkboxError = entry.querySelector(`#checkboxError_${index}`);
-
+        
         if (checkboxes.length === 0) {
             if(checkboxError) checkboxError.classList.remove('hidden');
             overallIsValid = false;
@@ -198,7 +244,7 @@
     });
 
     if (!overallIsValid) {
-      event.preventDefault();
+      event.preventDefault(); 
     }
   });
 </script>

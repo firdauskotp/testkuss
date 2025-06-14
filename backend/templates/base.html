@@ -50,7 +50,7 @@
                             <a href="{{ url_for('data_reports.view_complaints_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Help Requests</a>
                         </div>
                     </div>
-
+                    
                     <!-- User Management Dropdown -->
                     <div class="relative group">
                         <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Users</button>
@@ -107,7 +107,7 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-800 dark:bg-gray-900">
             <a href="{{ url_for('dashboard') }}" class="mobile-nav-link">Dashboard</a>
-
+            
             <h3 class="mobile-nav-heading">Customer Management</h3>
             <a href="{{ url_for('forms.new_customer') }}" class="mobile-nav-link">Add New Customer</a>
             <a href="{{ url_for('forms.change_form') }}" class="mobile-nav-link">Change Form (Settings)</a>
@@ -120,7 +120,7 @@
             <a href="{{ url_for('forms.service2') }}" class="mobile-nav-link">Service Form (Simple)</a>
             <a href="{{ url_for('forms.post_service') }}" class="mobile-nav-link">Post-Service Form</a>
             <a href="{{ url_for('data_reports.view_complaints_list') }}" class="mobile-nav-link">Help Requests</a>
-
+            
             <h3 class="mobile-nav-heading">User Management</h3>
             <a href="{{ url_for('auth.register') }}" class="mobile-nav-link">Add User</a>
             <a href="{{ url_for('auth.register_admin') }}" class="mobile-nav-link">Add Admin</a>
@@ -142,7 +142,7 @@
             <a href="{{ url_for('forms.remark') }}" class="mobile-nav-link">Submit Remark</a>
             <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='normal') }}" class="mobile-nav-link">View Normal Remarks</a>
             <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='urgent') }}" class="mobile-nav-link">View Urgent Remarks</a>
-
+            
             <hr class="border-gray-700 my-2">
             <a href="{{ url_for('auth.logout') }}" class="mobile-nav-link bg-red-500 hover:bg-red-600 text-white">Logout</a>
         </div>

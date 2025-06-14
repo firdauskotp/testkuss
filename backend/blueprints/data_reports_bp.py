@@ -1,8 +1,11 @@
 # backend/blueprints/data_reports_bp.py
+from bson import ObjectId
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from datetime import datetime
 from collections import defaultdict # For profile route
-from urllib.parse import urlencode # For pagination query string manipulation
+from urllib.parse import urlencode
+
+from backend.utils import log_activity # For pagination query string manipulation
 
 # Assuming database collections and helpers are accessible
 from ..col import (
@@ -420,3 +423,19 @@ def view_remarks_by_type(remark_type):
 
 # The multi-line comment block that was causing the SyntaxError has been removed.
 # It was my own instructional text mistakenly included in the generated file.
+@data_reports_bp.route('/delete_route', methods=['POST'])
+def delete_route():
+    if 'username' not in session: return redirect(url_for('login'))
+    record_id = request.form['record_id']
+    try: obj_id = ObjectId(record_id)
+    except: flash("Invalid record ID format.", "danger"); return redirect(url_for('route_table'))
+
+    record = route_list_collection.find_one({'_id': obj_id})
+    if record:
+        company = record.get('company', 'Unknown'); premise_val = record.get('premise', 'Unknown'); date_val = record.get('date', 'Unknown') # Renamed premise to premise_val
+        route_list_collection.delete_one({'_id': obj_id})
+        log_activity(session["username"], f"deleted route for Company: {company} Premise: {premise_val} Date: {date_val}", logs_collection)
+        flash("Record deleted successfully!", "success")
+    else:
+        flash("Record not found or failed to delete!", "error") # Clarified message
+    return redirect(url_for('route_table'))

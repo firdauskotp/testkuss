@@ -1,68 +1,140 @@
-# backend/__init__.py
-# This file makes 'backend' a package.
-from .app import app, fs, mail
+from .libs import *
+from .col import *
 
-# By importing app, fs, and mail here, they become accessible
-# as attributes of the 'backend' package, e.g., backend.app, backend.fs.
-# Blueprints can then use `from .. import fs` or `from ..app import fs`
-# depending on how they are structured.
-# The circular import issue arose because app.py imports blueprints,
-# which then tried to import fs from backend's __init__ before app.py finished defining fs.
+# Blueprint imports are moved after app, fs, and mail are defined to avoid circular imports.
 
-# A more robust solution is often the app factory pattern,
-# but this change aims to resolve the immediate circular import.
-# We are keeping fs and mail exposed here for now, as blueprints
-# like customer_actions_bp.py were trying `from .. import fs`.
-# The key is that app.py itself does not try to import `backend.fs` or `backend.mail`
-# at the top level, but rather defines them, and they are exposed here.
-# The problem was likely the timing and order of module initialization.
+app = Flask(__name__)
 
-# Let's re-evaluate:
-# conftest -> backend.app (causes backend/__init__ to run)
-# backend/__init__ -> .app (app, fs, mail)
-# .app -> blueprints -> customer_actions_bp
-# customer_actions_bp -> .. (which is backend, trying to get fs from backend/__init__)
+CORS(app)
 
-# The circularity is: backend/__init__.py imports .app.fs, but .app needs to be fully loaded.
-# While .app is loading, it loads blueprints, which load backend/__init__.py (for fs).
+load_dotenv()
 
-# Alternative for __init__.py:
-# Only import app here. Blueprints must import fs & mail directly from .app
-# from .app import app
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-# Let's try this minimal approach for __init__.py:
-# This makes `app` available as `backend.app`.
-# Blueprints will need to change how they import fs and mail.
-# from .app import app
-# No, the original problem was `cannot import name 'fs' from 'backend'`, so `fs` *needs* to be in `backend/__init__`.
-# The issue is that `app.py` imports blueprints *before* `fs` is truly "registered" at the package level.
+UPLOAD_FOLDER = "static/uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Let's stick to the original idea for this file:
-# from .app import app, fs, mail
-# And ensure that in app.py, blueprint imports are done carefully.
-# However, app.py already defines fs and mail BEFORE importing blueprints.
+scheduler = APScheduler()
 
-# The "partially initialized module" error means `backend` (i.e. `backend/__init__.py`)
-# is trying to import something from itself that isn't fully baked yet due to the recursion.
+# Key initializations before blueprint imports
+fs = gridfs.GridFS(db)
+mail = Mail(app) # mail needs app, so app must be defined before mail
 
-# What if `app.py` imports `fs` and `mail` from `col.py` or a new `extensions.py`?
-# `app.py`:
-#   `app = Flask()`
-#   `from .extensions import fs, mail, db` (initialize them in extensions.py)
-#   `from .blueprints import ...`
-#   `app.register_blueprint(...)`
+# Now import blueprints
+from .blueprints.auth_bp import auth_bp
+from .blueprints.user_management_bp import user_management_bp
+from .blueprints.customer_actions_bp import customer_actions_bp
+from .blueprints.staff_actions_bp import staff_actions_bp
+from .blueprints.data_reports_bp import data_reports_bp
+from .blueprints.forms_bp import forms_bp
+from .blueprints.global_settings_bp import global_settings_bp
+from .blueprints.api_helpers_bp import api_helpers_bp
 
-# `extensions.py`:
-#   `from flask_pymongo import MongoClient`
-#   `import gridfs`
-#   `# ... setup db ...`
-#   `fs = gridfs.GridFS(db)`
-#   `# ... setup mail ...`
-#   `mail = Mail()` -> needs app, so this must be `mail.init_app(app)` later.
+app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.getenv('SMTP_TEST_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
+app.config['MODE'] = os.getenv('MODE')
+app.config['MAIL_SENDER_ADDRESS'] = os.getenv('MAIL_SENDER_ADDRESS')
 
-# This is getting complex. The simplest fix is often to change the import style in the blueprints.
-# Instead of `from .. import fs`, use `from ..app import fs`.
+# mail instance is already created above, just ensure all configs are set before it's potentially used by scheduler or other parts.
 
-# So, for now, `backend/__init__.py` will be left as exposing app, fs, mail.
-# The fix will be in the blueprints.
-from .app import app, fs, mail
+@scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
+def scheduled_route_update():
+    replicate_monthly_routes(route_list_collection)
+
+scheduler.init_app(app)
+scheduler.start()
+
+# update_data() is now in api_helpers_bp
+@app.context_processor
+def inject_builtin_functions():
+    # Inject Python built-in functions into the Jinja2 environment
+    return dict(max=max, min=min)
+
+@app.template_filter('to_querystring')
+def to_querystring(query_params):
+    """Converts a dictionary into a query string."""
+    return urlencode(query_params)
+
+@app.template_filter('update_querystring')
+def update_querystring(querystring, key, value):
+    """Updates or adds a key-value pair in the query string."""
+    query_dict = dict([kv.split('=') for kv in querystring.split('&') if '=' in kv])
+    query_dict[key] = value
+    return urlencode(query_dict)
+
+# --- Dashboard Route ---
+@app.route("/dashboard")
+def dashboard():
+    if 'username' not in session:
+        flash("Please log in to access the dashboard.", "warning")
+        return redirect(url_for('auth.admin_login'))
+
+    # Fetch counts for dashboard cards
+    # Ensure these collection names match those imported from .col
+    help_request_count = collection.count_documents({}) # This is complaint_collection from col.py
+    change_count = change_collection.count_documents({})
+    refund_count = refund_collection.count_documents({})
+    remarks_count = remark_collection.count_documents({'urgent': False})
+    urgent_remarks_count = remark_collection.count_documents({'urgent': True})
+
+    return render_template(
+        "dashboard.html",
+        username=session["username"],
+        help_request_count=help_request_count,
+        change_count=change_count,
+        refund_count=refund_count,
+        remarks_count=remarks_count,
+        urgent_remarks_count=urgent_remarks_count
+    )
+# --- End Dashboard Route ---
+
+# Register Blueprints
+app.register_blueprint(auth_bp)
+app.register_blueprint(user_management_bp)
+app.register_blueprint(customer_actions_bp)
+app.register_blueprint(staff_actions_bp)
+app.register_blueprint(data_reports_bp)
+app.register_blueprint(forms_bp)
+app.register_blueprint(global_settings_bp)
+app.register_blueprint(api_helpers_bp)
+# Add other blueprints here as they are created
+
+# The dashboard route is the only one remaining directly in app.py
+# All other routes have been moved to their respective blueprints.
+# Comments below were kept for historical reference during refactoring but can be removed.
+# # customer_form() route is now in customer_actions_bp
+# # get_case_details() is now in staff_actions_bp
+# # staff_form() is now in staff_actions_bp
+# # index() route is now in auth_bp
+# # case_success() route is now in customer_actions_bp
+# # register() route is now in auth_bp
+# # register_admin() route is now in auth_bp
+# # delete_user() is now in user_management_bp
+# # delete_admin() is now in user_management_bp
+# # admin_login() route is now in auth_bp
+# # reports() route is now in data_reports_bp
+# # pack_list() route is now in data_reports_bp
+# # eo_list() route is now in data_reports_bp
+# # dashboard() route remains for now, but its login redirect is to auth.admin_login
+# # change_form() route is now in forms_bp
+# # view_remarks() route is now in data_reports_bp
+# # new_customer() route is now in forms_bp
+# # pre_service() route is now in forms_bp
+# # remark() route is now in forms_bp
+# # post_service() route is now in forms_bp
+# # view_users() is now in user_management_bp
+# # view_admins() is now in user_management_bp
+# # get_logs() is now in data_reports_bp
+# # profile() is now in data_reports_bp
+# # view_device() is now in data_reports_bp
+# # route_table() is now in data_reports_bp
+# # view_helpss() and view_help() are now in data_reports_bp (renamed to view_complaints_list)
+# # service() route is now in forms_bp
+# # eo_global() and device_global() routes are now in global_settings_bp
+# # save_all_eo_global_changes and save_model1_changes are now in global_settings_bp
+# # API routes like get-premises, get_image etc. are in api_helpers_bp

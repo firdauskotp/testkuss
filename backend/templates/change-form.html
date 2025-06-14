@@ -141,11 +141,29 @@
                     </div>
                     <div>
                         <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
-                        <select name="year" id="year" class="tailwind-input-class">
-                            {% for y in range( (current_date.year if current_date else 2024) , (current_date.year if current_date else 2024) + 6) %}
-                                <option value="{{ y }}">{{ y }}</option>
-                            {% endfor %}
-                        </select>
+                                                {% set year_for_range = 2024 %} {# Default year #}
+                        
+                        {% if current_date is defined and current_date %}
+                            {% if current_date is string %}
+                                {# current_date is a string. Try to extract year from its beginning. #}
+                                {# For example, if current_date is "2025" or "2025-01-10" #}
+                                {% set extracted_year_str = current_date[:4] %}
+                                {% set converted_year = extracted_year_str | int(0) %} {# Convert to int, default to 0 on failure #}
+                                {% if converted_year > 1900 and converted_year < 2200 %} {# Basic sanity check for a plausible year #}
+                                    {% set year_for_range = converted_year %}
+                                {% endif %}
+                            {% elif hasattr(current_date, 'year') and current_date.year is number %}
+                                {# current_date is an object (e.g., datetime) with a numeric .year attribute #}
+                                {% set year_for_range = current_date.year %}
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% for y in range(year_for_range, year_for_range + 6) %}
+                            {# Your content for each year 'y' goes here. For example: #}
+                            <option value="{{ y }}">{{ y }}</option>
+                        {% endfor %}
+                      
+                        
                     </div>
                 </div>
             </div>
