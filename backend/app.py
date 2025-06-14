@@ -334,7 +334,6 @@ def reports():
     else:
         flash("Please log in to access this page.", "warning")
         return redirect(url_for("login"))
-
 @app.route('/pack-list',methods=['GET'])
 def pack_list():
     if 'username' in session:
@@ -1377,6 +1376,7 @@ def get_device_details(premise_name):
     devices_data = list(device_list_collection.find({"tied_to_premise": premise_name})) # Renamed devices to devices_data
     for device_item in devices_data: device_item['_id'] = str(device_item['_id']) # Renamed device to device_item
     return jsonify(html=render_template("partials/device-details.html", devices=devices_data)) # Pass correct var
+
 
 @app.route('/service', methods=['GET', 'POST'])
 def service():
