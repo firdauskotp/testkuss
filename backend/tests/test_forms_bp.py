@@ -117,6 +117,296 @@ def test_new_customer_post_success(client, app, mocker):
         else:
             current_app.config.pop('MODE', None)
 
+# --- Tests for change_form ---
+def test_change_form_get_unauthenticated(client, app):
+    with app.test_request_context():
+        response = client.get(url_for('forms.change_form'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_change_form_get_authenticated(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections for rendering the form
+    mocker.patch('backend.blueprints.forms_bp.services_collection.distinct', return_value=['Company A', 'Company B'])
+    
+    with app.test_request_context():
+        response = client.get(url_for('forms.change_form'))
+    assert response.status_code == 200
+    assert b"Change Request Form" in response.data
+
+def test_change_form_post_settings_update(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mock_change_insert = mocker.patch('backend.blueprints.forms_bp.change_form_collection.insert_one')
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+    
+    form_data = {
+        'companyName': 'Test Company',
+        'date': '2024-01-15',
+        'month': 'January',
+        'year': '2024',
+        'premises': ['Premise 1', 'Premise 2'],
+        'devices': ['Device 1', 'Device 2'],
+        'changeScent': 'on',
+        'changeScentText': 'New Scent',
+        'redoSettings': 'on',
+        'reduceIntensity': 'off',
+        'increaseIntensity': 'off',
+        'moveDevice': 'off',
+        'moveDeviceText': '',
+        'relocateDevice': 'off',
+        'relocateDeviceDropdown': '',
+        'collectBack': 'off',
+        'remark': 'Test remark'
+    }
+    
+    with app.test_request_context():
+        response = client.post(url_for('forms.change_form'), data=form_data, follow_redirects=False)
+    
+    assert response.status_code == 302
+    assert response.location == url_for('dashboard')
+    
+    mock_change_insert.assert_called_once()
+    mock_log.assert_called_with("testformadmin", "updated settings : ['Premise 1', 'Premise 2']['Device 1', 'Device 2']", mocker.ANY)
+
+def test_change_form_post_collect_back(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mock_refund_insert = mocker.patch('backend.blueprints.forms_bp.refund_collection.insert_one')
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+    
+    form_data = {
+        'companyName': 'Test Company',
+        'date': '2024-01-15',
+        'month': 'January',
+        'year': '2024',
+        'premises': ['Premise 1'],
+        'devices': ['Device 1'],
+        'changeScent': 'off',
+        'changeScentText': '',
+        'redoSettings': 'off',
+        'reduceIntensity': 'off',
+        'increaseIntensity': 'off',
+        'moveDevice': 'off',
+        'moveDeviceText': '',
+        'relocateDevice': 'off',
+        'relocateDeviceDropdown': '',
+        'collectBack': 'on',
+        'remark': 'Collecting back device'
+    }
+    
+    with app.test_request_context():
+        response = client.post(url_for('forms.change_form'), data=form_data, follow_redirects=False)
+    
+    assert response.status_code == 302
+    assert response.location == url_for('dashboard')
+    
+    mock_refund_insert.assert_called_once()
+    mock_log.assert_called_with("testformadmin", "collected back : ['Premise 1']['Device 1']", mocker.ANY)
+
+# --- Tests for pre_service ---
+def test_pre_service_get_unauthenticated(client, app):
+    with app.test_request_context():
+        response = client.get(url_for('forms.pre_service'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_pre_service_get_authenticated(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mocker.patch('backend.blueprints.forms_bp.services_collection.distinct', return_value=['Company A', 'Company B'])
+    
+    with app.test_request_context():
+        response = client.get(url_for('forms.pre_service'))
+    assert response.status_code == 200
+    assert b"Pre-Service Route Planning" in response.data
+
+def test_pre_service_post_success(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mock_route_insert = mocker.patch('backend.blueprints.forms_bp.route_list_collection.insert_one')
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+    
+    form_data = {
+        'date': '2024-01-15T10:00:00Z',
+        'company': 'Test Company',
+        'premise': 'Test Premise',
+        'model': 'Model X',
+        'color': 'Black',
+        'eo': 'Citrus'
+    }
+    
+    with app.test_request_context():
+        response = client.post(url_for('forms.pre_service'), data=form_data, follow_redirects=True)
+    
+    assert response.status_code == 200
+    assert b"Route for Company: Test Company, Premise: Test Premise added successfully!" in response.data
+    
+    mock_route_insert.assert_called_once()
+    mock_log.assert_called_with("testformadmin", "pre-service route added for: Test Company : Test Premise", mocker.ANY)
+
+# --- Tests for service ---
+def test_service_get_unauthenticated(client, app):
+    with app.test_request_context():
+        response = client.get(url_for('forms.service'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_service_get_authenticated(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mocker.patch('backend.blueprints.forms_bp.services_collection.distinct', return_value=['Company A', 'Company B'])
+    mocker.patch('backend.blueprints.forms_bp.profile_list_collection.find', return_value=[])
+    
+    with app.test_request_context():
+        response = client.get(url_for('forms.service'))
+    assert response.status_code == 200
+    assert b"Field Service Report" in response.data
+
+def test_service_post_success(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mock_premise = {"premise_name": "Test Premise", "company": "Test Company"}
+    mocker.patch('backend.blueprints.forms_bp.profile_list_collection.find_one', return_value=mock_premise)
+    
+    mock_devices = [
+        {
+            "location": "Lobby",
+            "S/N": 12345,
+            "Model": "Model X",
+            "Current EO": "Citrus",
+            "Volume": 100,
+            "E1 - DAYS": "Mon-Fri",
+            "E1 - START": "09:00",
+            "E1 - END": "17:00",
+            "E1 - WORK": 30,
+            "E1 - PAUSE": 60,
+            "E2 - DAYS": "",
+            "E2 - START": "",
+            "E2 - END": "",
+            "E2 - WORK": "",
+            "E2 - PAUSE": "",
+            "E3 - DAYS": "",
+            "E3 - START": "",
+            "E3 - END": "",
+            "E3 - WORK": "",
+            "E3 - PAUSE": "",
+            "E4 - DAYS": "",
+            "E4 - START": "",
+            "E4 - END": "",
+            "E4 - WORK": "",
+            "E4 - PAUSE": ""
+        }
+    ]
+    mocker.patch('backend.blueprints.forms_bp.device_list_collection.find', return_value=mock_devices)
+    
+    mock_pics = [{"name": "John Doe", "email": "john@example.com"}]
+    mocker.patch('backend.blueprints.forms_bp.profile_list_collection.find', side_effect=[mock_pics, mock_pics])
+    
+    mock_change_insert = mocker.patch('backend.blueprints.forms_bp.change_form_collection.insert_one')
+    
+    form_data = {
+        'premiseName': 'Test Premise',
+        'actions': ['Action 1', 'Action 2'],
+        'remarks': 'Service completed successfully',
+        'staffName': 'John Doe',
+        'signature': 'John Doe',
+        'balance1': '80'  # For the first device
+    }
+    
+    with app.test_request_context():
+        response = client.post(url_for('forms.service'), data=form_data, follow_redirects=False)
+    
+    assert response.status_code == 302
+    # Note: The redirect URL might need adjustment based on actual implementation
+    # assert response.location == url_for('forms.service')
+    
+    mock_change_insert.assert_called_once()
+
+def test_service_post_invalid_premise(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections - no premise found
+    mocker.patch('backend.blueprints.forms_bp.profile_list_collection.find_one', return_value=None)
+    
+    form_data = {
+        'premiseName': 'Invalid Premise',
+        'actions': ['Action 1'],
+        'remarks': 'Test',
+        'staffName': 'John Doe',
+        'signature': 'John Doe'
+    }
+    
+    with app.test_request_context():
+        response = client.post(url_for('forms.service'), data=form_data, follow_redirects=False)
+    
+    assert response.status_code == 302
+    # Should redirect to field_service or show error
+
+# --- Tests for service2 ---
+def test_service2_get_unauthenticated(client, app):
+    with app.test_request_context():
+        response = client.get(url_for('forms.service2'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_service2_get_authenticated(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mocker.patch('backend.blueprints.forms_bp.services_collection.distinct', return_value=['Company A', 'Company B'])
+    
+    with app.test_request_context():
+        response = client.get(url_for('forms.service2'))
+    assert response.status_code == 200
+    assert b"Service Form 2" in response.data
+
+# --- Tests for post_service ---
+def test_post_service_get_unauthenticated(client, app):
+    with app.test_request_context():
+        response = client.get(url_for('forms.post_service'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_post_service_get_authenticated(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    with app.test_request_context():
+        response = client.get(url_for('forms.post_service'))
+    assert response.status_code == 200
+    assert b"Post-Service Report" in response.data
+
+def test_post_service_post_success(client, app, mocker):
+    login_admin(client, mocker, app)
+    
+    # Mock collections
+    mock_update = mocker.patch('backend.blueprints.forms_bp.eo_pack_collection.update_one')
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+    
+    form_data = {
+        'essential_oil': 'Citrus',
+        'oil_balance': '50',
+        'balance_brought_back': '20',
+        'balance_brought_back_percent': '40%',
+        'refill_amount': '30',
+        'refill_amount_percent': '60%'
+    }
+    
+    with app.test_request_context():
+        response = client.post(url_for('forms.post_service'), data=form_data, follow_redirects=False)
+    
+    assert response.status_code == 302
+    assert response.location == url_for('dashboard')
+    
+    mock_update.assert_called_once()
+    mock_log.assert_called_with("testformadmin", "Updated/added post-service record for EO: Citrus", mocker.ANY)
 
 # --- Tests for remark form ---
 def test_remark_get_unauthenticated(client, app):

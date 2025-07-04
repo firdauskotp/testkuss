@@ -1,19 +1,37 @@
 # Use the official Python 3.8 slim image as the base image
 FROM python:3.11-slim
 
-# Set the working directory within the container
-WORKDIR /APP
+# Add Dokploy-specific labels
+LABEL maintainer="dokploy"
+LABEL application="kuss"
 
-# Copy the necessary files and directories into the container
-COPY . /APP/
+# Install Node.js and npm first
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-WORKDIR /APP/backend/
-# Upgrade pip and install Python dependencies
-RUN pip3 install --upgrade pip && pip install --no-cache-dir -r requirements.txt
-RUN npm i && npm run build:css 
+# Set working directory
+WORKDIR /app
 
-# Expose port 5000 for the Flask application
-EXPOSE 3000
+# Copy package files and install npm dependencies
+COPY package*.json ./
+RUN npm install
 
-# Define the command to run the Flask application using Gunicorn
-CMD ["gunicorn", "app:app", "-b", "0.0.0.0:5000", "-w", "4"]
+# Copy application files
+COPY . .
+
+# Build CSS and install Python dependencies
+RUN npm run build:css && \
+    cd backend && \
+    pip3 install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Use PORT environment variable for Heroku compatibility
+ENV PORT=5000
+EXPOSE $PORT
+
+# Update CMD to match Procfile format
+CMD cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 4

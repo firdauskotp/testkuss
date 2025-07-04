@@ -13,3 +13,4 @@ env
 # if not using a build server to generate it on the fly.
 # However, if you were using a more complex build setup (e.g. with Parcel, Webpack),
 # you might have a /dist or /build folder to ignore.
+project-analysis.md

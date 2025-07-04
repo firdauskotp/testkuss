@@ -132,6 +132,271 @@ def test_logout(client, mocker):
 
     mock_log.assert_called_once_with("testadmin", "logout", mocker.ANY)
 
-# TODO: Add tests for client_login (GET, POST success/failure)
-# TODO: Add tests for register (GET access control, POST success, duplicate email, password mismatch)
-# TODO: Add tests for register_admin (GET access control, POST success, duplicate username, password mismatch)
+# --- Tests for client_login ---
+def test_client_login_get(client, app):
+    """Test GET request to client_login page."""
+    with app.app_context():
+        response = client.get(url_for('auth.client_login'))
+    assert response.status_code == 200
+    # Should render the same template as index (client login form)
+    assert b"Client Login" in response.data
+
+def test_client_login_post_success(client, mocker, app):
+    """Test successful client login POST request."""
+    # Mock database find_one to return a valid client user
+    mock_client_user = {
+        "_id": "someclientid",
+        "email": "testclient@example.com",
+        "password": "pbkdf2:sha256:..." # A real hash of 'password'
+    }
+    mocker.patch('backend.blueprints.auth_bp.login_cust_collection.find_one', return_value=mock_client_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+
+    with app.app_context():
+        response = client.post(url_for('auth.client_login'), data={
+            'email': 'testclient@example.com',
+            'password': 'password'
+        }, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('customer.customer_form')
+
+    with client.session_transaction() as sess:
+        assert sess['user_id'] == "someclientid"
+        assert sess['customer_email'] == "testclient@example.com"
+
+def test_client_login_post_invalid_email(client, mocker, app):
+    """Test client login POST with invalid email."""
+    mocker.patch('backend.blueprints.auth_bp.login_cust_collection.find_one', return_value=None)
+
+    with app.app_context():
+        response = client.post(url_for('auth.client_login'), data={
+            'email': 'wrong@example.com',
+            'password': 'password'
+        }, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('auth.index')
+
+    with client.session_transaction() as sess:
+        assert 'user_id' not in sess
+        assert 'customer_email' not in sess
+
+def test_client_login_post_invalid_password(client, mocker, app):
+    """Test client login POST with invalid password."""
+    mock_client_user = {"email": "testclient@example.com", "password": "pbkdf2:sha256:..."}
+    mocker.patch('backend.blueprints.auth_bp.login_cust_collection.find_one', return_value=mock_client_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=False)
+
+    with app.app_context():
+        response = client.post(url_for('auth.client_login'), data={
+            'email': 'testclient@example.com',
+            'password': 'wrongpassword'
+        }, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('auth.index')
+
+    with client.session_transaction() as sess:
+        assert 'user_id' not in sess
+        assert 'customer_email' not in sess
+
+# --- Tests for register (client user registration) ---
+def test_register_get_unauthenticated(client, app):
+    """Test GET request to register page without admin login."""
+    with app.app_context():
+        response = client.get(url_for('auth.register'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_register_get_authenticated(client, app, mocker):
+    """Test GET request to register page with admin login."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.auth_bp.log_activity')
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then access register page
+        response = client.get(url_for('auth.register'))
+
+    assert response.status_code == 200
+    assert b"Register Client User" in response.data
+
+def test_register_post_success(client, app, mocker):
+    """Test successful client user registration."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.auth_bp.log_activity')
+
+    # Mock customer collection operations
+    mocker.patch('backend.blueprints.auth_bp.login_cust_collection.find_one', return_value=None)  # No existing user
+    mock_insert = mocker.patch('backend.blueprints.auth_bp.login_cust_collection.insert_one')
+    mock_log = mocker.patch('backend.blueprints.auth_bp.log_activity')
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then register new client
+        response = client.post(url_for('auth.register'), data={
+            'email': 'newclient@example.com',
+            'password': 'newpassword',
+            'confirm_password': 'newpassword'
+        }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Client user registered successfully!" in response.data
+
+    mock_insert.assert_called_once()
+    mock_log.assert_called_with("admin", "added client user: newclient@example.com", mocker.ANY)
+
+def test_register_post_password_mismatch(client, app, mocker):
+    """Test client registration with password mismatch."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then try to register with mismatched passwords
+        response = client.post(url_for('auth.register'), data={
+            'email': 'newclient@example.com',
+            'password': 'newpassword',
+            'confirm_password': 'differentpassword'
+        }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Passwords do not match" in response.data
+
+def test_register_post_duplicate_email(client, app, mocker):
+    """Test client registration with duplicate email."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+
+    # Mock existing user found
+    mocker.patch('backend.blueprints.auth_bp.login_cust_collection.find_one', return_value={"email": "existing@example.com"})
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then try to register with existing email
+        response = client.post(url_for('auth.register'), data={
+            'email': 'existing@example.com',
+            'password': 'newpassword',
+            'confirm_password': 'newpassword'
+        }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"This email is already registered" in response.data
+
+# --- Tests for register_admin (admin user registration) ---
+def test_register_admin_get_unauthenticated(client, app):
+    """Test GET request to register_admin page without admin login."""
+    with app.app_context():
+        response = client.get(url_for('auth.register_admin'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_register_admin_get_authenticated(client, app, mocker):
+    """Test GET request to register_admin page with admin login."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.auth_bp.log_activity')
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then access register_admin page
+        response = client.get(url_for('auth.register_admin'))
+
+    assert response.status_code == 200
+    assert b"Register Admin User" in response.data
+
+def test_register_admin_post_success(client, app, mocker):
+    """Test successful admin user registration."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.auth_bp.log_activity')
+
+    # Mock admin collection operations
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', side_effect=[
+        mock_admin_user,  # First call for login
+        None  # Second call for new admin check (no existing user)
+    ])
+    mock_insert = mocker.patch('backend.blueprints.auth_bp.login_collection.insert_one')
+    mock_log = mocker.patch('backend.blueprints.auth_bp.log_activity')
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then register new admin
+        response = client.post(url_for('auth.register_admin'), data={
+            'username': 'newadmin',
+            'password': 'newpassword',
+            'confirm_password': 'newpassword'
+        }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Admin user registered successfully!" in response.data
+
+    mock_insert.assert_called_once()
+    mock_log.assert_called_with("admin", "added admin user: newadmin", mocker.ANY)
+
+def test_register_admin_post_password_mismatch(client, app, mocker):
+    """Test admin registration with password mismatch."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then try to register with mismatched passwords
+        response = client.post(url_for('auth.register_admin'), data={
+            'username': 'newadmin',
+            'password': 'newpassword',
+            'confirm_password': 'differentpassword'
+        }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Passwords do not match" in response.data
+
+def test_register_admin_post_duplicate_username(client, app, mocker):
+    """Test admin registration with duplicate username."""
+    # Login as admin first
+    mock_admin_user = {"_id": "adminid", "username": "admin", "password": "hashed"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_admin_user)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+
+    # Mock existing admin found
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', side_effect=[
+        mock_admin_user,  # First call for login
+        {"username": "existingadmin"}  # Second call for new admin check (existing user)
+    ])
+
+    with app.app_context():
+        # Login first
+        client.post(url_for('auth.admin_login'), data={'username': 'admin', 'password': 'password'})
+        # Then try to register with existing username
+        response = client.post(url_for('auth.register_admin'), data={
+            'username': 'existingadmin',
+            'password': 'newpassword',
+            'confirm_password': 'newpassword'
+        }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"This username is already registered" in response.data
