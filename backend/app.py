@@ -1198,20 +1198,43 @@ def profile():
         try: # Ensure year_filter is an int for the query
             query['$expr'] = {'$and': [{'$in': [{'$month': '$created_at'}, month_list]}, {'$eq': [{'$year': '$created_at'}, int(year_filter)]}]}
         except ValueError: flash("Invalid year format for filter.", "warning")
+
     records = list(profile_list_collection.find(query))
-    grouped_data = defaultdict(lambda: {"company": "", "industry": "", "premise_name": "", "premise_area": "", "premise_address": "", "month": "", "year": "", "pics": []})
-    for record_item in records: # Renamed record to record_item
+
+    grouped_data = defaultdict(lambda: {"_id": None, "company": "", "industry": "", "premise_name": "", "premise_area": "", "premise_address": "", "month": "", "year": "", "pics": []})
+
+    for record_item in records:
         created_at = record_item.get("created_at")
         if "premise_name" in record_item:
             key = (record_item["company"], record_item["premise_name"])
-            grouped_data[key].update({"company": record_item["company"], "industry": record_item.get("industry", ""), "premise_name": record_item["premise_name"], "premise_area": record_item.get("premise_area", ""), "premise_address": record_item.get("premise_address", ""), "month": created_at.month if created_at else "", "year": created_at.year if created_at else ""})
+            if grouped_data[key]['_id'] is None:
+                grouped_data[key].update({
+                    "_id": str(record_item["_id"]),
+                    "company": record_item["company"],
+                    "industry": record_item.get("industry", ""),
+                    "premise_name": record_item["premise_name"],
+                    "premise_area": record_item.get("premise_area", ""),
+                    "premise_address": record_item.get("premise_address", ""),
+                    "month": created_at.month if created_at else "",
+                    "year": created_at.year if created_at else ""
+                })
         elif "tied_to_premise" in record_item:
             key = (record_item["company"], record_item["tied_to_premise"])
             if key in grouped_data:
-                 grouped_data[key]["pics"].append({"name": record_item["name"], "designation": record_item.get("designation", ""), "contact": record_item.get("contact", ""), "email": record_item.get("email", "")})
+                pic_info = {
+                    "_id": str(record_item["_id"]),
+                    "name": record_item.get("name"),
+                    "designation": record_item.get("designation", ""),
+                    "contact": record_item.get("contact", ""),
+                    "email": record_item.get("email", "")
+                }
+                grouped_data[key]["pics"].append(pic_info)
+
     structured_data = list(grouped_data.values())
-    total_records = len(structured_data); total_pages = (total_records + limit - 1) // limit
+    total_records = len(structured_data)
+    total_pages = (total_records + limit - 1) // limit
     paginated_data = structured_data[(page - 1) * limit: page * limit]
+
     query_params = request.args.to_dict()
     return render_template('profile.html', page=page, total_pages=total_pages, limit=limit, pagination_base_url=f"{request.path}?", query_params=query_params, data=paginated_data)
 
@@ -1305,21 +1328,51 @@ def route_table():
 
 @app.route('/edit_record/<record_id>', methods=['POST'])
 def edit_record(record_id):
-    if 'username' not in session: return jsonify({"error": "Unauthorized"}), 403
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
     data = request.json
-    # This route is generic. Determine collection based on fields or an explicit type field if added to data.
-    # For now, assuming it's for profile_list_collection based on previous structure.
-    # A 'collection_type' field in data would be better.
-    collection_to_update = profile_list_collection
 
-    # Ensure ObjectId is valid
-    try: obj_id = ObjectId(record_id)
-    except: return jsonify({"success": False, "message": "Invalid record ID format"}), 400
+    try:
+        obj_id = ObjectId(record_id)
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Invalid record ID format: {e}"}), 400
 
-    result = collection_to_update.update_one({"_id": obj_id}, {"$set": data})
-    if result.modified_count > 0: return jsonify({"success": True, "message": "Record updated"})
-    elif result.matched_count > 0: return jsonify({"success": True, "message": "No changes made to the record"})
-    return jsonify({"success": False, "message": "Update failed or record not found"})
+    if 'pics' in data and isinstance(data['pics'], list) and data['pics']:
+        pic_to_update = data['pics'][0]
+
+        # Find the specific PIC record to update using its unique _id
+        # This requires that the _id for the PIC is available.
+        # Assuming the record_id passed to the route is the PIC's _id.
+
+        update_fields = {
+            "name": pic_to_update.get("name"),
+            "designation": pic_to_update.get("designation"),
+            "contact": pic_to_update.get("contact"),
+            "email": pic_to_update.get("email")
+        }
+
+        result = profile_list_collection.update_one(
+            {"_id": obj_id},
+            {"$set": update_fields}
+        )
+
+        if result.modified_count > 0:
+            log_activity(session["username"], f"Updated PIC record {record_id}", logs_collection)
+            return jsonify({"success": True, "message": "PIC updated successfully"})
+        elif result.matched_count > 0:
+            return jsonify({"success": True, "message": "No changes made to the PIC record"})
+        else:
+            return jsonify({"success": False, "message": "PIC record not found"})
+
+    else:
+        # Fallback for other types of record updates if necessary
+        result = profile_list_collection.update_one({"_id": obj_id}, {"$set": data})
+        if result.modified_count > 0:
+            return jsonify({"success": True, "message": "Record updated"})
+        elif result.matched_count > 0:
+            return jsonify({"success": True, "message": "No changes made to the record"})
+        return jsonify({"success": False, "message": "Update failed or record not found"})
 
 @app.route('/delete_route', methods=['POST'])
 def delete_route():
