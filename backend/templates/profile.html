@@ -90,34 +90,30 @@
         </thead>
         <tbody>
             {% for item in data %}
-            <tr id="row-{{ item._id }}">
-                <td>{{ item.company }}</td>
-                <td>{{ item.industry }}</td>
-                <td>{{ item.premise_name }}</td>
-                <td>{{ item.premise_area }}</td>
-                <td>{{ item.premise_address }}</td>
-                <td>
-                    {% if item.pics %}
+                {% for pic in item.pics %}
+                <tr id="row-{{ pic._id }}">
+                    <td>{{ item.company }}</td>
+                    <td>{{ item.industry }}</td>
+                    <td>{{ item.premise_name }}</td>
+                    <td>{{ item.premise_area }}</td>
+                    <td>{{ item.premise_address }}</td>
+                    <td>
                         <ul>
-                        {% for pic in item.pics %}
                             <li><strong>PIC Name = <span class="editable" data-field="name">{{ pic.name }}</span></strong></li>
                             <li>PIC Designation = (<span class="editable" data-field="designation">{{ pic.designation }}</span>)</li>
-                             <li>PIC Contact = <span class="editable" data-field="contact">{{ pic.contact }}</span></li>
-                             <li>PIC Email = <span class="editable" data-field="email">{{ pic.email }}</span></li>
-                        {% endfor %}
+                            <li>PIC Contact = <span class="editable" data-field="contact">{{ pic.contact }}</span></li>
+                            <li>PIC Email = <span class="editable" data-field="email">{{ pic.email }}</span></li>
                         </ul>
-                    {% else %}
-                        No PIC assigned
-                    {% endif %}
-                </td>
-                <td>{{ item.month }}</td>
-                <td>{{ item.year }}</td>
-                <td>
-                    <button class="btn btn-warning btn-sm edit-btn" data-id="{{ item._id }}">Edit</button>
-                    <button class="btn btn-success btn-sm save-btn d-none" data-id="{{ item._id }}">Save</button>
-                    <button class="btn btn-danger btn-sm delete-btn" data-id="{{ item._id }}">Delete</button>
-                </td>
-            </tr>
+                    </td>
+                    <td>{{ item.month }}</td>
+                    <td>{{ item.year }}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm edit-btn" data-id="{{ pic._id }}">Edit</button>
+                        <button class="btn btn-success btn-sm save-btn d-none" data-id="{{ pic._id }}">Save</button>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="{{ pic._id }}">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
             {% endfor %}
         </tbody>
     </table></div>
@@ -245,17 +241,13 @@
                 button.addEventListener("click", function () {
                     selectedRow = this.closest("tr");
                     const recordId = this.getAttribute("data-id");
-                    updatedData = {
-                        pics: []
-                    };
+                    updatedData = {};
     
-                    let picData = {};
                     selectedRow.querySelectorAll(".editable").forEach(cell => {
                         let field = cell.getAttribute("data-field");
                         let value = cell.innerText.trim();
-                        picData[field] = value;
+                        updatedData[field] = value;
                     });
-                    updatedData.pics.push(picData);
     
                     // Since we are editing, we pass the recordId to the save function
                     document.getElementById("confirmSave").setAttribute("data-id", recordId);

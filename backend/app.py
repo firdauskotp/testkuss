@@ -1338,41 +1338,18 @@ def edit_record(record_id):
     except Exception as e:
         return jsonify({"success": False, "message": f"Invalid record ID format: {e}"}), 400
 
-    if 'pics' in data and isinstance(data['pics'], list) and data['pics']:
-        pic_to_update = data['pics'][0]
+    result = profile_list_collection.update_one(
+        {"_id": obj_id},
+        {"$set": data}
+    )
 
-        # Find the specific PIC record to update using its unique _id
-        # This requires that the _id for the PIC is available.
-        # Assuming the record_id passed to the route is the PIC's _id.
-
-        update_fields = {
-            "name": pic_to_update.get("name"),
-            "designation": pic_to_update.get("designation"),
-            "contact": pic_to_update.get("contact"),
-            "email": pic_to_update.get("email")
-        }
-
-        result = profile_list_collection.update_one(
-            {"_id": obj_id},
-            {"$set": update_fields}
-        )
-
-        if result.modified_count > 0:
-            log_activity(session["username"], f"Updated PIC record {record_id}", logs_collection)
-            return jsonify({"success": True, "message": "PIC updated successfully"})
-        elif result.matched_count > 0:
-            return jsonify({"success": True, "message": "No changes made to the PIC record"})
-        else:
-            return jsonify({"success": False, "message": "PIC record not found"})
-
+    if result.modified_count > 0:
+        log_activity(session["username"], f"Updated PIC record {record_id}", logs_collection)
+        return jsonify({"success": True, "message": "PIC updated successfully"})
+    elif result.matched_count > 0:
+        return jsonify({"success": True, "message": "No changes made to the PIC record"})
     else:
-        # Fallback for other types of record updates if necessary
-        result = profile_list_collection.update_one({"_id": obj_id}, {"$set": data})
-        if result.modified_count > 0:
-            return jsonify({"success": True, "message": "Record updated"})
-        elif result.matched_count > 0:
-            return jsonify({"success": True, "message": "No changes made to the record"})
-        return jsonify({"success": False, "message": "Update failed or record not found"})
+        return jsonify({"success": False, "message": "PIC record not found"})
 
 @app.route('/delete_route', methods=['POST'])
 def delete_route():
