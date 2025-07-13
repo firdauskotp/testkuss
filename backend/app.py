@@ -908,17 +908,20 @@ def new_customer():
 
 @app.route('/pre-service',  methods=['GET', 'POST'])
 def pre_service():
-    # if "username" not in session: return redirect(url_for('login'))
-    # companies = services_collection.distinct('company')
-    # if request.method == 'POST':
-    #     date_str = request.form.get('date')
-    #     date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
-    #     entry = {"date": date_obj, "company": request.form.get('company'), "premise": request.form.get('premise'), "model": request.form.get('model'), "color": request.form.get('color'), "eo": request.form.get('eo')}
-    #     route_list_collection.insert_one(entry)
-    #     flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
-    #     log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
-    #     return render_template('pre-service.html', companies=companies)
-    # return render_template('pre-service.html', companies=companies)
+    if "username" not in session: return redirect(url_for('login'))
+    companies = services_collection.distinct('company')
+    if request.method == 'POST':
+        date_str = request.form.get('date')
+        date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
+        entry = {"date": date_obj, "company": request.form.get('company'), "premise": request.form.get('premise'), "model": request.form.get('model'), "color": request.form.get('color'), "eo": request.form.get('eo')}
+        route_list_collection.insert_one(entry)
+        flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
+        log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
+        return render_template('pre-service.html', companies=companies)
+    return render_template('pre-service.html', companies=companies)
+
+@app.route('/service-form', methods=['GET', 'POST'])
+def field_service():
     if 'username' not in session:
         return redirect(url_for('login'))
 
