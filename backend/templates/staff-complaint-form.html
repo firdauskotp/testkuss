@@ -166,7 +166,7 @@
 {% for action in action_list %}
   <div class="form-check">
     <input class="form-check-input" type="checkbox" name="actions" value="{{ action }}" id="{{ action|replace(' ', '') }}"
-      {% if case_data.get("actions_done") and action in case_data["actions_done"] %}checked{% endif %}>
+      {% if case_data.get("actions_done") and action in case_data["actions_done"] %}checked{% endif %} {% if case_data.status == 'closed' %}disabled{% endif %}>
     <label class="form-check-label" for="{{ action|replace(' ', '') }}">{{ action }}</label>
   </div>
 {% endfor %}
@@ -175,19 +175,19 @@
             <h5 class="acknowledgement-title">ACKNOWLEDGEMENT</h5>
             <div class="form-group">
               <label for="remarks-acknowledgement">Remarks (if any):</label>
-              <textarea class="form-control" id="remarks-acknowledgement" name="remarks" rows="3"></textarea>
+              <textarea class="form-control" id="remarks-acknowledgement" name="remarks" rows="3" {% if case_data.status == 'closed' %}disabled{% endif %}>{{ case_data.get('remarks', '') }}</textarea>
 
             </div>
             <div class="form-check">
               <label class="form-check-label" for="caseClosedOrOpen">Case Closed? </label></div>
             <div class="form-check">
 
-              <input class="form-check-input" type="radio" name="case_closed" value="Yes" id="caseClosedYes">
+              <input class="form-check-input" type="radio" name="case_closed" value="Yes" id="caseClosedYes" {% if case_data.status == 'closed' %}checked{% endif %} {% if case_data.status == 'closed' %}disabled{% endif %}>
 
               <label class="form-check-label" for="caseClosedYes"> Yes</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="case_closed" value="No" id="caseClosedNo">
+              <input class="form-check-input" type="radio" name="case_closed" value="No" id="caseClosedNo" {% if case_data.status == 'closed' %}disabled{% endif %}>
 
               <label class="form-check-label" for="caseClosedNo">No, revisit on:</label>
             </div>
@@ -201,11 +201,11 @@
                   </tr>
                   <tr>
                     <td>
-                      <input type="date" class="form-control" name="appointment_date" value="{{ case_data.get('revisit_date', '') }}">
+                      <input type="date" class="form-control" name="appointment_date" value="{{ case_data.get('revisit_date', '') }}" {% if case_data.status == 'closed' %}disabled{% endif %}>
 
                     </td>
                     <td>
-                      <input type="time" class="form-control" name="appointment_time" value="{{ case_data.get('revisit_time', '') }}">
+                      <input type="time" class="form-control" name="appointment_time" value="{{ case_data.get('revisit_time', '') }}" {% if case_data.status == 'closed' %}disabled{% endif %}>
 
                     </td>
                   </tr>
@@ -216,7 +216,7 @@
             <!-- Staff Name -->
             <div class="form-group">
               <label for="staffName">Staff Name:</label>
-              <input type="text" class="form-control" id="staffName" name="staff_name">
+              <input type="text" class="form-control" id="staffName" name="staff_name" value="{{ case_data.get('staff_name', '') }}" {% if case_data.status == 'closed' %}disabled{% endif %}>
             </div>
 
             <!-- Signature -->
@@ -225,12 +225,14 @@
               <div class="signature-container">
                   <canvas id="signature-pad" class="signature-pad"></canvas>
               </div>
-              <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
+              <button type="button" class="btn btn-secondary mt-2" id="clear-signature" {% if case_data.status == 'closed' %}disabled{% endif %}>Clear Signature</button>
               <input type="hidden" name="signature" id="signature-input">
           </div>
 
       <!-- Submit Button -->
+      {% if case_data.status != 'closed' %}
       <button type="submit" class="btn btn-primary btn-block">Submit Case</button>
+      {% endif %}
     </form>
 
     <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">

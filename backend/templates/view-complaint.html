@@ -40,6 +40,7 @@
             <thead class="table-dark">
                 <tr>
                     <th>Case Number</th>
+                    <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -47,9 +48,14 @@
                 {% for case in cases %}
                 <tr>
                     <td>{{ case.case_no }}</td>
+                    <td>{{ case.status }}</td>
                     <td>
                         <a href="{{ url_for('staff_form', case_no=case.case_no) }}" class="btn btn-primary">
-                            View Details
+                            {% if case.status == 'open' %}
+                                Edit
+                            {% else %}
+                                View
+                            {% endif %}
                         </a>
                     </td>
                 </tr>

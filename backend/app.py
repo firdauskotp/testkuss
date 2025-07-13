@@ -101,7 +101,7 @@ def customer_form():
         collection.insert_one({
             "case_no": case_no, "premise_name": premise_name, "location": location,
             "image_id": image_id, "model": model, "issues": issues, "remarks": remarks,
-            "email": user_email, "created_at": datetime.now(),
+            "email": user_email, "created_at": datetime.now(), "status": "open"
         })
         send_email_to_customer(case_no, user_email, app.config['MAIL_USERNAME'], mail)
         send_email_to_admin(case_no, user_email, app.config['MAIL_USERNAME'], mail)
@@ -123,6 +123,9 @@ def staff_form(case_no):
         return redirect(url_for("customer_form"))
     case_data["_id"] = str(case_data["_id"])
     if request.method == "POST":
+        if case_data.get("status") == "closed":
+            flash("This case is closed and cannot be edited.", "warning")
+            return redirect(url_for("view_help"))
         actions_done = request.form.getlist("actions")
         remarks = request.form.get("remarks", "")
         case_closed = request.form.get("case_closed")
@@ -136,9 +139,9 @@ def staff_form(case_no):
             if file and file.filename:
                 image_id = fs.put(file.read(), filename=file.filename, content_type=file.content_type)
         if case_closed == "Yes":
-            collection.delete_one({"case_no": case_no})
-            flash(f"Case #{case_no} has been closed and removed.", "success")
-            return render_template("view-complaint.html")
+            collection.update_one({"case_no": case_no}, {"$set": {"status": "closed"}})
+            flash(f"Case #{case_no} has been closed.", "success")
+            return redirect(url_for("view_help"))
         collection.update_one(
             {"case_no": case_no},
             {"$set": {
@@ -1376,7 +1379,7 @@ def view_helpss(): #This route seems unused
 @app.route("/view-help-list", methods=['POST','GET'])
 def view_help():
     if 'username' not in session: return redirect(url_for('login'))
-    cases = list(collection.find({}, {"case_no": 1, "_id":0}))
+    cases = list(collection.find({}))
     return render_template("view-complaint.html", cases=cases)
 
 @app.route("/image/<file_id>")
