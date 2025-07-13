@@ -1044,8 +1044,8 @@ def field_service():
                            companies=companies,
                            premises=premises)
 
-@app.route('/get-premises/<company>')
-def get_premises(company):
+@app.route('/get-premises-for-company/<company>')
+def get_premises_for_company(company):
     premises = services_collection.distinct('Premise Name', {'company': company})
     return jsonify(premises)
 

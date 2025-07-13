@@ -101,7 +101,7 @@
     <script>
         document.getElementById('company').addEventListener('change', function() {
             let company = this.value;
-            axios.get(`/get-premises/${company}`)
+            axios.get(`/get-premises-for-company/${company}`)
                 .then(response => {
                     let premiseDropdown = document.getElementById('premise');
                     premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
