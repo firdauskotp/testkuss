@@ -28,6 +28,8 @@ straw_list_collection = dashboard_db['straw_mist_heads_pack']
 profile_list_collection = dashboard_db['profile']
 device_list_collection = dashboard_db['device']
 route_list_collection = dashboard_db['routes']
+industry_list_collection = dashboard_db['industry']
+
 
 # customer_collection = dashboard_db['customer']
 # device_collection = dashboard_db['device']

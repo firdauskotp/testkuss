@@ -58,7 +58,12 @@
                 </div>
                 <div class="mb-3">
                     <label for="industry" class="form-label">Industry</label>
-                    <input type="text" id="industry" name="industry" class="form-control" placeholder="Enter industry type" required>
+                    <select class="form-select mb-2" name="industry" id="industry" required>
+                        <option selected disabled>Select an industry</option>
+                        {% for eo in industries %}
+                            <option>{{ eo.eo_name }}</option>
+                        {% endfor %}
+                    </select>
                     <div class="invalid-feedback"> Field is required.</div>
 
                 </div>

@@ -712,6 +712,9 @@ def new_customer():
     eo_raw = list(eo_pack_collection.find().sort("order", 1))
     essential_oils = [{k: v for k, v in eo.items() if k != '_id'} for eo in eo_raw]
 
+    industry_raw = list(industry_list_collection.find().sort("order", 1))
+    industries = [{k: v for k, v in eo.items() if k != '_id'} for eo in industry_raw]
+
     if request.method == "POST":
         date_str = request.form.get("dateCreated")
         dateCreated = datetime.strptime(date_str, "%Y-%m-%d") if date_str else None
@@ -898,7 +901,7 @@ def new_customer():
         flash(f"Company {companyName} added successfully!", "success")
         return redirect(url_for("new_customer"))
 
-    return render_template('new-customer.html', models=models, essential_oils=essential_oils)
+    return render_template('new-customer.html', models=models, essential_oils=essential_oils, industries = industries)
 
 @app.route('/pre-service',  methods=['GET', 'POST'])
 def pre_service():
@@ -1545,6 +1548,39 @@ def get_eos():
 def get_premises_json(company):
     premises_list = services_collection.distinct('Premise Name', {'company': company})
     return jsonify({'premises': sorted(list(set(premises_list)))})
+
+@app.route('/industry-global')
+def industry_global():
+    if 'username' not in session: return redirect(url_for('login'))
+    eos = list(industry_list_collection.find().sort("order", 1))
+    return render_template('industry-list.html', eos=eos)
+
+@app.route('/save_all_industry_global_changes', methods=['POST'])
+def save_all_industry_global_changes():
+    data = request.json
+    added = data.get('added', [])
+    edited = data.get('edited', [])
+    deleted = data.get('deleted', [])
+    visual_order = data.get('visual_order', [])
+    for eo_item in added: # Renamed eo to eo_item
+        if industry_list_collection.find_one({'eo_name': eo_item['eo_name']}):
+            return jsonify({'status': 'error', 'message': f"EO name '{eo_item['eo_name']}' already exists."}), 400
+        industry_list_collection.insert_one({"eo_name": eo_item['eo_name'], "order": -1}) # Default order
+    for eo_item in edited:
+        if industry_list_collection.find_one({'eo_name': eo_item['eo_name'], '_id': {'$ne': ObjectId(eo_item['_id'])}}):
+            return jsonify({'status': 'error', 'message': f"EO name '{eo_item['eo_name']}' already exists."}), 400
+        industry_list_collection.update_one({'_id': ObjectId(eo_item['_id'])}, {'$set': {'eo_name': eo_item['eo_name']}})
+    for _id_str in deleted:
+        industry_list_collection.delete_one({'_id': ObjectId(_id_str)})
+    for index, item in enumerate(visual_order):
+        target_id_str = item.get('_id')
+        if not target_id_str and 'eo_name' in item :
+            new_eo_doc = industry_list_collection.find_one({'eo_name': item['eo_name']}) # Renamed new_eo to new_eo_doc
+            if new_eo_doc: target_id_str = str(new_eo_doc['_id'])
+        if target_id_str:
+             industry_list_collection.update_one({'_id': ObjectId(target_id_str)}, {'$set': {'order': index}})
+    return jsonify({'status': 'success'})
+
 
 @app.route('/generate-change-form-pdf', methods=['POST'])
 def generate_change_form_pdf():
