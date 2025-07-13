@@ -100,10 +100,10 @@
                     {% if item.pics %}
                         <ul>
                         {% for pic in item.pics %}
-                            <li class="editable" data-field="name"><strong>PIC Name = {{ pic.name }}</strong></li>
-                            <li class="editable" data-field="designation">PIC Designation = ({{ pic.designation }})</li>
-                             <li class="editable" data-field="contact">PIC Contact = {{ pic.contact }}</li>
-                             <li class="editable" data-field="email">PIC Email = {{ pic.email }}</li>
+                            <li><strong>PIC Name = <span class="editable" data-field="name">{{ pic.name }}</span></strong></li>
+                            <li>PIC Designation = (<span class="editable" data-field="designation">{{ pic.designation }}</span>)</li>
+                             <li>PIC Contact = <span class="editable" data-field="contact">{{ pic.contact }}</span></li>
+                             <li>PIC Email = <span class="editable" data-field="email">{{ pic.email }}</span></li>
                         {% endfor %}
                         </ul>
                     {% else %}
@@ -253,18 +253,6 @@
                     selectedRow.querySelectorAll(".editable").forEach(cell => {
                         let field = cell.getAttribute("data-field");
                         let value = cell.innerText.trim();
-
-                        // Extracting the raw value from the displayed text
-                        if (field === "name") {
-                            value = value.replace("PIC Name = ", "").trim();
-                        } else if (field === "designation") {
-                            value = value.replace("PIC Designation = (", "").replace(")", "").trim();
-                        } else if (field === "contact") {
-                            value = value.replace("PIC Contact = ", "").trim();
-                        } else if (field === "email") {
-                            value = value.replace("PIC Email = ", "").trim();
-                        }
-
                         picData[field] = value;
                     });
                     updatedData.pics.push(picData);
