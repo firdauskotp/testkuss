@@ -133,6 +133,14 @@
                 <div id="deviceContainer">
                     <!-- Device Fields -->
                     <div class="device-item mb-3" id="device-1">
+
+                        <label class="form-label">Tie Device to Premise:</label>
+                        <select class="form-select mb-2" id="devicePremise1" name="devicePremise1" required>
+                            <option selected disabled>Select a premise</option>
+                            <option>Premise 1</option>
+                        </select>
+                        <div class="invalid-feedback"> Field is required.</div>
+                       
                         <label class="form-label">#1 Location</label>
                         <input type="text" class="form-control mb-2" placeholder="Enter location" name="deviceLocation1" id="deviceLocation1"  required>
                         <div class="invalid-feedback"> Field is required.</div>
@@ -173,13 +181,7 @@
                         <div class="invalid-feedback"> Field is required.</div>
                        
 
-                        <label class="form-label">Tie Device to Premise:</label>
-                        <select class="form-select mb-2" id="devicePremise1" name="devicePremise1" required>
-                            <option selected disabled>Select a premise</option>
-                            <option>Premise 1</option>
-                        </select>
-                        <div class="invalid-feedback"> Field is required.</div>
-                       
+                        
 
                         <!-- Events for Device -->
                         <h6 class="section-heading">Event 1</h6>
@@ -490,6 +492,12 @@ const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  //
             const newDevice = `
                 <div class="device-item mb-3" id="device-${deviceCount}">
                     <h5 class="section-heading">Device ${deviceCount}</h5>
+                    <label class="form-label">Tie Device to Premise:</label>
+                    <select class="form-select mb-2" id="devicePremise${deviceCount}" name="devicePremise${deviceCount}" required>
+                        <option selected disabled>Select a premise</option>
+                        ${getPremiseOptions()}
+                    </select>
+                    <div class="invalid-feedback"> Field is required.</div>
                     <label class="form-label">#${deviceCount} Location</label>
                     <input type="text" class="form-control mb-2" name="deviceLocation${deviceCount}" id="deviceLocation${deviceCount}" placeholder="Enter location" required>
                     <div class="invalid-feedback"> Field is required.</div>
@@ -520,12 +528,7 @@ const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  //
 </select>
                     <div class="invalid-feedback"> Field is required.</div>
 
-                    <label class="form-label">Tie Device to Premise:</label>
-                    <select class="form-select mb-2" id="devicePremise${deviceCount}" name="devicePremise${deviceCount}" required>
-                        <option selected disabled>Select a premise</option>
-                        ${getPremiseOptions()}
-                    </select>
-                    <div class="invalid-feedback"> Field is required.</div>
+                    
 
                     <!-- Events for Device -->
                     <h6 class="section-heading">Event 1</h6>
