@@ -147,18 +147,18 @@
   <div class="second-navbar">
     <div class="container-fluid">
       <div class="row">
-        <div class="col" data-toggle="modal" data-target="#modalHelpRequest">
+        <a href="{{ url_for('view_help') }}" class="col">
           <h4>{{ help_request_count }}</h4>
           <p>Help Request</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#modalDeviceReplacement">
+        </a>
+        <a href="{{ url_for('changed_settings_list') }}" class="col">
           <h4>{{ change_count }}</h4>
           <p>Device(s) Replacement</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#modalDiscontinuedClients">
+        </a>
+        <a href="{{ url_for('discontinued_reports') }}" class="col">
           <h4>{{ refund_count }}</h4>
           <p>Discontinued Client(s)</p>
-        </div>
+        </a>
       </div>
     </div>
   </div>
@@ -166,16 +166,14 @@
   <div class="second-navbar">
     <div class="container-fluid">
       <div class="row">
-        
-        <div class="col" data-toggle="modal" data-target="#remarkModal">
+        <a href="{{ url_for('view_remarks', remark_type='normal') }}" class="col">
           <h4>{{ remarks_count }}</h4>
           <p>Remark</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#urgentRemarkModal">
+        </a>
+        <a href="{{ url_for('view_remarks', remark_type='urgent') }}" class="col">
           <h4>{{ urgent_remarks_count }}</h4>
           <p>Urgent Remark</p>
-        </div>
-        
+        </a>
       </div>
     </div>
   </div>
@@ -183,16 +181,15 @@
   <div class="second-navbar">
     <div class="container-fluid">
       <div class="row">
-        
-        <div class="col" data-toggle="modal" data-target="#profileModal">
+        <a href="{{ url_for('profile') }}" class="col">
           <p>Profile Master List</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#deviceModal">
+        </a>
+        <a href="{{ url_for('view_device') }}" class="col">
           <p>Device Master List</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#RouteModal">
+        </a>
+        <a href="{{ url_for('route_table') }}" class="col">
           <p>Routes</p>
-        </div>
+        </a>
       </div>
     </div>
   </div>
@@ -200,219 +197,15 @@
   <div class="second-navbar">
     <div class="container-fluid">
       <div class="row">
-        <div class="col" data-toggle="modal" data-target="#modalDashboardAll">
+        <a href="{{ url_for('reports') }}" class="col">
           <p>Dashboard: ALL</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#modalDashboardEO">
+        </a>
+        <a href="{{ url_for('eo_list') }}" class="col">
           <p>Dashboard: EO / Models</p>
-        </div>
-        <div class="col" data-toggle="modal" data-target="#modalDashboardToPack">
+        </a>
+        <a href="{{ url_for('pack_list') }}" class="col">
           <p>Dashboard: To Pack</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
-
-  <!-- Modals -->
-  <div class="modal fade" id="modalHelpRequest" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to view the remarks page?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('view_help') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to view all the help requests?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('view_remarks', remark_type='normal') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Urgent Remark Modal -->
-  <div class="modal fade" id="urgentRemarkModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to view the urgent remarks page?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('view_remarks', remark_type='urgent') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalDashboardAll" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to see the dashboard for all data?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('reports') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalDashboardEO" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to view the dashboard for Essential Oil and Models?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('eo_list') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalDashboardToPack" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to view the pack list page?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('pack_list') }}" class="btn btn-primary">Yes</a>
-          
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to see the dashboard for profile master list??
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('profile') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="deviceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to see the dashboard for all devices?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('view_device') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="RouteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to see all the routes?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('route_table') }}" class="btn btn-primary">Yes</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalDeviceReplacement" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to see all the changed devices?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                    <a href="{{ url_for('changed_settings_list') }}" class="btn btn-primary">Yes</a>
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalDiscontinuedClients" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirm Navigation</h5>
-          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Do you want to see all the discontinued devices?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-          <a href="{{ url_for('discontinued_reports') }}" class="btn btn-primary">Yes</a>
-        </div>
+        </a>
       </div>
     </div>
   </div>
