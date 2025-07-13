@@ -119,7 +119,7 @@
             <ul class="dropdown-menu" aria-labelledby="usersDropdown">
               <li><a class="dropdown-item" href="{{ url_for('eo_global') }}">Global EO List</a></li>
               <li><a class="dropdown-item" href="{{ url_for('device_global') }}">Global Device List</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('industry-global')}}">Global Industry List</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('industry_global')}}">Global Industry List</a></li>
             </ul>
           </li>
   
@@ -157,7 +157,7 @@
         </a>
         <a href="{{ url_for('discontinued_reports') }}" class="col">
           <h4>{{ refund_count }}</h4>
-          <p>Discontinued Client(s)</p>
+          <p>Inactive Client(s)</p>
         </a>
       </div>
     </div>
