@@ -48,13 +48,19 @@
                 {% for case in cases %}
                 <tr>
                     <td>{{ case.case_no }}</td>
-                    <td style="color: {% if case.status == 'open' %}red{% else %}green{% endif %}; font-weight: bold;">{{ case.status.upper() }}</td>
+                    <td style="color: {% if case.status is defined and case.status == 'closed' %}green{% else %}red{% endif %}; font-weight: bold;">
+                        {% if case.status is defined %}
+                            {{ case.status.upper() }}
+                        {% else %}
+                            OPEN
+                        {% endif %}
+                    </td>
                     <td>
                         <a href="{{ url_for('staff_form', case_no=case.case_no) }}" class="btn btn-primary">
-                            {% if case.status == 'open' %}
-                                Edit
-                            {% else %}
+                            {% if case.status is defined and case.status == 'closed' %}
                                 View
+                            {% else %}
+                                Edit
                             {% endif %}
                         </a>
                     </td>
