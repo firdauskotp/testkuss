@@ -20,12 +20,12 @@
         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
         <h1 class="text-center">Add Route</h1>
         <div class="card-body">
-            <form  method="POST" action="pre-service">
+            <form id="preServiceForm" method="POST" action="/pre-service">
+                <input type="hidden" name="confirm_duplicate" id="confirm_duplicate_input" value="">
                 <div class="mb-3">
-                    <label for="date" class="form-label">Date (Please click to select date)
-                        )</label>
+                    <label for="date" class="form-label">Date (Please click to select date)</label>
                     <input type="date" class="form-control" id="date" name="date"  value="{{ request.form.get('date', '') }}" autocomplete="off" required>
-                    
+
                 </div>
                 <!-- <input type="date" name="date" id="dateInput" value="{{ request.form.get('date', '') }}" autocomplete="off"> -->
 
@@ -79,6 +79,25 @@
         </div>
     </div>
 
+    <!-- Duplicate Entry Modal -->
+    <div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="duplicateModalLabel">Duplicate Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    This route already exists. Do you want to add it again?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirm-duplicate">Add Anyway</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.getElementById('company').addEventListener('change', function() {
             let company = this.value;
@@ -86,7 +105,12 @@
                 .then(response => {
                     let premiseDropdown = document.getElementById('premise');
                     premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
-                    response.data.forEach(p => premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`);
+                    if (response.data.length === 1) {
+                        premiseDropdown.innerHTML += `<option value="${response.data[0]}" selected>${response.data[0]}</option>`;
+                        premiseDropdown.dispatchEvent(new Event('change'));
+                    } else {
+                        response.data.forEach(p => premiseDropdown.innerHTML += `<option value="${p}">${p}</option>`);
+                    }
                     premiseDropdown.disabled = false;
                 });
         });
@@ -105,7 +129,7 @@
         document.getElementById('model').addEventListener('change', function() {
     let model = this.value;
     let premise = document.getElementById('premise').value;
-    
+
     axios.get(`/get-colors/${model}/${premise}`)
         .then(response => {
             let colorDropdown = document.getElementById('color');
@@ -122,7 +146,7 @@ document.getElementById('color').addEventListener('change', function() {
     let color = this.value;
     let model = document.getElementById('model').value;
     let premise = document.getElementById('premise').value;
-    
+
     axios.get(`/get-eo/${model}/${premise}/${color}`)
         .then(response => {
             let eoDropdown = document.getElementById('eo');
@@ -137,20 +161,31 @@ document.getElementById('color').addEventListener('change', function() {
 
 
 
-        document.getElementById('preServiceForm').addEventListener('submit', function(event) {
+document.getElementById('preServiceForm').addEventListener('submit', function(event) {
     event.preventDefault();
-    let formData = {
-        date: new Date(document.getElementById('date').value),  // Convert to Date object
-        company: document.getElementById('company').value,
-        premise: document.getElementById('premise').value,
-        model: document.getElementById('model').value,
-        color: document.getElementById('color').value,
-        eo: document.getElementById('eo').value
-    };
+    let form = this;
+    let formData = new FormData(form);
 
     axios.post('/pre-service', formData)
-        // .then(response => alert(response.data.message))
-        // .catch(error => alert('Error submitting form'));
+        .then(response => {
+            if (response.data.status === 'duplicate') {
+                var myModal = new bootstrap.Modal(document.getElementById('duplicateModal'), {
+                    keyboard: false
+                });
+                myModal.show();
+
+                document.getElementById('confirm-duplicate').addEventListener('click', function() {
+                    document.getElementById('confirm_duplicate_input').value = 'true';
+                    form.submit();
+                });
+            } else if (response.data.status === 'success') {
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting form:', error);
+            // Optionally, display a generic error message to the user
+        });
 });
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -159,7 +194,7 @@ document.addEventListener("DOMContentLoaded", function() {
         dateInput.value = ""; // Ensure it's blank
     }
 
-    
+
 });
     </script>
 </body>

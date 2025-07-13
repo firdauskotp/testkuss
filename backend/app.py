@@ -914,10 +914,16 @@ def pre_service():
         date_str = request.form.get('date')
         date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
         entry = {"date": date_obj, "company": request.form.get('company'), "premise": request.form.get('premise'), "model": request.form.get('model'), "color": request.form.get('color'), "eo": request.form.get('eo')}
+
+        # Check for duplicate entry
+        existing_route = route_list_collection.find_one(entry)
+        if existing_route and not request.form.get('confirm_duplicate'):
+            return jsonify({'status': 'duplicate'})
+
         route_list_collection.insert_one(entry)
         flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
         log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
-        return render_template('pre-service.html', companies=companies)
+        return jsonify({'status': 'success'})
     return render_template('pre-service.html', companies=companies)
 
 @app.route('/service-form', methods=['GET', 'POST'])
@@ -1038,21 +1044,26 @@ def field_service():
                            companies=companies,
                            premises=premises)
 
+@app.route('/get-premises/<company>')
+def get_premises(company):
+    premises = services_collection.distinct('Premise Name', {'company': company})
+    return jsonify(premises)
+
 @app.route('/get-models/<premise>')
 def get_models(premise):
-    models_cursor = services_collection.find({"Premise Name": premise}, {"Model": 1, "_id": 0}) # Corrected variable name
-    models_list = [m['Model'] for m in models_cursor if 'Model' in m and m['Model']] # Added check for m['Model']
-    return jsonify(list(set(models_list))) # Return unique models
+    models_cursor = services_collection.find({"Premise Name": premise}, {"Model": 1, "_id": 0})
+    models_list = [m['Model'] for m in models_cursor if 'Model' in m and m['Model']]
+    return jsonify(list(set(models_list)))
 
 @app.route('/get-colors/<model>/<premise>')
 def get_colors(model, premise):
-    colors_cursor = services_collection.find({"Model": model, "Premise Name": premise}, {"Color": 1, "_id": 0}) # Corrected variable name
+    colors_cursor = services_collection.find({"Model": model, "Premise Name": premise}, {"Color": 1, "_id": 0})
     unique_colors = list(set(c.get('Color') for c in colors_cursor if c.get('Color')))
     return jsonify(unique_colors)
 
 @app.route('/get-eo/<model>/<premise>/<color>')
 def get_eo(model, premise, color):
-    eos_cursor = services_collection.find({"Model": model, "Premise Name": premise, "Color": color}, {"Current EO": 1, "_id": 0}) # Corrected variable name
+    eos_cursor = services_collection.find({"Model": model, "Premise Name": premise, "Color": color}, {"Current EO": 1, "_id": 0})
     unique_eos = list(set(e.get('Current EO') for e in eos_cursor if e.get('Current EO')))
     return jsonify(unique_eos)
 
