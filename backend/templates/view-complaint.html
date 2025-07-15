@@ -40,6 +40,7 @@
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Case Number</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
@@ -48,17 +49,34 @@
                         {% for case_item in cases %} {# Renamed loop variable #}
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ case_item.case_no }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                                {% if case_item.status is defined and case_item.status == 'closed' %}
+                                    <span class="text-green-600 dark:text-green-400">{{ case_item.status.upper() }}</span>
+                                {% else %}
+                                    <span class="text-red-600 dark:text-red-400">OPEN</span>
+                                {% endif %}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ url_for('staff.staff_form', case_no=case_item.case_no) }}"
-                                   class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:focus:ring-offset-gray-900">
-                                    View Details
+                                <a href="{{ url_for('staff.staff_form', case_no=case_item.case_no) }}" 
+                                   class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white 
+                                          {% if case_item.status is defined and case_item.status == 'closed' %}
+                                              bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600
+                                          {% else %}
+                                              bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
+                                          {% endif %}
+                                          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                                    {% if case_item.status is defined and case_item.status == 'closed' %}
+                                        View
+                                    {% else %}
+                                        Edit
+                                    {% endif %}
                                 </a>
                             </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                     <tr>
-                        <td colspan="2" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
                             No help requests found.
                         </td>
                     </tr>

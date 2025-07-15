@@ -408,7 +408,7 @@ def activity_logs_view(): # Renamed from get_logs
 @data_reports_bp.route("/complaints-list") # Original was /view-help-list, function view_help
 def view_complaints_list():
     # This one is simpler
-    cases = list(complaint_collection.find({}, {"case_no": 1, "_id":0}))
+    cases = list(complaint_collection.find({}))
     return render_template("view-complaint.html", cases=cases)
 
 @data_reports_bp.route('/remarks-list/<remark_type>') # Original was /remarks/<remark_type>
