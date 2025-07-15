@@ -52,9 +52,13 @@
                     </div>
                     <div>
                         <label for="industry" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Industry</label>
-                        <input type="text" id="industry" name="industry"
-                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
-                               placeholder="Enter industry type" required>
+                        <select id="industry" name="industry"
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50" required>
+                            <option value="" selected disabled>Select an industry</option>
+                            {% for industry in industries %}
+                                <option value="{{ industry.eo_name }}">{{ industry.eo_name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
             </div>
@@ -65,14 +69,15 @@
                 <div id="premiseContainer" class="space-y-6">
                     <!-- Premise Fields Initial -->
                     <div class="premise-item border border-gray-300 dark:border-gray-700 rounded-md p-4 space-y-4" id="premise-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Premise 1 - Name</label>
+                        <div class="flex justify-between items-center">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Premise 1 - Name</label>
+                        </div>
                         <input type="text" name="premiseName1" id="premiseName1" placeholder="Enter premise name" required
                                class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                         <input type="text" name="premiseArea1" id="premiseArea1" placeholder="Enter premise area" required
                                class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                         <input type="text" name="premiseAddress1" id="premiseAddress1" placeholder="Enter premise address" required
                                class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                        {# Remove button will be added by JS if count > 1 #}
                     </div>
                 </div>
                 <button type="button" id="addPremiseBtn"
@@ -86,7 +91,9 @@
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Contact Details (PIC)</h3>
                 <div id="contactContainer" class="space-y-6">
                     <div class="contact-item border border-gray-300 dark:border-gray-700 rounded-md p-4 space-y-4" id="contact-1">
-                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">PIC 1 - Name</label>
+                        <div class="flex justify-between items-center">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">PIC 1 - Name</label>
+                        </div>
                         <input type="text" name="picName1" id="picName1" placeholder="Enter name" required
                                class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                         <input type="text" name="picDesignation1" id="picDesignation1" placeholder="Enter designation" required
@@ -99,10 +106,9 @@
                         <select name="contactPremise1" id="contactPremise1" required
                                 class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                             <option value="" selected disabled>Select a premise</option>
-                            <option value="Premise 1">Premise 1</option> {# Will be updated by JS #}
+                            <option value="Premise 1">Premise 1</option>
                             <option value="all">All Premises</option>
                         </select>
-                         {# Removed 'tieAllPremises' checkbox, assuming direct selection of 'All Premises' in dropdown #}
                     </div>
                 </div>
                 <button type="button" id="addContactBtn"
@@ -117,44 +123,52 @@
                 <div id="deviceContainer" class="space-y-6">
                     <div class="device-item border border-gray-300 dark:border-gray-700 rounded-md p-4 space-y-4" id="device-1">
                         <h4 class="text-lg font-medium text-gray-800 dark:text-gray-200">Device 1</h4>
+                        <div class="md:col-span-2">
+                                <label for="devicePremise1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie Device to Premise:</label>
+                                <select name="devicePremise1" id="devicePremise1" required 
+                                        class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option value="" selected disabled>Select a premise</option>
+                                    <option value="Premise 1">Premise 1</option>
+                                </select>
+                            </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                             <div>
                                 <label for="deviceLocation1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                                <input type="text" name="deviceLocation1" id="deviceLocation1" placeholder="Enter location" required class="tailwind-input-class">
+                                <input type="text" name="deviceLocation1" id="deviceLocation1" placeholder="Enter location" required 
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                             </div>
                             <div>
                                 <label for="deviceSN1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">S/N</label>
-                                <input type="number" name="deviceSN1" id="deviceSN1" placeholder="Enter serial number" required class="tailwind-input-class">
+                                <input type="number" name="deviceSN1" id="deviceSN1" placeholder="Enter serial number" required 
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                             </div>
                             <div>
                                 <label for="deviceModel1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-                                <select name="deviceModel1" id="deviceModel1" required class="tailwind-input-class">
+                                <select name="deviceModel1" id="deviceModel1" required 
+                                        class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                     <option value="" selected disabled>Select a model</option>
                                     {% for model in models %}<option value="{{ model.model1 }}">{{ model.model1 }}</option>{% endfor %}
                                 </select>
                             </div>
                             <div>
                                 <label for="deviceColour1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Colour</label>
-                                <input type="text" name="deviceColour1" id="deviceColour1" placeholder="Enter colour" required class="tailwind-input-class">
+                                <input type="text" name="deviceColour1" id="deviceColour1" placeholder="Enter colour" required 
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                             </div>
                             <div>
                                 <label for="deviceVolume1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volume Required</label>
-                                <input type="number" name="deviceVolume1" id="deviceVolume1" placeholder="Enter volume required" required class="tailwind-input-class">
+                                <input type="number" name="deviceVolume1" id="deviceVolume1" placeholder="Enter volume required" required 
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                             </div>
                             <div>
                                 <label for="deviceScent1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scent</label>
-                                <select name="deviceScent1" id="deviceScent1" required class="tailwind-input-class">
+                                <select name="deviceScent1" id="deviceScent1" required 
+                                        class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                     <option value="" selected disabled>Select a scent</option>
                                     {% for eo in essential_oils %}<option value="{{ eo.eo_name }}">{{ eo.eo_name }}</option>{% endfor %}
                                 </select>
                             </div>
-                            <div class="md:col-span-2">
-                                <label for="devicePremise1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie Device to Premise:</label>
-                                <select name="devicePremise1" id="devicePremise1" required class="tailwind-input-class">
-                                    <option value="" selected disabled>Select a premise</option>
-                                    <option value="Premise 1">Premise 1</option> {# Will be updated by JS #}
-                                </select>
-                            </div>
+                            
                         </div>
                         <!-- Events for Device -->
                         {% for i in range(1, 5) %}
@@ -163,23 +177,28 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                                 <div>
                                     <label for="E{{i}}Days1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Days</label>
-                                    <input type="text" name="E{{i}}Days1" id="E{{i}}Days1" placeholder="e.g., Mon-Fri" {% if i==1 %}required{% endif %} class="tailwind-input-class text-xs">
+                                    <input type="text" name="E{{i}}Days1" id="E{{i}}Days1" placeholder="e.g., Mon-Fri" {% if i==1 %}required{% endif %} 
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                 </div>
                                 <div>
                                     <label for="E{{i}}StartTime1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Time</label>
-                                    <input type="text" name="E{{i}}StartTime1" id="E{{i}}StartTime1" placeholder="HH:MM" {% if i==1 %}required{% endif %} class="tailwind-input-class text-xs">
+                                    <input type="text" name="E{{i}}StartTime1" id="E{{i}}StartTime1" placeholder="HH:MM" {% if i==1 %}required{% endif %} 
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                 </div>
                                 <div>
                                     <label for="E{{i}}EndTime1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Time</label>
-                                    <input type="text" name="E{{i}}EndTime1" id="E{{i}}EndTime1" placeholder="HH:MM" {% if i==1 %}required{% endif %} class="tailwind-input-class text-xs">
+                                    <input type="text" name="E{{i}}EndTime1" id="E{{i}}EndTime1" placeholder="HH:MM" {% if i==1 %}required{% endif %} 
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                 </div>
                                 <div>
                                     <label for="E{{i}}Work1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Work (s)</label>
-                                    <input type="number" name="E{{i}}Work1" id="E{{i}}Work1" placeholder="e.g., 60" {% if i==1 %}required{% endif %} class="tailwind-input-class text-xs">
+                                    <input type="number" name="E{{i}}Work1" id="E{{i}}Work1" placeholder="e.g., 60" {% if i==1 %}required{% endif %} 
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                 </div>
                                 <div>
                                     <label for="E{{i}}Pause1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pause (s)</label>
-                                    <input type="number" name="E{{i}}Pause1" id="E{{i}}Pause1" placeholder="e.g., 120" {% if i==1 %}required{% endif %} class="tailwind-input-class text-xs">
+                                    <input type="number" name="E{{i}}Pause1" id="E{{i}}Pause1" placeholder="e.g., 120" {% if i==1 %}required{% endif %} 
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                                 </div>
                             </div>
                         </div>
@@ -206,24 +225,19 @@
 {% block scripts %}
 <script>
     const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
-    const tailwindInputClassXs = tailwindInputClass + " text-xs"; // For smaller event inputs
-    const tailwindRemoveBtnClass = "mt-2 py-1 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 dark:focus:ring-offset-gray-900";
+    const tailwindInputClassXs = tailwindInputClass + " text-xs";
+    const tailwindRemoveBtnClass = "py-1 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 dark:focus:ring-offset-gray-900";
 
     let premiseCount = 1;
     let contactCount = 1;
     let deviceCount = 1;
-
-    const modelData = JSON.parse(document.getElementById("modelListData").textContent || "[]");
-    const modelOptions = modelData.map(m => `<option value="${m.model1}">${m.model1}</option>`).join("");
-    const eoData = JSON.parse(document.getElementById("eoListData").textContent || "[]");
-    const eoOptions = eoData.map(e => `<option value="${e.eo_name}">${e.eo_name}</option>`).join("");
 
     function getPremiseOptionsHTML() {
         const premiseItems = document.querySelectorAll('.premise-item');
         let options = '<option value="" selected disabled>Select a premise</option>';
         premiseItems.forEach((item, index) => {
             const nameInput = item.querySelector('input[name^="premiseName"]');
-            const premiseName = nameInput.value || `Premise ${index + 1}`;
+            const premiseName = nameInput ? nameInput.value.trim() || `Premise ${index + 1}` : `Premise ${index + 1}`;
             options += `<option value="${premiseName}">${premiseName}</option>`;
         });
         options += '<option value="all">All Premises</option>';
@@ -237,19 +251,65 @@
             select.innerHTML = optionsHTML;
             // Try to restore previous selection if still valid
             if (Array.from(select.options).some(opt => opt.value === currentValue)) {
-                 select.value = currentValue;
+                select.value = currentValue;
             } else {
-                 select.value = ""; // Reset if previous premise name changed or removed
+                select.value = ""; // Reset if previous premise name changed or removed
             }
         });
     }
 
+    function updatePremiseNumbers() {
+        const premiseItems = document.querySelectorAll('.premise-item');
+        premiseItems.forEach((item, index) => {
+            const premiseNumber = index + 1;
+            const label = item.querySelector('label');
+            if (label) {
+                label.textContent = `Premise ${premiseNumber} - Name`;
+            }
+        });
+    }
+
+    function updateContactNumbers() {
+        const contactItems = document.querySelectorAll('.contact-item');
+        contactItems.forEach((item, index) => {
+            const contactNumber = index + 1;
+            const label = item.querySelector('label');
+            if (label) {
+                label.textContent = `PIC ${contactNumber} - Name`;
+            }
+        });
+    }
+
+    function updateDeviceNumbers() {
+        const deviceItems = document.querySelectorAll('.device-item');
+        deviceItems.forEach((item, index) => {
+            const deviceNumber = index + 1;
+            const heading = item.querySelector('h4');
+            if (heading) {
+                heading.textContent = `Device ${deviceNumber}`;
+            }
+        });
+    }
+
+    // Event listeners for premise management
     document.getElementById('premiseContainer').addEventListener('input', function(event) {
         if (event.target.tagName === 'INPUT' && event.target.name.startsWith('premiseName')) {
             updatePremiseDropdowns();
         }
     });
 
+    document.getElementById('premiseContainer').addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-premise-btn')) {
+            const premiseItem = event.target.closest('.premise-item');
+            if (document.querySelectorAll('.premise-item').length > 1) {
+                premiseItem.remove();
+                updatePremiseNumbers();
+                updatePremiseDropdowns();
+            } else {
+                alert('You must have at least one premise.');
+            }
+        }
+    });
 
     document.getElementById('addPremiseBtn').addEventListener('click', () => {
         premiseCount++;
@@ -270,11 +330,16 @@
         updatePremiseDropdowns();
     });
 
-    document.getElementById('premiseContainer').addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-premise-btn')) {
-            event.target.closest('.premise-item').remove();
-            // Renumbering is complex, for now, just remove. Backend needs to handle gaps or re-index.
-            updatePremiseDropdowns();
+    // Event listeners for contact management
+    document.getElementById('contactContainer').addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-contact-btn')) {
+            const contactItem = event.target.closest('.contact-item');
+            if (document.querySelectorAll('.contact-item').length > 1) {
+                contactItem.remove();
+                updateContactNumbers();
+            } else {
+                alert('You must have at least one contact.');
+            }
         }
     });
 
@@ -299,36 +364,42 @@
                     ${getPremiseOptionsHTML()}
                 </select>
             </div>
-            <div class="flex items-center">
+            <div class="flex items-center mt-2">
                 <input type="checkbox" id="sameAsAboveContact${contactCount}" data-target="${contactCount}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 same-as-above-contact">
-                <label for="sameAsAboveContact${contactCount}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Same as PIC 1 (if applicable)</label>
+                <label for="sameAsAboveContact${contactCount}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Same as PIC 1</label>
             </div>
         `;
         container.appendChild(newItem);
     });
 
-    document.getElementById('contactContainer').addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-contact-btn')) {
-            event.target.closest('.contact-item').remove();
-        }
-    });
-
     document.getElementById('contactContainer').addEventListener('change', function (event) {
         if (event.target.classList.contains('same-as-above-contact')) {
             const targetIndex = event.target.getAttribute('data-target');
-            if (event.target.checked && targetIndex > 1) { // Only if not the first contact
+            if (event.target.checked && targetIndex > 1) {
                 const firstContactItem = document.getElementById('contact-1');
                 if (firstContactItem) {
-                    document.getElementById(\`picName\${targetIndex}\`).value = firstContactItem.querySelector('[name="picName1"]').value;
-                    document.getElementById(\`picDesignation\${targetIndex}\`).value = firstContactItem.querySelector('[name="picDesignation1"]').value;
-                    document.getElementById(\`picContact\${targetIndex}\`).value = firstContactItem.querySelector('[name="picContact1"]').value;
-                    document.getElementById(\`picEmail\${targetIndex}\`).value = firstContactItem.querySelector('[name="picEmail1"]').value;
-                    document.getElementById(\`contactPremise\${targetIndex}\`).value = firstContactItem.querySelector('[name="contactPremise1"]').value;
+                    document.getElementById(`picName${targetIndex}`).value = firstContactItem.querySelector('[name="picName1"]').value;
+                    document.getElementById(`picDesignation${targetIndex}`).value = firstContactItem.querySelector('[name="picDesignation1"]').value;
+                    document.getElementById(`picContact${targetIndex}`).value = firstContactItem.querySelector('[name="picContact1"]').value;
+                    document.getElementById(`picEmail${targetIndex}`).value = firstContactItem.querySelector('[name="picEmail1"]').value;
+                    document.getElementById(`contactPremise${targetIndex}`).value = firstContactItem.querySelector('[name="contactPremise1"]').value;
                 }
             }
         }
     });
 
+    // Event listeners for device management
+    document.getElementById('deviceContainer').addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-device-btn')) {
+            const deviceItem = event.target.closest('.device-item');
+            if (document.querySelectorAll('.device-item').length > 1) {
+                deviceItem.remove();
+                updateDeviceNumbers();
+            } else {
+                alert('You must have at least one device.');
+            }
+        }
+    });
 
     document.getElementById('addDeviceBtn').addEventListener('click', () => {
         deviceCount++;
@@ -336,6 +407,7 @@
         const newItem = document.createElement('div');
         newItem.classList.add('device-item', 'border', 'border-gray-300', 'dark:border-gray-700', 'rounded-md', 'p-4', 'space-y-4', 'mt-4');
         newItem.id = `device-${deviceCount}`;
+        
         let eventHTML = '';
         for (let i = 1; i <= 4; i++) {
             eventHTML += `
@@ -365,11 +437,18 @@
                 </div>
             </div>`;
         }
+        
         newItem.innerHTML = `
             <div class="flex justify-between items-center">
                 <h4 class="text-lg font-medium text-gray-800 dark:text-gray-200">Device ${deviceCount}</h4>
                 <button type="button" class="remove-device-btn ${tailwindRemoveBtnClass}">Remove</button>
             </div>
+            <div class="md:col-span-2">
+                    <label for="devicePremise${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie Device to Premise:</label>
+                    <select name="devicePremise${deviceCount}" id="devicePremise${deviceCount}" required class="${tailwindInputClass}">
+                        ${getPremiseOptionsHTML()}
+                    </select>
+                </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div>
                     <label for="deviceLocation${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
@@ -382,7 +461,9 @@
                 <div>
                     <label for="deviceModel${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
                     <select name="deviceModel${deviceCount}" id="deviceModel${deviceCount}" required class="${tailwindInputClass}">
-                        <option value="" selected disabled>Select a model</option>${modelOptions}</select>
+                        <option value="" selected disabled>Select a model</option>
+                        {% for model in models %}<option value="{{ model.model1 }}">{{ model.model1 }}</option>{% endfor %}
+                    </select>
                 </div>
                 <div>
                     <label for="deviceColour${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Colour</label>
@@ -395,26 +476,18 @@
                 <div>
                     <label for="deviceScent${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scent</label>
                     <select name="deviceScent${deviceCount}" id="deviceScent${deviceCount}" required class="${tailwindInputClass}">
-                        <option value="" selected disabled>Select a scent</option>${eoOptions}</select>
-                </div>
-                <div class="md:col-span-2">
-                    <label for="devicePremise${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie Device to Premise:</label>
-                    <select name="devicePremise${deviceCount}" id="devicePremise${deviceCount}" required class="${tailwindInputClass}">
-                        ${getPremiseOptionsHTML()}
+                        <option value="" selected disabled>Select a scent</option>
+                        {% for eo in essential_oils %}<option value="{{ eo.eo_name }}">{{ eo.eo_name }}</option>{% endfor %}
                     </select>
                 </div>
+                
             </div>
             ${eventHTML}
         `;
         container.appendChild(newItem);
     });
 
-    document.getElementById('deviceContainer').addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-device-btn')) {
-            event.target.closest('.device-item').remove();
-        }
-    });
-
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
         const dateInput = document.getElementById('dateCreated');
         if (dateInput) {
@@ -425,6 +498,7 @@
         updatePremiseDropdowns();
     });
 
+    // Form validation
     document.getElementById('customerForm').addEventListener('submit', function (event) {
         let isValid = true;
         const requiredFields = document.querySelectorAll('#customerForm [required]');
@@ -432,7 +506,7 @@
         requiredFields.forEach(field => {
             if (!field.value.trim()) {
                 isValid = false;
-                // Add visual indication of error, e.g., border color
+                // Add visual indication of error
                 field.classList.add('border-red-500', 'dark:border-red-400');
                 field.classList.remove('border-gray-300', 'dark:border-gray-600');
             } else {
@@ -442,9 +516,18 @@
             }
         });
 
+        // Check minimum requirements
+        const premiseItems = document.querySelectorAll('.premise-item');
+        const contactItems = document.querySelectorAll('.contact-item');
+        const deviceItems = document.querySelectorAll('.device-item');
+        
+        if (premiseItems.length === 0 || contactItems.length === 0 || deviceItems.length === 0) {
+            isValid = false;
+            alert('You must have at least one premise, one contact, and one device.');
+        }
+
         if (!isValid) {
             event.preventDefault();
-            // Optionally, display a general error message
             alert('Please fill out all required fields.');
         }
     });

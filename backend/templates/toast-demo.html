@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Toast Notifications Demo{% endblock %}
+{% block page_title %}Global Toast Notifications Demo{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100">Test Global Toast Notifications</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Success Toast -->
+            <div class="space-y-2">
+                <h3 class="font-medium text-green-600 dark:text-green-400">Success Toast</h3>
+                <button onclick="showSuccess('Operation completed successfully!')" 
+                        class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    Show Success
+                </button>
+                <button onclick="showToast('Custom success message', 'success')" 
+                        class="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    Custom Success
+                </button>
+            </div>
+
+            <!-- Error Toast -->
+            <div class="space-y-2">
+                <h3 class="font-medium text-red-600 dark:text-red-400">Error Toast</h3>
+                <button onclick="showError('Something went wrong!')" 
+                        class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    Show Error
+                </button>
+                <button onclick="showToast('Custom error message', 'error')" 
+                        class="w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    Custom Error
+                </button>
+            </div>
+
+            <!-- Warning Toast -->
+            <div class="space-y-2">
+                <h3 class="font-medium text-yellow-600 dark:text-yellow-400">Warning Toast</h3>
+                <button onclick="showWarning('Please review your input')" 
+                        class="w-full px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    Show Warning
+                </button>
+                <button onclick="showToast('Custom warning message', 'warning')" 
+                        class="w-full px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    Custom Warning
+                </button>
+            </div>
+
+            <!-- Info Toast -->
+            <div class="space-y-2">
+                <h3 class="font-medium text-blue-600 dark:text-blue-400">Info Toast</h3>
+                <button onclick="showInfo('Here is some information')" 
+                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Show Info
+                </button>
+                <button onclick="showToast('Custom info message', 'info')" 
+                        class="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    Custom Info
+                </button>
+            </div>
+        </div>
+
+        <!-- Advanced Testing -->
+        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">Advanced Testing</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="showMultipleToasts()" 
+                        class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    Show Multiple Toasts
+                </button>
+                <button onclick="showLongMessage()" 
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Show Long Message
+                </button>
+                <button onclick="clearToasts()" 
+                        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    Clear All Toasts
+                </button>
+            </div>
+        </div>
+
+        <!-- Code Examples -->
+        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+            <h3 class="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">Usage Examples</h3>
+            <div class="bg-gray-100 dark:bg-gray-700 rounded-md p-4">
+                <pre class="text-sm text-gray-800 dark:text-gray-200"><code>// Simple usage
+showSuccess('Operation completed!');
+showError('Something went wrong!');
+showWarning('Please check your input');
+showInfo('Here is some information');
+
+// Custom duration
+showToast('Custom message', 'success', 3000); // 3 seconds
+
+// Clear all toasts
+clearToasts();</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showMultipleToasts() {
+    showSuccess('First toast - Success!');
+    setTimeout(() => showWarning('Second toast - Warning!'), 500);
+    setTimeout(() => showInfo('Third toast - Info!'), 1000);
+    setTimeout(() => showError('Fourth toast - Error!'), 1500);
+}
+
+function showLongMessage() {
+    showInfo('This is a longer toast message to test how the notification system handles extended content. It should wrap properly and maintain good readability.', 8000);
+}
+</script>
+{% endblock %}

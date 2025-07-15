@@ -267,3 +267,69 @@ def get_change_notes_for_premise(premise_name):
     if not notes: notes = "No recent change notes found."
 
     return jsonify({"notes": notes})
+
+# API endpoints for pre-service form cascading dropdowns
+@api_helpers_bp.route('/get-premises-for-company/<company>')
+def get_premises_for_company(company):
+    """Get premises for a specific company"""
+    if not company or not company.strip():
+        return jsonify({'error': 'Company parameter is required'}), 400
+    
+    try:
+        premises = services_collection.distinct('Premise Name', {'company': company})
+        return jsonify(premises)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching premises for company {company}: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@api_helpers_bp.route('/get-models/<premise>')
+def get_models_for_premise(premise):
+    """Get models for a specific premise"""
+    if not premise or not premise.strip():
+        return jsonify({'error': 'Premise parameter is required'}), 400
+    
+    try:
+        models = services_collection.distinct('Model', {'Premise Name': premise})
+        return jsonify(models)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching models for premise {premise}: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@api_helpers_bp.route('/get-colors/<model>/<premise>')
+def get_colors_for_model_premise(model, premise):
+    """Get colors for a specific model and premise"""
+    if not model or not model.strip():
+        return jsonify({'error': 'Model parameter is required'}), 400
+    if not premise or not premise.strip():
+        return jsonify({'error': 'Premise parameter is required'}), 400
+    
+    try:
+        colors = services_collection.distinct('Color', {
+            'Model': model,
+            'Premise Name': premise
+        })
+        return jsonify(colors)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching colors for model {model} and premise {premise}: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@api_helpers_bp.route('/get-eo/<model>/<premise>/<color>')
+def get_eo_for_model_premise_color(model, premise, color):
+    """Get EO for a specific model, premise, and color"""
+    if not model or not model.strip():
+        return jsonify({'error': 'Model parameter is required'}), 400
+    if not premise or not premise.strip():
+        return jsonify({'error': 'Premise parameter is required'}), 400
+    if not color or not color.strip():
+        return jsonify({'error': 'Color parameter is required'}), 400
+    
+    try:
+        eos = services_collection.distinct('Current EO', {
+            'Model': model,
+            'Premise Name': premise,
+            'Color': color
+        })
+        return jsonify(eos)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching EO for model {model}, premise {premise}, and color {color}: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500

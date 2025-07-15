@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Kuss Essentials{% endblock %}</title>
+    <!-- add ficacon here -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <link href="{{ url_for('static', filename='css/output.css') }}" rel="stylesheet">
     {% block head_extra %}{% endblock %}
     <style>
@@ -21,6 +24,7 @@
     <header class="bg-gray-800 dark:bg-gray-900 text-white shadow-md print:hidden"> {# Hide header when printing #}
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="{{ url_for('dashboard') }}" class="text-xl font-bold hover:text-gray-300 dark:hover:text-gray-400">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Kuss Essentials Logo" class="inline-block  w-auto mx-2 rounded-full" style="height: 70px;">
                 Kuss Essentials
             </a>
             <div class="flex items-center space-x-3">
@@ -68,6 +72,7 @@
                         <div class="absolute left-0 mt-0 w-52 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
                             <a href="{{ url_for('global_settings.eo_global_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Global EO List</a>
                             <a href="{{ url_for('global_settings.device_global_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Global Device List</a>
+                            <a href="{{ url_for('staff.industry_global') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Global industry List</a>
                         </div>
                     </div>
 
