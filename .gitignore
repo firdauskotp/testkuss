@@ -466,3 +466,9 @@ out/
 *.tar.gz
 *.rar
 *.7z
+hashing_pass.py
+codestash.html
+Data\ Flow\ \(Draft\).jpg
+.coverage
+backend/extra-install.txt
+question.html
