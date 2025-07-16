@@ -24,26 +24,26 @@
 
     <!-- Card Grid for Counts -->
     <div class="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-toggle="modal" data-target="#modalHelpRequest">
+        <a href="{{ url_for('data_reports.view_complaints_list') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ help_request_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Help Request</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-toggle="modal" data-target="#modalDeviceReplacement">
+        </a>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ change_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Device(s) Replacement</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-toggle="modal" data-target="#modalDiscontinuedClients">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ refund_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Discontinued Client(s)</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-toggle="modal" data-target="#remarkModal">
+        <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='normal') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ remarks_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Remark</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-toggle="modal" data-target="#urgentRemarkModal">
+        </a>
+        <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='urgent') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-red-600 dark:text-red-400">{{ urgent_remarks_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Urgent Remark</p>
-        </div>
+        </a>
     </div>
 
     <!-- Link/Button Grid for Master Lists & Dashboards -->
@@ -51,223 +51,33 @@
         <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-200">Quick Access</h3>
     </div>
     <div class="px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center" data-toggle="modal" data-target="#profileModal">
+        <a href="{{ url_for('data_reports.profile_master_list') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
           <svg class="w-10 h-10 mb-3 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> {# User group icon example #}
           <p class="text-gray-700 dark:text-gray-300 font-semibold">Profile Master List</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center" data-toggle="modal" data-target="#deviceModal">
+        </a>
+        <a href="{{ url_for('data_reports.device_master_list') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
           <svg class="w-10 h-10 mb-3 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> {# Desktop icon example #}
           <p class="text-gray-700 dark:text-gray-300 font-semibold">Device Master List</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center" data-toggle="modal" data-target="#RouteModal">
+        </a>
+        <a href="{{ url_for('data_reports.route_table_view') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
           <svg class="w-10 h-10 mb-3 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7M9 7l6-3"></path></svg> {# Map icon example #}
           <p class="text-gray-700 dark:text-gray-300 font-semibold">Routes</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center" data-toggle="modal" data-target="#modalDashboardAll">
+        </a>
+        <a href="{{ url_for('data_reports.reports') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
           <svg class="w-10 h-10 mb-3 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> {# Document report icon example #}
           <p class="text-gray-700 dark:text-gray-300 font-semibold">Dashboard: ALL</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center" data-toggle="modal" data-target="#modalDashboardEO">
+        </a>
+        <a href="{{ url_for('data_reports.eo_list_func') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
           <svg class="w-10 h-10 mb-3 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a4 4 0 00-5.656 0M14 10l-2 1m0 0l-2-1m2 1v2.5M12 17.75l-2.172 1.138a.39.39 0 01-.568-.41l.415-2.416-1.756-1.712a.39.39 0 01.217-.665l2.428-.352 1.086-2.2a.39.39 0 01.702 0l1.086 2.2 2.428.352a.39.39 0 01.217.665l-1.756 1.712.415 2.416a.39.39 0 01-.568.41L12 17.75zM4.572 15.428a4 4 0 105.656 0M10 10l2 1m-2-1v2.5"></path></svg> {# Beaker/Flask icon example #}
           <p class="text-gray-700 dark:text-gray-300 font-semibold">Dashboard: EO / Models</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center" data-toggle="modal" data-target="#modalDashboardToPack">
+        </a>
+        <a href="{{ url_for('data_reports.pack_list') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
           <svg class="w-10 h-10 mb-3 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4"></path></svg> {# Archive/Box icon example #}
           <p class="text-gray-700 dark:text-gray-300 font-semibold">Dashboard: To Pack</p>
-        </div>
+        </a>
     </div>
 
-    <!-- Modals: Apply Tailwind classes to the existing Bootstrap modal structure -->
-    <div class="modal fade hidden" id="modalHelpRequest" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to view the remarks page?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.view_complaints_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="remarkModal" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to view all the help requests?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='normal') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="urgentRemarkModal" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to view the urgent remarks page?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='urgent') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="profileModal" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to see the dashboard for profile master list??
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.profile_master_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="deviceModal" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to see the dashboard for all devices?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.device_master_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="RouteModal" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to see all the routes?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.route_table_view') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="modalDashboardAll" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to see the dashboard for all data?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.reports') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="modalDashboardEO" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to view the dashboard for Essential Oil and Models?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.eo_list_func') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade hidden" id="modalDashboardToPack" tabindex="-1" aria-hidden="true" role="dialog">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-      <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-        <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-auto rounded-lg shadow-xl">
-          <div class="modal-header flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
-            <h5 class="modal-title text-xl font-semibold text-gray-900 dark:text-gray-100">Confirm Navigation</h5>
-            <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" data-dismiss="modal" aria-label="Close">
-              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div class="modal-body p-6 text-gray-700 dark:text-gray-300">
-            Do you want to view the pack list page?
-          </div>
-          <div class="modal-footer flex justify-end items-center p-5 border-t border-gray-200 dark:border-gray-700 space-x-3">
-            <button type="button" class="py-2 px-4 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900" data-dismiss="modal">No</button>
-            <a href="{{ url_for('data_reports.pack_list') }}" class="py-2 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Yes</a>
-          </div>
-        </div>
-      </div>
-    </div>
-    {# Added 'hidden' to modal fade class as JS should control visibility #}
-    {# Added a div for modal backdrop overlay #}
+    {# All modals removed - cards now link directly to their destinations #}
 {% endblock %}
 
 {% block scripts %}
@@ -285,32 +95,5 @@
 
       updateDateTime();
       setInterval(updateDateTime, 60000); // Update every minute
-
-      // Basic JS for Bootstrap data-dismiss modal functionality (very simplified)
-      // This is a placeholder and might not cover all Bootstrap modal interactions.
-      // Ideally, replace modals with Tailwind native ones or a Tailwind-compatible modal library.
-      document.querySelectorAll('[data-dismiss="modal"]').forEach(button => {
-          button.addEventListener('click', event => {
-              // Find the closest parent modal and hide it
-              let modalNode = event.target.closest('.modal');
-              if (modalNode) {
-                  modalNode.classList.add('hidden');
-                  // If there's a backdrop, it should be handled too.
-                  // This simple version doesn't manage backdrops or focus trapping.
-              }
-          });
-      });
-      document.querySelectorAll('[data-toggle="modal"]').forEach(button => {
-          button.addEventListener('click', event => {
-              const targetModalId = event.currentTarget.getAttribute('data-target');
-              if (targetModalId) {
-                  const modalNode = document.querySelector(targetModalId);
-                  if (modalNode) {
-                      modalNode.classList.remove('hidden');
-                  }
-              }
-          });
-      });
-
     </script>
 {% endblock %}
