@@ -283,39 +283,74 @@ def eo_list_func(): # Renamed from eo_list to avoid conflict with collection nam
 
 @data_reports_bp.route('/profile-master') # Original was /profile
 def profile_master_list(): # Renamed from profile
-    # ... (Full original content of profile function from app.py)
-    # ... (Ensure all url_for for pagination are relative)
+    if 'username' not in session: 
+        return redirect(url_for('auth.admin_login'))
+    
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
-    # Filters (capture all)
-    # ...
+    company_filter = request.args.get('company', '').strip()
+    industry_filter = request.args.get('industry', '').strip()
+    premise_filter = request.args.get('premise', '').strip()
+    pic_filter = request.args.get('pic', '').strip()
+    month_filter = request.args.get('month', '').strip()
+    year_filter = request.args.get('year', '').strip()
+    
     query = {}
-    # Build query (must be copied from app.py)
-    # ...
-    records = list(profile_list_collection.find(query)) # Original fetches all then groups
-    # Grouping logic (must be copied from app.py)
-    grouped_data = defaultdict(lambda: {"company": "","industry": "","premise_name": "","premise_area": "","premise_address": "","month": "","year": "","pics": []})
-    for record in records:
-        created_at = record.get("created_at")
-        if "premise_name" in record:
-            key = (record["company"], record["premise_name"])
-            grouped_data[key].update({
-                "company": record["company"], "industry": record.get("industry", ""),
-                "premise_name": record["premise_name"], "premise_area": record.get("premise_area", ""),
-                "premise_address": record.get("premise_address", ""),
-                "month": created_at.month if created_at else "", "year": created_at.year if created_at else ""})
-        elif "tied_to_premise" in record: # PIC record
-            key = (record["company"], record["tied_to_premise"])
-            grouped_data[key]["pics"].append({"name": record["name"], "designation": record.get("designation", ""), "contact": record.get("contact", ""), "email": record.get("email", "")})
+    if company_filter: 
+        query["company"] = {'$regex': company_filter, '$options': 'i'}
+    if industry_filter: 
+        query["industry"] = {'$regex': industry_filter, '$options': 'i'}
+    if premise_filter: 
+        query["premise_name"] = {'$regex': premise_filter, '$options': 'i'}
+    if pic_filter: 
+        query["name"] = {'$regex': pic_filter, '$options': 'i'}
+    if month_filter and year_filter:
+        month_list = [int(m.strip()) for m in month_filter.split(',') if m.strip().isdigit()]
+        try: # Ensure year_filter is an int for the query
+            query['$expr'] = {'$and': [{'$in': [{'$month': '$created_at'}, month_list]}, {'$eq': [{'$year': '$created_at'}, int(year_filter)]}]}
+        except ValueError: 
+            flash("Invalid year format for filter.", "warning")
+
+    records = list(profile_list_collection.find(query))
+
+    grouped_data = defaultdict(lambda: {"_id": None, "company": "", "industry": "", "premise_name": "", "premise_area": "", "premise_address": "", "month": "", "year": "", "pics": []})
+
+    for record_item in records:
+        created_at = record_item.get("created_at")
+        if "premise_name" in record_item:
+            key = (record_item["company"], record_item["premise_name"])
+            if grouped_data[key]['_id'] is None:
+                grouped_data[key].update({
+                    "_id": str(record_item["_id"]),
+                    "company": record_item["company"],
+                    "industry": record_item.get("industry", ""),
+                    "premise_name": record_item["premise_name"],
+                    "premise_area": record_item.get("premise_area", ""),
+                    "premise_address": record_item.get("premise_address", ""),
+                    "month": created_at.month if created_at else "",
+                    "year": created_at.year if created_at else ""
+                })
+        elif "tied_to_premise" in record_item:
+            key = (record_item["company"], record_item["tied_to_premise"])
+            if key in grouped_data:
+                pic_info = {
+                    "_id": str(record_item["_id"]),
+                    "name": record_item.get("name"),
+                    "designation": record_item.get("designation", ""),
+                    "contact": record_item.get("contact", ""),
+                    "email": record_item.get("email", "")
+                }
+                grouped_data[key]["pics"].append(pic_info)
 
     structured_data = list(grouped_data.values())
     total_records = len(structured_data)
     total_pages = (total_records + limit - 1) // limit
-    paginated_data = structured_data[(page - 1) * limit : page * limit]
+    paginated_data = structured_data[(page - 1) * limit: page * limit]
 
-    return render_template('profile.html', page=page, total_pages=total_pages, limit=limit,
+    query_params = request.args.to_dict()
+    return render_template('profile.html', page=page, total_pages=total_pages, limit=limit, 
                            pagination_base_url=url_for('.profile_master_list'),
-                           query_params=request.args.to_dict(), data=paginated_data)
+                           query_params=query_params, data=paginated_data)
 
 @data_reports_bp.route('/device-master') # Original was /view-device
 def device_master_list(): # Renamed from view_device
