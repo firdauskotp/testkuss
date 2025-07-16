@@ -124,16 +124,8 @@
     </div>
 
     <!-- Pagination Controls -->
-    {% if data and total_pages > 1 %}
-    <nav aria-label="Page navigation" class="mt-6 flex justify-center">
-        <ul class="inline-flex items-center -space-x-px">
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}" class="tailwind-pagination-button rounded-l-lg {% if page == 1 %}tailwind-pagination-disabled{% endif %}">&laquo; Prev</a></li>
-            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}" class="tailwind-pagination-button {% if p == page %}tailwind-pagination-active{% endif %}">{{p}}</a></li>
-            {% endfor %}
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}" class="tailwind-pagination-button rounded-r-lg {% if page == total_pages %}tailwind-pagination-disabled{% endif %}">Next &raquo;</a></li>
-        </ul>
-    </nav>
+    {% if total_pages > 1 %}
+    {% include 'partials/pagination.html' %}
     {% endif %}
 </div>
 {% endblock %}

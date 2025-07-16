@@ -192,41 +192,8 @@
     </div>
 
     <!-- Pagination Controls -->
-    {% if data and total_pages > 1 %}
-    <nav aria-label="Page navigation" class="mt-6 flex justify-center">
-        <ul class="inline-flex items-center -space-x-px">
-            <li> {# Previous Button #}
-                <a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}"
-                   class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white {% if page == 1 %}opacity-50 cursor-not-allowed{% endif %}">
-                    <span class="sr-only">Previous</span>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                </a>
-            </li>
-            {% if page > 4 %} {# First Page and Ellipsis #}
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}" class="hidden sm:inline-flex py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a></li>
-            <li class="hidden sm:inline-flex"><span class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">...</span></li>
-            {% endif %}
-            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %} {# Dynamic Page Numbers #}
-            <li>
-                <a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}"
-                   class="hidden sm:inline-flex py-2 px-3 leading-tight border {% if p == page %}text-blue-600 bg-blue-50 border-blue-300 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white{% else %}text-gray-500 bg-white border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white{% endif %}">
-                    {{ p }}
-                </a>
-            </li>
-            {% endfor %}
-            {% if page < total_pages - 3 %} {# Ellipsis and Last Page #}
-            <li class="hidden sm:inline-flex"><span class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">...</span></li>
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', total_pages) }}" class="hidden sm:inline-flex py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">{{ total_pages }}</a></li>
-            {% endif %}
-            <li> {# Next Button #}
-                <a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}"
-                   class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white {% if page == total_pages %}opacity-50 cursor-not-allowed{% endif %}">
-                    <span class="sr-only">Next</span>
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    {% if data %}
+    {% include 'partials/pagination.html' %}
     {% endif %}
 </div>
 

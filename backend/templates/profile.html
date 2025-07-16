@@ -154,16 +154,8 @@
     </div>
     
     <!-- Pagination Controls -->
-    {% if data and total_pages > 1 %}
-    <nav aria-label="Page navigation" class="mt-6 flex justify-center">
-        <ul class="inline-flex items-center -space-x-px">
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}" class="tailwind-pagination-button rounded-l-lg {% if page == 1 %}tailwind-pagination-disabled{% endif %}">&laquo; Prev</a></li>
-            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}" class="tailwind-pagination-button {% if p == page %}tailwind-pagination-active{% endif %}">{{p}}</a></li>
-            {% endfor %}
-            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}" class="tailwind-pagination-button rounded-r-lg {% if page == total_pages %}tailwind-pagination-disabled{% endif %}">Next &raquo;</a></li>
-        </ul>
-    </nav>
+    {% if total_pages >= 1 %}
+    {% include 'partials/pagination.html' %}
     {% endif %}
 </div>
 
@@ -217,10 +209,6 @@
     const tailwindButtonRed = "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 dark:focus:ring-offset-gray-900";
     const tailwindButtonGray = "py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900";
 
-    const tailwindPaginationButton = "py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white";
-    const tailwindPaginationActive = "text-blue-600 bg-blue-50 border-blue-300 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white";
-    const tailwindPaginationDisabled = "opacity-50 cursor-not-allowed";
-    
     // Apply common classes to inputs and buttons in filter form
     document.querySelectorAll('#filterFormContainer input, #filterFormContainer select').forEach(el => {
         if (el.type !== 'submit' && el.type !== 'button') {
@@ -229,15 +217,6 @@
     });
     document.querySelectorAll('#filterFormContainer button[type="submit"]').forEach(el => {
          el.classList.add(...tailwindButtonBlue.split(' '));
-    });
-     // Apply pagination styles
-    document.querySelectorAll('nav[aria-label="Page navigation"] ul.pagination a, nav[aria-label="Page navigation"] ul.pagination span').forEach(el => {
-        el.classList.remove('page-link');
-        if(el.parentNode.classList.contains('disabled')) { el.classList.add(...tailwindPaginationDisabled.split(' '));}
-        if(el.parentNode.classList.contains('active')) { el.classList.add(...tailwindPaginationActive.split(' '));}
-        el.classList.add(...tailwindPaginationButton.split(' '));
-        if (el.innerHTML.includes('&laquo;')) { el.classList.add('rounded-l-lg'); }
-        else if (el.innerHTML.includes('&raquo;')) { el.classList.add('rounded-r-lg');}
     });
      // Apply common classes to modal buttons
     document.querySelectorAll('#saveConfirmModal button, #deleteConfirmModal button').forEach(button => {
