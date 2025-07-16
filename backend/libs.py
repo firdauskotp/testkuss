@@ -12,7 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
-from utils import log_activity, safe_int, send_email_to_admin, send_email_to_customer, replicate_monthly_routes, flash_message
+from .utils import log_activity, safe_int, send_email_to_admin, send_email_to_customer, replicate_monthly_routes, flash_message
 from flask_cors import CORS
 from collections import defaultdict
 from flask_apscheduler import APScheduler

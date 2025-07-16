@@ -1,655 +1,543 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Customer Form</title>
-    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .form-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .form-section + .form-section {
-            margin-top: 20px;
-        }
-        .remove-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container my-5">
-         <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="alert alert-success mt-3">
-        {{ messages[0][1] }}
-    </div>
-    {% endif %}
-    {% endwith %}
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
+{% extends "base.html" %}
 
-        <h3 class="text-center mb-4">New Customer Form</h3>
+{% block title %}New Customer Form{% endblock %}
+{% block page_title %}New Customer Registration{% endblock %}
 
-        <form id="customerForm" action="/new-customer" method="POST">
+{% block head_extra %}
+    {# Add any page-specific CSS links or head content here if needed in the future #}
+{% endblock %}
+
+{% block content %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-8">
+
+        <div class="text-left mb-6">
+            <a href="{{ url_for('dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 text-sm rounded-md border
+                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                            " role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <form id="customerForm" action="{{ url_for('forms.new_customer') }}" method="POST" class="space-y-8">
             <!-- Company Details -->
-            <div class="form-section">
-                <div class="mb-3">
-                    <label for="companyName" class="form-label">Company Name</label>
-                    <input type="text" id="companyName" name="companyName" class="form-control" placeholder="Enter company name" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                </div>
-                <div class="mb-3">
-                    <label for="dateCreated" class="form-label">Date Created</label>
-                    <input type="date" id="dateCreated" name="dateCreated" class="form-control" disabled required>
-                </div>
-                <div class="mb-3">
-                    <label for="industry" class="form-label">Industry</label>
-                    <select class="form-select mb-2" name="industry" id="industry" required>
-                        <option selected disabled>Select an industry</option>
-                        {% for eo in industries %}
-                            <option>{{ eo.eo_name }}</option>
-                        {% endfor %}
-                    </select>
-                    <div class="invalid-feedback"> Field is required.</div>
-
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Company Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <label for="companyName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company Name</label>
+                        <input type="text" id="companyName" name="companyName"
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
+                               placeholder="Enter company name" required>
+                    </div>
+                    <div>
+                        <label for="dateCreated" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date Created</label>
+                        <input type="date" id="dateCreated" name="dateCreated"
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
+                               disabled required>
+                    </div>
+                    <div>
+                        <label for="industry" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Industry</label>
+                        <select id="industry" name="industry"
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50" required>
+                            <option value="" selected disabled>Select an industry</option>
+                            {% for industry in industries %}
+                                <option value="{{ industry.eo_name }}">{{ industry.eo_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Premise Details -->
-            <div class="form-section" id="premiseDetails">
-                <h5>Premise Details</h5>
-                <div id="premiseContainer">
-                    <!-- Premise Fields -->
-                    <div class="premise-item mb-3" id="premise-1">
-                        <label class="form-label">Premise 1 - Name</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter premise name" name="premiseName1" id="premiseName1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control mb-2" placeholder="Enter premise area" name="premiseArea1" id="premiseArea1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control" placeholder="Enter premise address" name="premiseAddress1" id="premiseAddress1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <!-- <button type="button" class="remove-btn mt-2">Remove</button> -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Premise Details</h3>
+                <div id="premiseContainer" class="space-y-6">
+                    <!-- Premise Fields Initial -->
+                    <div class="premise-item border border-gray-300 dark:border-gray-700 rounded-md p-4 space-y-4" id="premise-1">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Premise 1 - Name</label>
+                        </div>
+                        <input type="text" name="premiseName1" id="premiseName1" placeholder="Enter premise name" required
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        <input type="text" name="premiseArea1" id="premiseArea1" placeholder="Enter premise area" required
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        <input type="text" name="premiseAddress1" id="premiseAddress1" placeholder="Enter premise address" required
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary w-100 mt-3" id="addPremiseBtn">+ Add New Premise</button>
+                <button type="button" id="addPremiseBtn"
+                        class="mt-4 w-full flex justify-center py-2 px-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                    + Add New Premise
+                </button>
             </div>
 
             <!-- Contact Details -->
-
-            <div class="form-section" id="contactDetails" >
-                <h5>Contact Details</h5>
-                <div id="contactContainer">
-                    <!-- Contact Fields -->
-                    <div class="contact-item mb-3" id="contact-1">
-                        <label class="form-label">PIC 1 - Name</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter name" name="picName1" id="picName1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control mb-2" placeholder="Enter designation" name="picDesignation1" id="picDesignation1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control mb-2" placeholder="Enter contact" name="picContact1" id="picContact1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="email" class="form-control mb-2" placeholder="Enter email" name="picEmail1" id="picEmail1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <select class="form-select"  id="contactPremise1" name="contactPremise1"  required>
-                            <option selected disabled>Tie contact to:</option>
-                            <option>Premise 1</option>
-                            <!-- <option value="all">All Premises</option> -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Contact Details (PIC)</h3>
+                <div id="contactContainer" class="space-y-6">
+                    <div class="contact-item border border-gray-300 dark:border-gray-700 rounded-md p-4 space-y-4" id="contact-1">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">PIC 1 - Name</label>
+                        </div>
+                        <input type="text" name="picName1" id="picName1" placeholder="Enter name" required
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        <input type="text" name="picDesignation1" id="picDesignation1" placeholder="Enter designation" required
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        <input type="text" name="picContact1" id="picContact1" placeholder="Enter contact number" required
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        <input type="email" name="picEmail1" id="picEmail1" placeholder="Enter email" required
+                               class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        <label for="contactPremise1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie contact to:</label>
+                        <select name="contactPremise1" id="contactPremise1" required
+                                class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                            <option value="" selected disabled>Select a premise</option>
+                            <option value="Premise 1">Premise 1</option>
+                            <option value="all">All Premises</option>
                         </select>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <!-- <button type="button" class="remove-btn mt-2">Remove</button> -->
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary w-100 mt-3" id="addContactBtn">+ Add New Contact and Device</button>
-                <div class="form-check mt-2">
-                    <input class="form-check-input tie-all-checkbox" type="checkbox" id="tieAllPremises${contactCount}" data-target="${contactCount}">
-                    <label class="form-check-label" for="tieAllPremises${contactCount}">Apply to All Premises</label>
-                  </div>
+                <button type="button" id="addContactBtn"
+                        class="mt-4 w-full flex justify-center py-2 px-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                    + Add New Contact
+                </button>
             </div>
 
-            <div class="form-section" id="deviceDetails">
-                <h5 class="section-heading">Device 1</h5>
-                <div id="deviceContainer">
-                    <!-- Device Fields -->
-                    <div class="device-item mb-3" id="device-1">
+            <!-- Device Details -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Device Details</h3>
+                <div id="deviceContainer" class="space-y-6">
+                    <div class="device-item border border-gray-300 dark:border-gray-700 rounded-md p-4 space-y-4" id="device-1">
+                        <h4 class="text-lg font-medium text-gray-800 dark:text-gray-200">Device 1</h4>
+                        <div class="md:col-span-2">
+                                <label for="devicePremise1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie Device to Premise:</label>
+                                <select name="devicePremise1" id="devicePremise1" required
+                                        class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option value="" selected disabled>Select a premise</option>
+                                    <option value="Premise 1">Premise 1</option>
+                                </select>
+                            </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                            <div>
+                                <label for="deviceLocation1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                <input type="text" name="deviceLocation1" id="deviceLocation1" placeholder="Enter location" required
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                            </div>
+                            <div>
+                                <label for="deviceSN1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">S/N</label>
+                                <input type="number" name="deviceSN1" id="deviceSN1" placeholder="Enter serial number" required
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                            </div>
+                            <div>
+                                <label for="deviceModel1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                                <select name="deviceModel1" id="deviceModel1" required
+                                        class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option value="" selected disabled>Select a model</option>
+                                    {% for model in models %}<option value="{{ model.model1 }}">{{ model.model1 }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="deviceColour1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Colour</label>
+                                <input type="text" name="deviceColour1" id="deviceColour1" placeholder="Enter colour" required
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                            </div>
+                            <div>
+                                <label for="deviceVolume1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volume Required</label>
+                                <input type="number" name="deviceVolume1" id="deviceVolume1" placeholder="Enter volume required" required
+                                       class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                            </div>
+                            <div>
+                                <label for="deviceScent1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scent</label>
+                                <select name="deviceScent1" id="deviceScent1" required
+                                        class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option value="" selected disabled>Select a scent</option>
+                                    {% for eo in essential_oils %}<option value="{{ eo.eo_name }}">{{ eo.eo_name }}</option>{% endfor %}
+                                </select>
+                            </div>
 
-                        <label class="form-label">Tie Device to Premise:</label>
-                        <select class="form-select mb-2" id="devicePremise1" name="devicePremise1" required>
-                            <option selected disabled>Select a premise</option>
-                            <option>Premise 1</option>
-                        </select>
-                        <div class="invalid-feedback"> Field is required.</div>
-                       
-                        <label class="form-label">#1 Location</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter location" name="deviceLocation1" id="deviceLocation1"  required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-
-                        <label class="form-label">#1 S/N</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter serial number"  name="deviceSN1" id="deviceSN1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-
-                        <label class="form-label">#1 Model</label>
-                        <select class="form-select mb-2" name="deviceModel1" id="deviceModel1" required>
-                            <option selected disabled>Select a model</option>
-                            {% for model in models %}
-                                <option>{{ model.model1 }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-
-                        <label class="form-label">#1 Colour</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter colour" name="deviceColour1" id="deviceColour1"  required>
-                        <div class="invalid-feedback"> Field is required.</div>
-                        
-
-                        <label class="form-label">#1 Volume Required</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter volume required" name="deviceVolume1" id="deviceVolume1"  required>
-                        <div class="invalid-feedback"> Field is required.</div>
-                        
-
-                        <label class="form-label">#1 Scent</label>
-                        <select class="form-select mb-2" name="deviceScent1" id="deviceScent1" required>
-                            <option selected disabled>Select a scent</option>
-                            {% for eo in essential_oils %}
-                                <option>{{ eo.eo_name }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="invalid-feedback"> Field is required.</div>
-                       
-
-                        
-
+                        </div>
                         <!-- Events for Device -->
-                        <h6 class="section-heading">Event 1</h6>
-                        <label class="form-label">#1 - E1 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E1Days1" id="E1Days1"  required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <label class="form-label">#1 - E1 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E1StartTime1" id="E1StartTime1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <label class="form-label">#1 - E1 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E1EndTime1" id="E1EndTime1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <label class="form-label">#1 - E1 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E1Work1" id="E1Work1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        
-                        <label class="form-label">#1 - E1 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E1Pause1" id="E1Pause1" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        
-                        <h6 class="section-heading">Event 2</h6>
-                        <label class="form-label">#1 - E2 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E2Days1" id="E2Days1" >
-
-                        <label class="form-label">#1 - E2 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E2StartTime1" id="E2StartTime1" >
-
-                        <label class="form-label">#1 - E2 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E2EndTime1" id="E2EndTime1" >
-
-                        <label class="form-label">#1 - E2 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E2Work1" id="E2Work1" >
-
-                        
-                        <label class="form-label">#1 - E2 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E2Pause1" id="E2Pause1" >
-
-                        
-                        <h6 class="section-heading">Event 3</h6>
-                        <label class="form-label">#1 - E3 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E3Days1" id="E3Days1" >
-
-                        <label class="form-label">#1 - E3 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E3StartTime1" id="E3StartTime1" >
-
-                        <label class="form-label">#1 - E3 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E3EndTime1" id="E3EndTime1" >
-
-
-                        <label class="form-label">#1 - E3 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E3Work1" id="E3Work1" >
-
-
-                        <label class="form-label">#1 - E3 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E3Pause1" id="E3Pause1" >
-
-                        
-                        <h6 class="section-heading">Event 4</h6>
-                        <label class="form-label">#1 - E4 - Days</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter days" name="E4Days1" id="E4Days1" >
-
-                        <label class="form-label">#1 - E4 - Start Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter start time" name="E4StartTime1" id="E4StartTime1" >
-
-                        <label class="form-label">#1 - E4 - End Time</label>
-                        <input type="text" class="form-control mb-2" placeholder="Enter end time" name="E4EndTime1" id="E4EndTime1" >
-
-                        <label class="form-label">#1 - E4 - Work</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter work duration" name="E4Work1" id="E4Work1" >
-
-
-                        <label class="form-label">#1 - E4 - Pause</label>
-                        <input type="number" class="form-control mb-2" placeholder="Enter pause duration" name="E4Pause1" id="E4Pause1" >
-
-                       
+                        {% for i in range(1, 5) %}
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <h5 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Event {{i}}</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                                <div>
+                                    <label for="E{{i}}Days1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Days</label>
+                                    <input type="text" name="E{{i}}Days1" id="E{{i}}Days1" placeholder="e.g., Mon-Fri" {% if i==1 %}required{% endif %}
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                </div>
+                                <div>
+                                    <label for="E{{i}}StartTime1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Time</label>
+                                    <input type="text" name="E{{i}}StartTime1" id="E{{i}}StartTime1" placeholder="HH:MM" {% if i==1 %}required{% endif %}
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                </div>
+                                <div>
+                                    <label for="E{{i}}EndTime1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Time</label>
+                                    <input type="text" name="E{{i}}EndTime1" id="E{{i}}EndTime1" placeholder="HH:MM" {% if i==1 %}required{% endif %}
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                </div>
+                                <div>
+                                    <label for="E{{i}}Work1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Work (s)</label>
+                                    <input type="number" name="E{{i}}Work1" id="E{{i}}Work1" placeholder="e.g., 60" {% if i==1 %}required{% endif %}
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                </div>
+                                <div>
+                                    <label for="E{{i}}Pause1" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pause (s)</label>
+                                    <input type="number" name="E{{i}}Pause1" id="E{{i}}Pause1" placeholder="e.g., 120" {% if i==1 %}required{% endif %}
+                                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 text-xs bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
-                
-                <button type="button" class="btn btn-secondary w-100 mt-3" id="addDeviceBtn">+ Add New Device and Contact</button>
+                <button type="button" id="addDeviceBtn"
+                        class="mt-4 w-full flex justify-center py-2 px-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                    + Add New Device
+                </button>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mt-4">Submit Form</button>
+            <div class="mt-8 flex justify-end">
+                <button type="submit"
+                        class="py-2.5 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900">
+                    Submit Form
+                </button>
+            </div>
         </form>
     </div>
+</div>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let premiseCount = 1;
-        let contactCount = 1;
-        let deviceCount = 1;
+{% block scripts %}
+<script>
+    const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
+    const tailwindInputClassXs = tailwindInputClass + " text-xs";
+    const tailwindRemoveBtnClass = "py-1 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 dark:focus:ring-offset-gray-900";
 
-        // Event delegation for dynamic premise removal
-        document.getElementById('premiseContainer').addEventListener('click', function(event) {
-            if (event.target.classList.contains('remove-btn')) {
-                const premiseItem = event.target.closest('.premise-item');
+    let premiseCount = 1;
+    let contactCount = 1;
+    let deviceCount = 1;
+
+    function getPremiseOptionsHTML() {
+        const premiseItems = document.querySelectorAll('.premise-item');
+        let options = '<option value="" selected disabled>Select a premise</option>';
+        premiseItems.forEach((item, index) => {
+            const nameInput = item.querySelector('input[name^="premiseName"]');
+            const premiseName = nameInput ? nameInput.value.trim() || `Premise ${index + 1}` : `Premise ${index + 1}`;
+            options += `<option value="${premiseName}">${premiseName}</option>`;
+        });
+        options += '<option value="all">All Premises</option>';
+        return options;
+    }
+
+    function updatePremiseDropdowns() {
+        const optionsHTML = getPremiseOptionsHTML();
+        document.querySelectorAll('select[name^="contactPremise"], select[name^="devicePremise"]').forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = optionsHTML;
+            // Try to restore previous selection if still valid
+            if (Array.from(select.options).some(opt => opt.value === currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = ""; // Reset if previous premise name changed or removed
+            }
+        });
+    }
+
+    function updatePremiseNumbers() {
+        const premiseItems = document.querySelectorAll('.premise-item');
+        premiseItems.forEach((item, index) => {
+            const premiseNumber = index + 1;
+            const label = item.querySelector('label');
+            if (label) {
+                label.textContent = `Premise ${premiseNumber} - Name`;
+            }
+        });
+    }
+
+    function updateContactNumbers() {
+        const contactItems = document.querySelectorAll('.contact-item');
+        contactItems.forEach((item, index) => {
+            const contactNumber = index + 1;
+            const label = item.querySelector('label');
+            if (label) {
+                label.textContent = `PIC ${contactNumber} - Name`;
+            }
+        });
+    }
+
+    function updateDeviceNumbers() {
+        const deviceItems = document.querySelectorAll('.device-item');
+        deviceItems.forEach((item, index) => {
+            const deviceNumber = index + 1;
+            const heading = item.querySelector('h4');
+            if (heading) {
+                heading.textContent = `Device ${deviceNumber}`;
+            }
+        });
+    }
+
+    // Event listeners for premise management
+    document.getElementById('premiseContainer').addEventListener('input', function(event) {
+        if (event.target.tagName === 'INPUT' && event.target.name.startsWith('premiseName')) {
+            updatePremiseDropdowns();
+        }
+    });
+
+    document.getElementById('premiseContainer').addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-premise-btn')) {
+            const premiseItem = event.target.closest('.premise-item');
+            if (document.querySelectorAll('.premise-item').length > 1) {
                 premiseItem.remove();
-                premiseCount--;
                 updatePremiseNumbers();
                 updatePremiseDropdowns();
+            } else {
+                alert('You must have at least one premise.');
             }
-        });
-
-        // Add new premise and update numbering
-        document.getElementById('addPremiseBtn').addEventListener('click', () => {
-            premiseCount++;
-            const premiseContainer = document.getElementById('premiseContainer');
-            const newPremise = `
-                <div class="premise-item mb-3" id="premise-${premiseCount}">
-                    <label class="form-label">Premise ${premiseCount} - Name</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter premise name" name="premiseName${premiseCount}" id="premiseName${premiseCount}" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control mb-2" placeholder="Enter premise area" name="premiseArea${premiseCount}" id="premiseArea${premiseCount}" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control" placeholder="Enter premise address" name="premiseAddress${premiseCount}" id="premiseAddress${premiseCount}" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                    <button type="button" class="remove-btn mt-2">Remove Premise</button>
-                </div>
-            `;
-            premiseContainer.insertAdjacentHTML('beforeend', newPremise);
-            updatePremiseNumbers();
-            updatePremiseDropdowns();
-        });
-
-        // Update premise numbering after adding/removing premises
-        function updatePremiseNumbers() {
-            const premiseItems = document.querySelectorAll('.premise-item');
-            premiseItems.forEach((premiseItem, index) => {
-                const premiseNumber = index + 1;  // Premise numbering starts from 1
-                premiseItem.querySelector('label').innerText = `Premise ${premiseNumber} - Name`;
-            });
         }
-
-        // Update premise dropdown options for contacts
-        // Update premise dropdown options for contacts and devices
-function updatePremiseDropdowns() {
-    const selectElements = document.querySelectorAll('#contactDetails select[id^="contactPremise"]');
-const deviceElements = document.querySelectorAll('#deviceDetails select[id^="devicePremise"]');
-
-
-    const premiseOptions = getPremiseOptions(); // Get updated premise names
-    selectElements.forEach(select => {
-        select.innerHTML = `
-            <option selected disabled>Tie contact to:</option>
-            ${premiseOptions}
-        `;
     });
 
-    deviceElements.forEach(select => {
-        select.innerHTML = `
-            <option selected disabled>Tie contact to:</option>
-            ${premiseOptions}
-        `;
-    });
-}
-
-
-// Get all premise options with names for dropdowns
-function getPremiseOptions() {
-    const premiseItems = document.querySelectorAll('.premise-item');
-    let options = '<option value="all">All Premises</option>';  // <-- add this line first
-
-    premiseItems.forEach((premiseItem, index) => {
-        const premiseNameInput = premiseItem.querySelector('input[type="text"]');
-        const premiseName = premiseNameInput?.value || `Premise ${index + 1}`;
-        options += `<option>${premiseName}</option>`;
-    });
-
-    return options;
-}
-
-// Add listener to update dropdowns on input change
-document.getElementById('premiseContainer').addEventListener('input', function (event) {
-    if (event.target.closest('.premise-item')) {
-        updatePremiseDropdowns();
-    }
-});
-
-        // Event delegation for dynamic contact removal
-        document.getElementById('contactContainer').addEventListener('click', function(event) {
-            if (event.target.classList.contains('remove-btn')) {
-                const contactItem = event.target.closest('.contact-item');
-                contactItem.remove();
-                contactCount--;
-                updateContactNumbers();
-                
-            }
-        });
-
-        document.getElementById('contactContainer').addEventListener('change', function (event) {
-    if (event.target.classList.contains('tie-all-checkbox')) {
-        const contactIndex = event.target.getAttribute('data-target');
-        const select = document.getElementById(`contactPremise${contactIndex}`);
-        if (event.target.checked) {
-            select.value = "all";
-        } else {
-            select.value = "";  // Reset to default
-        }
-    }
-});
-
-        // Event delegation for dynamic device removal
-        document.getElementById('deviceContainer').addEventListener('click', function(event) {
-            if (event.target.classList.contains('remove-btn')) {
-                const deviceItem = event.target.closest('.device-item');
-                deviceItem.remove();
-                deviceCount--;
-            }
-        });
-
-
-        // Update contact numbering after adding/removing contacts
-        function updateContactNumbers() {
-            const contactItems = document.querySelectorAll('.contact-item');
-            contactItems.forEach((contactItem, index) => {
-                const contactNumber = index + 1;  // Contact numbering starts from 1
-                contactItem.querySelector('label').innerText = `PIC ${contactNumber} - Name`;
-            });
-        }
-
-        // Handle form submission with validation
-        document.getElementById('customerForm').addEventListener('submit', function(event) {
-            const premiseItems = document.querySelectorAll('.premise-item');
-            const contactItems = document.querySelectorAll('.contact-item');
-            
-            // Ensure at least one premise and one contact are present
-            if (premiseItems.length === 0 || contactItems.length === 0) {
-                event.preventDefault();  // Prevent form submission
-                alert('You must add at least one premise and one contact.');
-            }
-        });
-        // Handle form submission
-        document.getElementById('customerForm').addEventListener('submit', function(event) {
-            const deviceItems = document.querySelectorAll('.device-item');
-            if (deviceItems.length === 0) {
-                event.preventDefault();
-                alert('You must add at least one device.');
-            }
-        });
-
-        document.getElementById('addContactBtn').addEventListener('click', () => {
-            contactCount++;
-            const contactContainer = document.getElementById('contactContainer');
-            const newContact = `
-                <div class="contact-item mb-3" id="contact-${contactCount}">
-                    <label class="form-label">PIC ${contactCount} - Name</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter name" name="picName${contactCount}" id="picName${contactCount}" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control mb-2" placeholder="Enter designation" name="picDesignation${contactCount}" id="picDesignation${contactCount}" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="text" class="form-control mb-2" placeholder="Enter contact" name="picContact${contactCount}" id="picContact${contactCount}" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                        <input type="email" class="form-control mb-2" placeholder="Enter email" name="picEmail${contactCount}" id="picEmail${contactCount}" required>
-                        <div class="invalid-feedback"> Field is required.</div>
-
-                    <select class="form-select" id="contactPremise${contactCount}" name="contactPremise${contactCount}" required>
-                        <option selected disabled>Tie contact to:</option>
-                        ${getPremiseOptions()}
-                    </select>
-          
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <div class="form-check mt-2">
-                <input class="form-check-input same-as-above" type="checkbox" id="sameAsAbove${contactCount}" data-target="${contactCount}">
-                <label class="form-check-label" for="sameAsAbove${contactCount}">Same as Above</label>
+    document.getElementById('addPremiseBtn').addEventListener('click', () => {
+        premiseCount++;
+        const container = document.getElementById('premiseContainer');
+        const newItem = document.createElement('div');
+        newItem.classList.add('premise-item', 'border', 'border-gray-300', 'dark:border-gray-700', 'rounded-md', 'p-4', 'space-y-4', 'mt-4');
+        newItem.id = `premise-${premiseCount}`;
+        newItem.innerHTML = `
+            <div class="flex justify-between items-center">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Premise ${premiseCount} - Name</label>
+                <button type="button" class="remove-premise-btn ${tailwindRemoveBtnClass}">Remove</button>
             </div>
+            <input type="text" name="premiseName${premiseCount}" id="premiseName${premiseCount}" placeholder="Enter premise name" required class="${tailwindInputClass}">
+            <input type="text" name="premiseArea${premiseCount}" id="premiseArea${premiseCount}" placeholder="Enter premise area" required class="${tailwindInputClass}">
+            <input type="text" name="premiseAddress${premiseCount}" id="premiseAddress${premiseCount}" placeholder="Enter premise address" required class="${tailwindInputClass}">
+        `;
+        container.appendChild(newItem);
+        updatePremiseDropdowns();
+    });
 
-
-                    <button type="button" class="remove-btn mt-2">Remove</button>
-                </div>
-            `;
-            contactContainer.insertAdjacentHTML('beforeend', newContact);
-            updateContactNumbers();
-        });
-
-        document.getElementById('contactContainer').addEventListener('change', function (event) {
-    if (event.target.classList.contains('same-as-above')) {
-        const contactIndex = event.target.getAttribute('data-target');
-        const prevIndex = contactIndex - 1;
-
-        if (event.target.checked && prevIndex > 0) {
-            document.getElementById(`picName${contactIndex}`).value = document.getElementById(`picName${prevIndex}`).value;
-            document.getElementById(`picDesignation${contactIndex}`).value = document.getElementById(`picDesignation${prevIndex}`).value;
-            document.getElementById(`picContact${contactIndex}`).value = document.getElementById(`picContact${prevIndex}`).value;
-            document.getElementById(`picEmail${contactIndex}`).value = document.getElementById(`picEmail${prevIndex}`).value;
-            document.getElementById(`contactPremise${contactIndex}`).value = document.getElementById(`contactPremise${prevIndex}`).value;
-        }
-    }
-});
-
-     document.getElementById('addDeviceBtn').addEventListener('click', () => {
-        const modelData = JSON.parse(document.getElementById("modelListData").textContent);
-const modelOptions = modelData.map(m => `<option>${m.model1}</option>`).join("");
-const eoData = JSON.parse(document.getElementById("eoListData").textContent);
-const eoOptions = eoData.map(e => `<option>${e.eo_name}</option>`).join("");  // <-- assuming EO field is 'name'
-            deviceCount++;
-            const deviceContainer = document.getElementById('deviceContainer');
-            const newDevice = `
-                <div class="device-item mb-3" id="device-${deviceCount}">
-                    <h5 class="section-heading">Device ${deviceCount}</h5>
-                    <label class="form-label">Tie Device to Premise:</label>
-                    <select class="form-select mb-2" id="devicePremise${deviceCount}" name="devicePremise${deviceCount}" required>
-                        <option selected disabled>Select a premise</option>
-                        ${getPremiseOptions()}
-                    </select>
-                    <div class="invalid-feedback"> Field is required.</div>
-                    <label class="form-label">#${deviceCount} Location</label>
-                    <input type="text" class="form-control mb-2" name="deviceLocation${deviceCount}" id="deviceLocation${deviceCount}" placeholder="Enter location" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} S/N</label>
-                    <input type="number" class="form-control mb-2" name="deviceSN${deviceCount}" id="deviceSN${deviceCount}" placeholder="Enter serial number" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} Model</label>
-                    <select class="form-select mb-2" name="deviceModel${deviceCount}" id="deviceModel${deviceCount}" required>
-    <option selected disabled>Select a model</option>
-    ${modelOptions}
-</select>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} Colour</label>
-                    <input type="text" class="form-control mb-2" placeholder="Enter colour" name="deviceColour${deviceCount}" id="deviceColour${deviceCount}" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} Volume Required</label>
-                    <input type="number" class="form-control mb-2" placeholder="Enter volume required"  name="deviceVolume${deviceCount}" id="deviceVolume${deviceCount}" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} Scent</label>
-                    <select class="form-select mb-2" name="deviceScent${deviceCount}" id="deviceScent${deviceCount}" required>
-    <option selected disabled>Select a scent</option>
-    ${eoOptions}
-</select>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    
-
-                    <!-- Events for Device -->
-                    <h6 class="section-heading">Event 1</h6>
-                    <label class="form-label">#${deviceCount} - E1 - Days</label>
-                    <input type="text" class="form-control mb-2" name="E1Days${deviceCount}" id="E1Days${deviceCount}" placeholder="Enter days" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} - E1 - Start Time</label>
-                    <input type="text" class="form-control mb-2" name="E1StartTime${deviceCount}" id="E1StartTime${deviceCount}" placeholder="Enter start time" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} - E1 - End Time</label>
-                    <input type="text" class="form-control mb-2" name="E1EndTime${deviceCount}" id="E1EndTime${deviceCount}" placeholder="Enter end time" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    <label class="form-label">#${deviceCount} - E1 - Work</label>
-                    <input type="number" class="form-control mb-2" name="E1Work${deviceCount}" id="E1Work${deviceCount}"  placeholder="Enter work duration" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                   
-                    <label class="form-label">#${deviceCount} - E1 - Pause</label>
-                    <input type="number" class="form-control mb-2"  name="E1Pause${deviceCount}" id="E1Pause${deviceCount}" placeholder="Enter pause duration" required>
-                    <div class="invalid-feedback"> Field is required.</div>
-
-                    
-                    <h6 class="section-heading">Event 2</h6>
-                    <label class="form-label">#${deviceCount} - E2 - Days</label>
-                    <input type="text" class="form-control mb-2" name="E2Days${deviceCount}" id="E2Days${deviceCount}" placeholder="Enter days" >
-
-                    <label class="form-label">#${deviceCount} - E2 - Start Time</label>
-                    <input type="text" class="form-control mb-2" name="E2StartTime${deviceCount}" id="E2StartTime${deviceCount}" placeholder="Enter start time" >
-
-                    <label class="form-label">#${deviceCount} - E2 - End Time</label>
-                    <input type="text" class="form-control mb-2" name="E2EndTime${deviceCount}" id="E2EndTime${deviceCount}" placeholder="Enter end time" >
-
-                    <label class="form-label">#${deviceCount} - E2 - Work</label>
-                    <input type="number" class="form-control mb-2" name="E2Work${deviceCount}" id="E2Work${deviceCount}"  placeholder="Enter work duration" >
-
-
-                    <label class="form-label">#${deviceCount} - E2 - Pause</label>
-                    <input type="number" class="form-control mb-2" name="E2Pause${deviceCount}" id="E2Pause${deviceCount}" placeholder="Enter pause duration" >
-
-                   
-                    <h6 class="section-heading">Event 3</h6>
-                    <label class="form-label">#${deviceCount} - E3 - Days</label>
-                    <input type="text" class="form-control mb-2" name="E3Days${deviceCount}" id="E3Days${deviceCount}" placeholder="Enter days" >
-
-                    <label class="form-label">#${deviceCount} - E3 - Start Time</label>
-                    <input type="text" class="form-control mb-2" name="E3StartTime${deviceCount}" id="E3StartTime${deviceCount}" placeholder="Enter start time" >
-
-                    <label class="form-label">#${deviceCount} - E3 - End Time</label>
-                    <input type="text" class="form-control mb-2" name="E3EndTime${deviceCount}" id="E3EndTime${deviceCount}" placeholder="Enter end time" >
-
-                    <label class="form-label">#${deviceCount} - E3 - Work</label>
-                    <input type="number" class="form-control mb-2" name="E3Work${deviceCount}" id="E3Work${deviceCount}"  placeholder="Enter work duration" >
-
-                    
-                    <label class="form-label">#${deviceCount} - E3 - Pause</label>
-                    <input type="number" class="form-control mb-2" name="E3Pause${deviceCount}" id="E3Pause${deviceCount}" placeholder="Enter pause duration" >
-
-                  
-                    <h6 class="section-heading">Event 4</h6>
-                    <label class="form-label">#${deviceCount} - E4 - Days</label>
-                    <input type="text" class="form-control mb-2" name="E4Days${deviceCount}" id="E4Days${deviceCount}" placeholder="Enter days" >
-
-                    <label class="form-label">#${deviceCount} - E4 - Start Time</label>
-                    <input type="text" class="form-control mb-2" name="E4StartTime${deviceCount}" id="E4StartTime${deviceCount}" placeholder="Enter start time" >
-
-                    <label class="form-label">#${deviceCount} - E4 - End Time</label>
-                    <input type="text" class="form-control mb-2" name="E4EndTime${deviceCount}" id="E4EndTime${deviceCount}" placeholder="Enter end time" >
-
-                    <label class="form-label">#${deviceCount} - E4 - Work</label>
-                    <input type="number" class="form-control mb-2" name="E4Work${deviceCount}" id="E4Work${deviceCount}"  placeholder="Enter work duration" >
-
-
-                    <label class="form-label">#${deviceCount} - E4 - Pause</label>
-                    <input type="number" class="form-control mb-2" name="E4Pause${deviceCount}" id="E4Pause${deviceCount}" placeholder="Enter pause duration" >
-
-                   
-                    <button type="button" class="remove-btn mt-2">Remove Device</button>
-                </div>`;
-            deviceContainer.insertAdjacentHTML('beforeend', newDevice);
-        });
-
-       
-    </script>
-
-    <script>
-        // Set the default date to today
-        document.addEventListener('DOMContentLoaded', () => {
-            const dateInput = document.getElementById('dateCreated');
-            const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-            dateInput.value = today;
-        });
-
-        document.getElementById('customerForm').addEventListener('submit', function (event) {
-    let isValid = true;
-    const requiredFields = document.querySelectorAll('#customerForm input[required], #customerForm select[required]');
-    
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            isValid = false;
-            field.classList.add('is-invalid'); // Bootstrap's error styling
-        } else {
-            field.classList.remove('is-invalid');
+    // Event listeners for contact management
+    document.getElementById('contactContainer').addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-contact-btn')) {
+            const contactItem = event.target.closest('.contact-item');
+            if (document.querySelectorAll('.contact-item').length > 1) {
+                contactItem.remove();
+                updateContactNumbers();
+            } else {
+                alert('You must have at least one contact.');
+            }
         }
     });
 
-    if (!isValid) {
-        event.preventDefault(); // Prevent submission if any field is empty
-    }
-});
+    document.getElementById('addContactBtn').addEventListener('click', () => {
+        contactCount++;
+        const container = document.getElementById('contactContainer');
+        const newItem = document.createElement('div');
+        newItem.classList.add('contact-item', 'border', 'border-gray-300', 'dark:border-gray-700', 'rounded-md', 'p-4', 'space-y-4', 'mt-4');
+        newItem.id = `contact-${contactCount}`;
+        newItem.innerHTML = `
+            <div class="flex justify-between items-center">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">PIC ${contactCount} - Name</label>
+                <button type="button" class="remove-contact-btn ${tailwindRemoveBtnClass}">Remove</button>
+            </div>
+            <input type="text" name="picName${contactCount}" id="picName${contactCount}" placeholder="Enter name" required class="${tailwindInputClass}">
+            <input type="text" name="picDesignation${contactCount}" id="picDesignation${contactCount}" placeholder="Enter designation" required class="${tailwindInputClass}">
+            <input type="text" name="picContact${contactCount}" id="picContact${contactCount}" placeholder="Enter contact number" required class="${tailwindInputClass}">
+            <input type="email" name="picEmail${contactCount}" id="picEmail${contactCount}" placeholder="Enter email" required class="${tailwindInputClass}">
+            <div>
+                <label for="contactPremise${contactCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie contact to:</label>
+                <select name="contactPremise${contactCount}" id="contactPremise${contactCount}" required class="${tailwindInputClass}">
+                    ${getPremiseOptionsHTML()}
+                </select>
+            </div>
+            <div class="flex items-center mt-2">
+                <input type="checkbox" id="sameAsAboveContact${contactCount}" data-target="${contactCount}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 same-as-above-contact">
+                <label for="sameAsAboveContact${contactCount}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Same as PIC 1</label>
+            </div>
+        `;
+        container.appendChild(newItem);
+    });
 
-    </script>
+    document.getElementById('contactContainer').addEventListener('change', function (event) {
+        if (event.target.classList.contains('same-as-above-contact')) {
+            const targetIndex = event.target.getAttribute('data-target');
+            if (event.target.checked && targetIndex > 1) {
+                const firstContactItem = document.getElementById('contact-1');
+                if (firstContactItem) {
+                    document.getElementById(`picName${targetIndex}`).value = firstContactItem.querySelector('[name="picName1"]').value;
+                    document.getElementById(`picDesignation${targetIndex}`).value = firstContactItem.querySelector('[name="picDesignation1"]').value;
+                    document.getElementById(`picContact${targetIndex}`).value = firstContactItem.querySelector('[name="picContact1"]').value;
+                    document.getElementById(`picEmail${targetIndex}`).value = firstContactItem.querySelector('[name="picEmail1"]').value;
+                    document.getElementById(`contactPremise${targetIndex}`).value = firstContactItem.querySelector('[name="contactPremise1"]').value;
+                }
+            }
+        }
+    });
 
+    // Event listeners for device management
+    document.getElementById('deviceContainer').addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-device-btn')) {
+            const deviceItem = event.target.closest('.device-item');
+            if (document.querySelectorAll('.device-item').length > 1) {
+                deviceItem.remove();
+                updateDeviceNumbers();
+            } else {
+                alert('You must have at least one device.');
+            }
+        }
+    });
+
+    document.getElementById('addDeviceBtn').addEventListener('click', () => {
+        deviceCount++;
+        const container = document.getElementById('deviceContainer');
+        const newItem = document.createElement('div');
+        newItem.classList.add('device-item', 'border', 'border-gray-300', 'dark:border-gray-700', 'rounded-md', 'p-4', 'space-y-4', 'mt-4');
+        newItem.id = `device-${deviceCount}`;
+
+        let eventHTML = '';
+        for (let i = 1; i <= 4; i++) {
+            eventHTML += `
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h5 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Event ${i}</h5>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                    <div>
+                        <label for="E${i}Days${deviceCount}" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Days</label>
+                        <input type="text" name="E${i}Days${deviceCount}" id="E${i}Days${deviceCount}" placeholder="e.g., Mon-Fri" ${i === 1 ? 'required' : ''} class="${tailwindInputClassXs}">
+                    </div>
+                    <div>
+                        <label for="E${i}StartTime${deviceCount}" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Time</label>
+                        <input type="text" name="E${i}StartTime${deviceCount}" id="E${i}StartTime${deviceCount}" placeholder="HH:MM" ${i === 1 ? 'required' : ''} class="${tailwindInputClassXs}">
+                    </div>
+                    <div>
+                        <label for="E${i}EndTime${deviceCount}" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Time</label>
+                        <input type="text" name="E${i}EndTime${deviceCount}" id="E${i}EndTime${deviceCount}" placeholder="HH:MM" ${i === 1 ? 'required' : ''} class="${tailwindInputClassXs}">
+                    </div>
+                    <div>
+                        <label for="E${i}Work${deviceCount}" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Work (s)</label>
+                        <input type="number" name="E${i}Work${deviceCount}" id="E${i}Work${deviceCount}" placeholder="e.g., 60" ${i === 1 ? 'required' : ''} class="${tailwindInputClassXs}">
+                    </div>
+                    <div>
+                        <label for="E${i}Pause${deviceCount}" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pause (s)</label>
+                        <input type="number" name="E${i}Pause${deviceCount}" id="E${i}Pause${deviceCount}" placeholder="e.g., 120" ${i === 1 ? 'required' : ''} class="${tailwindInputClassXs}">
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        newItem.innerHTML = `
+            <div class="flex justify-between items-center">
+                <h4 class="text-lg font-medium text-gray-800 dark:text-gray-200">Device ${deviceCount}</h4>
+                <button type="button" class="remove-device-btn ${tailwindRemoveBtnClass}">Remove</button>
+            </div>
+            <div class="md:col-span-2">
+                    <label for="devicePremise${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tie Device to Premise:</label>
+                    <select name="devicePremise${deviceCount}" id="devicePremise${deviceCount}" required class="${tailwindInputClass}">
+                        ${getPremiseOptionsHTML()}
+                    </select>
+                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                <div>
+                    <label for="deviceLocation${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                    <input type="text" name="deviceLocation${deviceCount}" id="deviceLocation${deviceCount}" placeholder="Enter location" required class="${tailwindInputClass}">
+                </div>
+                <div>
+                    <label for="deviceSN${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">S/N</label>
+                    <input type="number" name="deviceSN${deviceCount}" id="deviceSN${deviceCount}" placeholder="Enter serial number" required class="${tailwindInputClass}">
+                </div>
+                <div>
+                    <label for="deviceModel${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                    <select name="deviceModel${deviceCount}" id="deviceModel${deviceCount}" required class="${tailwindInputClass}">
+                        <option value="" selected disabled>Select a model</option>
+                        {% for model in models %}<option value="{{ model.model1 }}">{{ model.model1 }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="deviceColour${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Colour</label>
+                    <input type="text" name="deviceColour${deviceCount}" id="deviceColour${deviceCount}" placeholder="Enter colour" required class="${tailwindInputClass}">
+                </div>
+                <div>
+                    <label for="deviceVolume${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volume Required</label>
+                    <input type="number" name="deviceVolume${deviceCount}" id="deviceVolume${deviceCount}" placeholder="Enter volume required" required class="${tailwindInputClass}">
+                </div>
+                <div>
+                    <label for="deviceScent${deviceCount}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scent</label>
+                    <select name="deviceScent${deviceCount}" id="deviceScent${deviceCount}" required class="${tailwindInputClass}">
+                        <option value="" selected disabled>Select a scent</option>
+                        {% for eo in essential_oils %}<option value="{{ eo.eo_name }}">{{ eo.eo_name }}</option>{% endfor %}
+                    </select>
+                </div>
+
+            </div>
+            ${eventHTML}
+        `;
+        container.appendChild(newItem);
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        const dateInput = document.getElementById('dateCreated');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+        // Initial premise dropdown update for contacts and devices
+        updatePremiseDropdowns();
+    });
+
+    // Form validation
+    document.getElementById('customerForm').addEventListener('submit', function (event) {
+        let isValid = true;
+        const requiredFields = document.querySelectorAll('#customerForm [required]');
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                // Add visual indication of error
+                field.classList.add('border-red-500', 'dark:border-red-400');
+                field.classList.remove('border-gray-300', 'dark:border-gray-600');
+            } else {
+                // Remove error indication
+                field.classList.remove('border-red-500', 'dark:border-red-400');
+                field.classList.add('border-gray-300', 'dark:border-gray-600');
+            }
+        });
+
+        // Check minimum requirements
+        const premiseItems = document.querySelectorAll('.premise-item');
+        const contactItems = document.querySelectorAll('.contact-item');
+        const deviceItems = document.querySelectorAll('.device-item');
+
+        if (premiseItems.length === 0 || contactItems.length === 0 || deviceItems.length === 0) {
+            isValid = false;
+            alert('You must have at least one premise, one contact, and one device.');
+        }
+
+        if (!isValid) {
+            event.preventDefault();
+            alert('Please fill out all required fields.');
+        }
+    });
+</script>
+
+{# These script tags are to pass Flask data to JS, keep them at the end of the block or outside if they cause issues with other JS #}
 <script id="eoListData" type="application/json">
-    {{ essential_oils | tojson }}
+    {{ essential_oils | tojson | safe }}
 </script>
-
 <script id="modelListData" type="application/json">
-    {{ models | tojson }}
+    {{ models | tojson | safe }}
 </script>
-</body>
-</html>
+{% endblock %}

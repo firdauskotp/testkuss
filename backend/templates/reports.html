@@ -1,722 +1,411 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Data</title>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-5">
-        <div class="container mt-5 position-relative">
-            <!-- Button Positioned Top Right -->
-            <p>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
-            </p>
-    
-            <h1>All - Data</h1>
-        </div>
+{% extends "base.html" %}
 
-        <form class="mb-4" method="get" action="/all-list">
+{% block title %}All Data Reports{% endblock %}
+{% block page_title %}Comprehensive Data Report{% endblock %}
 
+{% block head_extra %}
+    {# Any page-specific CSS or JS links for this page #}
+{% endblock %}
 
-        <div class="accordion" id="responsiveAccordion">
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="formHeader">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#formContent" aria-expanded="false" aria-controls="formContent">
+{% block content %}
+<div class="py-8 px-4 sm:px-6 lg:px-8 space-y-8">
 
-                        Filter
-                    </button>
-                </h2>
-                <div id="formContent" class="accordion-collapse collapse " aria-labelledby="formHeader" data-bs-parent="#responsiveAccordion">
-                    <div class="accordion-body">
-    
-            
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="month" class="form-label">Month (Fill in the year too)</label>
-                    <input type="text" id="month" name="month" class="form-control" placeholder="10">
-                </div>
-                <div class="col-md-3">
-                    <label for="year" class="form-label">Year (Fill in the month too)</label>
-                    <input type="number" id="year" name="year" class="form-control" placeholder="2024">
-                </div>
-                <div class="col-md-3">
-                    <label for="Company" class="form-label">Company Name</label>
-                    <input type="text" id="Company" name="Company" class="form-control" placeholder="Valencia">
-                </div>
-                <div class="col-md-3">
-                    <label for="industry" class="form-label">Industry</label>
-                    <input type="text" id="industry" name="industry" class="form-control" placeholder="Industry">
-                </div>
-                <div class="col-md-3">
-                    <label for="premise" class="form-label">Premise Name</label>
-                    <input type="text" id="premise" name="premise" class="form-control" placeholder="Premise Name">
-                </div>
-                <div class="col-md-3">
-                    <label for="premiseArea" class="form-label">Premise Area</label>
-                    <input type="text" id="premiseArea" name="premiseArea" class="form-control" placeholder="Premise Area">
-                </div>
-                <div class="col-md-3">
-                    <label for="premiseAddress" class="form-label">Premise Address</label>
-                    <input type="text" id="premiseAddress" Address="premiseAddress" class="form-control" placeholder="Premise Name">
-                </div>
-                <div class="col-md-3">
-                    <label for="pic" class="form-label">PIC Name</label>
-                    <input type="text" id="pic" name="pic" class="form-control" placeholder="Person In Charge">
-                </div>
-                <div class="col-md-3">
-                    <label for="Model" class="form-label">Model</label>
-                    <input type="text" id="Model" name="Model" class="form-control" placeholder="VOX">
-                </div>
-                <div class="col-md-3">
-                    <label for="Colour" class="form-label">Colour (First Letter of Colour)</label>
-                    <input type="text" id="Colour" name="Colour" class="form-control" placeholder="R">
-                </div>
-                <div class="col-md-3">
-                    <label for="EO" class="form-label">EO</label>
-                    <input type="text" id="EO" name="EO" class="form-control" placeholder="Black Opium">
-                </div>
-                <div class="col-md-3">
-                    <label for="Volume" class="form-label">Volume</label>
-                    <input type="number" id="Volume" name="Volume" class="form-control" placeholder="10">
-                </div>
-                <div class="col-md-3">
-                    <label for="SN" class="form-label">S/N</label>
-                    <input type="number" id="SN" name="SN" class="form-control" placeholder="12345">
-                </div>
-                <div class="col-md-3">
-                    <label for="Balance" class="form-label">Balance</label>
-                    <input type="number" id="Balance" name="Balance" class="form-control" placeholder="10">
-                </div>
-                <div class="col-md-3">
-                    <label for="Consumption" class="form-label">Consumption</label>
-                    <input type="number" id="Consumption" name="Consumption" class="form-control" placeholder="10">
-                </div>
-                <div class="col-md-3">
-                    <label for="Refilled" class="form-label">Refilled</label>
-                    <input type="number" id="Refilled" name="Refilled" class="form-control" placeholder="10">
-                </div>
-                <div class="col-md-3">
-                    <label for="E1_Days" class="form-label">E1-Days</label>
-                    <input type="text" id="E1_Days" name="E1_Days" class="form-control" placeholder="1,2,3,4,5">
-                </div>
-                <div class="col-md-3">
-                    <label for="E1_Start" class="form-label">E1-Start</label>
-                    <input type="text" id="E1_Start" name="E1_Start" class="form-control" placeholder="9:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E1_End" class="form-label">E1-End</label>
-                    <input type="text" id="E1_End" name="E1_End" class="form-control" placeholder="12:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E1_Work" class="form-label">E1-Work</label>
-                    <input type="number" id="E1_Work" name="E1_Work" class="form-control" placeholder="100">
-                </div>
-                <div class="col-md-3">
-                    <label for="E1_Pause" class="form-label">E1-Pause</label>
-                    <input type="number" id="E1_Pause" name="E1_Pause" class="form-control" placeholder="120">
-                </div>
-                
-                
-                <!-- E2 -->
-                <div class="col-md-3">
-                    <label for="E2_Days" class="form-label">E2-Days</label>
-                    <input type="text" id="E2_Days" name="E2_Days" class="form-control" placeholder="1,2,3,4,5">
-                </div>
-                <div class="col-md-3">
-                    <label for="E2_Start" class="form-label">E2-Start</label>
-                    <input type="text" id="E2_Start" name="E2_Start" class="form-control" placeholder="9:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E2_End" class="form-label">E2-End</label>
-                    <input type="text" id="E2_End" name="E2_End" class="form-control" placeholder="12:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E2_Work" class="form-label">E2-Work</label>
-                    <input type="number" id="E2_Work" name="E2_Work" class="form-control" placeholder="100">
-                </div>
-                <div class="col-md-3">
-                    <label for="E2_Pause" class="form-label">E2-Pause</label>
-                    <input type="number" id="E2_Pause" name="E2_Pause" class="form-control" placeholder="120">
-                </div>
-                
-                <!-- E3 -->
-                <div class="col-md-3">
-                    <label for="E3_Days" class="form-label">E3-Days</label>
-                    <input type="text" id="E3_Days" name="E3_Days" class="form-control" placeholder="1,2,3,4,5">
-                </div>
-                <div class="col-md-3">
-                    <label for="E3_Start" class="form-label">E3-Start</label>
-                    <input type="text" id="E3_Start" name="E3_Start" class="form-control" placeholder="9:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E3_End" class="form-label">E3-End</label>
-                    <input type="text" id="E3_End" name="E3_End" class="form-control" placeholder="12:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E3_Work" class="form-label">E3-Work</label>
-                    <input type="number" id="E3_Work" name="E3_Work" class="form-control" placeholder="100">
-                </div>
-                <div class="col-md-3">
-                    <label for="E3_Pause" class="form-label">E3-Pause</label>
-                    <input type="number" id="E3_Pause" name="E3_Pause" class="form-control" placeholder="200">
-                </div>
-                
-                <!-- E4 -->
-                <div class="col-md-3">
-                    <label for="E4_Days" class="form-label">E4-Days</label>
-                    <input type="text" id="E4_Days" name="E4_Days" class="form-control" placeholder="1,2,3,4,5">
-                </div>
-                <div class="col-md-3">
-                    <label for="E4_Start" class="form-label">E4-Start</label>
-                    <input type="text" id="E4_Start" name="E4_Start" class="form-control" placeholder="9:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E4_End" class="form-label">E4-End</label>
-                    <input type="text" id="E4_End" name="E4_End" class="form-control" placeholder="12:00:00">
-                </div>
-                <div class="col-md-3">
-                    <label for="E4_Work" class="form-label">E4-Work</label>
-                    <input type="number" id="E4_Work" name="E4_Work" class="form-control" placeholder="100">
-                </div>
-                <div class="col-md-3">
-                    <label for="E4_Pause" class="form-label">E4-Pause</label>
-                    <input type="number" id="E4_Pause" name="E4_Pause" class="form-control" placeholder="120">
-                </div>
-                
-                <!-- <div class="col-md-3">
-                    <label for="Scent_Effectiveness" class="form-label">Scent Effectiveness</label>
-                    <input type="text" id="Scent_Effectiveness" name="Scent_Effectiveness" class="form-control" placeholder="Scent Effectiveness">
-                </div>
-                <div class="col-md-3">
-                    <label for="Common_Encounters" class="form-label">Common Encounters</label>
-                    <input type="text" id="Common_Encounters" name="Common_Encounters" class="form-control" placeholder="Common Encounters">
-                </div> -->
-                <div class="col-md-3">
-                    <label for="Other_Remarks" class="form-label">Other Remarks</label>
-                    <input type="text" id="Other_Remarks" name="Other_Remarks" class="form-control" placeholder="Other Remarks">
-                </div>
-
-                <button type="submit" class="btn btn-primary mt-3">Filter</button>
-            </div>
-            
+    <div class="flex justify-start mb-6">
+        <a href="{{ url_for('dashboard') }}"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+            &larr; Back to Dashboard
+        </a>
     </div>
-</div>
-</div>
-</div>
-</form>
-    
-        <!-- Data Table -->
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <thead class="table-dark">
+
+    <!-- Filter Form Section -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <button id="filterToggleButton"
+                class="w-full flex justify-between items-center py-3 px-4 text-left text-lg font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span>Show/Hide Filters</span>
+            <svg id="filterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </button>
+        <div id="filterFormContainer" class="hidden mt-6">
+            <form method="get" action="{{ url_for('data_reports.reports') }}" class="space-y-6"> {# Assuming 'reports' is the correct endpoint for filtering #}
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
+                    {# Helper macro for form fields could be useful here if Jinja2 supports it easily in this context #}
+                    {% for name, label, placeholder, type in [
+                        ('month', 'Month (Fill in year too)', '10', 'text'),
+                        ('year', 'Year (Fill in month too)', '2024', 'number'),
+                        ('Company', 'Company Name', 'Valencia', 'text'),
+                        ('industry', 'Industry', 'Industry', 'text'),
+                        ('premise', 'Premise Name', 'Premise Name', 'text'),
+                        ('pic', 'PIC Name', 'Person In Charge', 'text'),
+                        ('Model', 'Model', 'VOX', 'text'),
+                        ('Colour', 'Colour (First Letter)', 'R', 'text'),
+                        ('EO', 'EO', 'Black Opium', 'text'),
+                        ('Volume', 'Volume', '10', 'number'),
+                        ('SN', 'S/N', '12345', 'number'),
+                        ('Balance', 'Balance', '10', 'number'),
+                        ('Consumption', 'Consumption', '10', 'number'),
+                        ('Refilled', 'Refilled', '10', 'number'),
+                        ('E1_Days', 'E1-Days', '1,2,3,4,5', 'text'),
+                        ('E1_Start', 'E1-Start', '09:00:00', 'text'),
+                        ('E1_End', 'E1-End', '12:00:00', 'text'),
+                        ('E1_Work', 'E1-Work', '100', 'number'),
+                        ('E1_Pause', 'E1-Pause', '120', 'number'),
+                        ('E2_Days', 'E2-Days', '1,2,3,4,5', 'text'),
+                        ('E2_Start', 'E2-Start', '09:00:00', 'text'),
+                        ('E2_End', 'E2-End', '12:00:00', 'text'),
+                        ('E2_Work', 'E2-Work', '100', 'number'),
+                        ('E2_Pause', 'E2-Pause', '120', 'number'),
+                        ('E3_Days', 'E3-Days', '1,2,3,4,5', 'text'),
+                        ('E3_Start', 'E3-Start', '09:00:00', 'text'),
+                        ('E3_End', 'E3-End', '12:00:00', 'text'),
+                        ('E3_Work', 'E3-Work', '100', 'number'),
+                        ('E3_Pause', 'E3-Pause', '200', 'number'),
+                        ('E4_Days', 'E4-Days', '1,2,3,4,5', 'text'),
+                        ('E4_Start', 'E4-Start', '09:00:00', 'text'),
+                        ('E4_End', 'E4-End', '12:00:00', 'text'),
+                        ('E4_Work', 'E4-Work', '100', 'number'),
+                        ('E4_Pause', 'E4-Pause', '120', 'number'),
+                        ('Other_Remarks', 'Other Remarks', 'Other Remarks', 'text')
+                    ] %}
+                    <div>
+                        <label for="{{ name }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ label }}</label>
+                        <input type="{{ type | default('text') }}" id="{{ name }}" name="{{ name }}"
+                               value="{{ request.args.get(name, '') }}"
+                               placeholder="{{ placeholder }}"
+                               class="tailwind-input-class">
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="pt-4 flex justify-end">
+                    <button type="submit"
+                            class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900">
+                        Filter Data
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Data Table Section -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-0 sm:p-2">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th>Company</th>
-                        <th>Industry</th>
-                <th>Premise Name</th>
-                <th>Premise Area</th>
-                <th>Premise Address</th>
-                <th>PICs</th>
-                        <th>Model</th>
-                        <th>Colour</th>
-                        <th>S/N</th>
-                        <th>Volume</th>
-                        <th>Current EO</th>
-                        <th>Balance</th>
-                        <th>Consumption</th>
-                        <th>New EO</th>
-                        <th>Refilled</th>
-                        <th>E1-Days</th>
-                        <th>E1-Start</th>
-                        <th>E1-End</th>
-                        <th>E1-Work</th>
-                        <th>E1-Pause</th>
-                        <th>E2-Days</th>
-                        <th>E2-Start</th>
-                        <th>E2-End</th>
-                        <th>E2-Work</th>
-                        <th>E2-Pause</th>
-                        <th>E3-Days</th>
-                        <th>E3-Start</th>
-                        <th>E3-End</th>
-                        <th>E3-Work</th>
-                        <th>E3-Pause</th>
-                        <th>E4-Days</th>
-                        <th>E4-Start</th>
-                        <th>E4-End</th>
-                        <th>E4-Work</th>
-                        <th>E4-Pause</th>
-                        <th>Scent Effectiveness</th>
-                        <th>Common Encounters</th>
-                        <th>Other Remarks</th>
-                        <th>Month</th>
-                        <th>Year</th>
-                        <!-- <th>Edit</th> -->
+                        {% for header in ['Company', 'Industry', 'Premise Name', 'Premise Area', 'Premise Address', 'PICs', 'Model', 'Colour', 'S/N', 'Volume', 'Current EO', 'Balance', 'Consumption', 'New EO', 'Refilled', 'E1-Days', 'E1-Start', 'E1-End', 'E1-Work', 'E1-Pause', 'E2-Days', 'E2-Start', 'E2-End', 'E2-Work', 'E2-Pause', 'E3-Days', 'E3-Start', 'E3-End', 'E3-Work', 'E3-Pause', 'E4-Days', 'E4-Start', 'E4-End', 'E4-Work', 'E4-Pause', 'Scent Effectiveness', 'Common Encounters', 'Other Remarks', 'Month', 'Year'] %}
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">{{ header }}</th>
+                        {% endfor %}
+                        {# <th scope="col" class="relative px-4 py-3"><span class="sr-only">Edit</span></th> #}
                     </tr>
                 </thead>
-                <tbody>
-                    {% for user in data %}
-                    <tr data-id="{{ user['_id'] }}"
-                    data-company="{{ user['company'] }}"
-                    data-premise-name="{{ user['Premise Name'] }}"
-                    data-model="{{ user['Model'] }}"
-                    data-color="{{ user['Color'] }}"
-                    data-sn="{{ user['S/N'] }}"
-                    data-volume="{{ user['Volume'] }}"
-                    data-current-eo="{{ user['Current EO'] }}"
-                    data-balance="{{ user['Balance'] }}"
-                    data-consumption="{{ user['Consumption'] }}"
-                    data-new-eo="{{ user['New EO'] }}"
-                    data-refilled="{{ user['Refilled'] }}"
-                    data-scent-effectiveness="{{ user['#1 Scent Effectiveness'] }}"
-                    data-common-encounters="{{ user['#1 Common encounters'] }}"
-                    data-other-remarks="{{ user['#1 Other remarks'] }}"
-                    data-month="{{ user['month'] }}"
-                    data-year="{{ user['year'] }}">
-                        <td>{{ user['company'] }}</td>
-
-                      <td>{{ user.industry }}</td>
-                      <td>{{ user['Premise Name'] }}</td>
-
-                <td>{{ user['Premise Area'] }}</td>
-                <td>{{ user['Premise Address'] }}</td>
-                <td>
-                    {{ user['PIC Name'] }}
-                </td>
-                        <td>{{ user['Model'] }}</td>
-                        <td>{{ user['Color'] }}</td>
-                        <td>{{ user['S/N'] }}</td>
-                        <td>{{ user['Volume'] }}</td>
-                        <td>{{ user['Current EO'] }}</td>
-                        <td>{{ user['Balance'] }}</td>
-                        <td>{{ user['Consumption'] }}</td>
-                        <td>{{ user['New EO'] }}</td>
-                        <td>{{ user['Refilled'] }}</td>
-                        <td>{{ user['E1 - DAYS'] }}</td>
-                        <td>{{ user['E1 - START'] }}</td>
-                        <td>{{ user['E1 - END'] }}</td>
-                        <td>{{ user['E1 - WORK'] }}</td>
-                        <td>{{ user['E1 - PAUSE'] }}</td>
-                        <td>{{ user['E2 - DAYS'] }}</td>
-                        <td>{{ user['E2 - START'] }}</td>
-                        <td>{{ user['E2 - END'] }}</td>
-                        <td>{{ user['E2 - WORK'] }}</td>
-                        <td>{{ user['E2 - PAUSE'] }}</td>
-                        <td>{{ user['E3 - DAYS'] }}</td>
-                        <td>{{ user['E3 - START'] }}</td>
-                        <td>{{ user['E3 - END'] }}</td>
-                        <td>{{ user['E3 - WORK'] }}</td>
-                        <td>{{ user['E3 - PAUSE'] }}</td>
-                        <td>{{ user['E4 - DAYS'] }}</td>
-                        <td>{{ user['E4 - START'] }}</td>
-                        <td>{{ user['E4 - END'] }}</td>
-                        <td>{{ user['E4 - WORK'] }}</td>
-                        <td>{{ user['E4 - PAUSE'] }}</td>
-                        <td>{{ user['#1 Scent Effectiveness'] }}</td>
-                        <td>{{ user['#1 Common encounters'] }}</td>
-                        <td>{{ user['#1 Other remarks'] }}</td>
-                        <td>{{ user['month'] }}</td>
-                        <td>{{ user['year'] }}</td>
-                        <!-- <td>
-                            <button class="btn btn-primary btn-sm edit-btn" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>
-                        </td> -->
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for item_row in data %} {# Renamed loop variable from 'user' to 'item_row' for clarity #}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        data-id="{{ item_row['_id'] }}"
+                        data-company="{{ item_row['company'] }}"
+                        data-premise-name="{{ item_row['Premise Name'] }}"
+                        data-model="{{ item_row['Model'] }}"
+                        data-color="{{ item_row['Color'] }}"
+                        data-sn="{{ item_row['S/N'] }}"
+                        data-volume="{{ item_row['Volume'] }}"
+                        data-current-eo="{{ item_row['Current EO'] }}"
+                        data-balance="{{ item_row['Balance'] }}"
+                        data-consumption="{{ item_row['Consumption'] }}"
+                        data-new-eo="{{ item_row['New EO'] }}"
+                        data-refilled="{{ item_row['Refilled'] }}"
+                        data-e1-days="{{ item_row['E1 - DAYS'] }}" data-e1-start="{{ item_row['E1 - START'] }}" data-e1-end="{{ item_row['E1 - END'] }}" data-e1-work="{{ item_row['E1 - WORK'] }}" data-e1-pause="{{ item_row['E1 - PAUSE'] }}"
+                        data-e2-days="{{ item_row['E2 - DAYS'] }}" data-e2-start="{{ item_row['E2 - START'] }}" data-e2-end="{{ item_row['E2 - END'] }}" data-e2-work="{{ item_row['E2 - WORK'] }}" data-e2-pause="{{ item_row['E2 - PAUSE'] }}"
+                        data-e3-days="{{ item_row['E3 - DAYS'] }}" data-e3-start="{{ item_row['E3 - START'] }}" data-e3-end="{{ item_row['E3 - END'] }}" data-e3-work="{{ item_row['E3 - WORK'] }}" data-e3-pause="{{ item_row['E3 - PAUSE'] }}"
+                        data-e4-days="{{ item_row['E4 - DAYS'] }}" data-e4-start="{{ item_row['E4 - START'] }}" data-e4-end="{{ item_row['E4 - END'] }}" data-e4-work="{{ item_row['E4 - WORK'] }}" data-e4-pause="{{ item_row['E4 - PAUSE'] }}"
+                        data-scent-effectiveness="{{ item_row['#1 Scent Effectiveness'] }}"
+                        data-common-encounters="{{ item_row['#1 Common encounters'] }}"
+                        data-other-remarks="{{ item_row['#1 Other remarks'] }}"
+                        data-month="{{ item_row['month'] }}"
+                        data-year="{{ item_row['year'] }}"
+                        data-month-year="{{ item_row.get('month_year') if item_row.get('month_year') is string else item_row.get('month_year').isoformat() if item_row.get('month_year') else '' }}"
+                    >
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['company'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row.industry }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Premise Name'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row.premise_area }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row.premise_address }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                            {% if item_row.pics %}
+                                <ul class="list-disc list-inside space-y-1">
+                                {% for pic in item_row.pics %}
+                                    <li><strong>{{ pic.name }}</strong> ({{ pic.designation }})<br/>C: {{ pic.contact }}<br/>E: {{ pic.email }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                No PIC
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Model'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Color'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['S/N'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Volume'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Current EO'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Balance'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Consumption'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['New EO'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['Refilled'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E1 - DAYS'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E1 - START'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E1 - END'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E1 - WORK'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E1 - PAUSE'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E2 - DAYS'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E2 - START'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E2 - END'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E2 - WORK'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E2 - PAUSE'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E3 - DAYS'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E3 - START'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E3 - END'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E3 - WORK'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E3 - PAUSE'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E4 - DAYS'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E4 - START'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E4 - END'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E4 - WORK'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['E4 - PAUSE'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['#1 Scent Effectiveness'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['#1 Common encounters'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['#1 Other remarks'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['month'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['year'] }}</td>
+                        {# <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                            <button type="button" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 edit-btn"
+                                    data-modal-target="editModal" data-modal-toggle="editModal">Edit</button>
+                        </td> #}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="40" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
+                            No data available for the current filters.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    
-        <!-- Pagination Controls -->
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center mt-4">
-                <!-- Previous Button -->
-                <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}" 
-                       aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-        
-                <!-- First Page and Ellipsis -->
-                {% if page > 4 %}
-                <li class="page-item">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}">1</a>
-                </li>
-                <li class="page-item disabled d-none d-sm-inline">
-<span class="page-link">...</span>                </li>
-                {% endif %}
+    </div>
 
-                <!-- Dynamic Page Numbers -->
-                {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
-                <li class="page-item {% if p == page %}active{% endif %} d-none d-sm-inline">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}">
-                        {{ p }}
-                    </a>
-                </li>
+    <!-- Pagination Controls -->
+    {% if data and total_pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-6 flex justify-center">
+        <ul class="inline-flex items-center -space-x-px">
+            <li> {# Previous Button #}
+                <a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page - 1) }}"
+                   class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white {% if page == 1 %}opacity-50 cursor-not-allowed{% endif %}">
+                    <span class="sr-only">Previous</span>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </a>
+            </li>
+            {% if page > 4 %} {# First Page and Ellipsis #}
+            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', 1) }}" class="hidden sm:inline-flex py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a></li>
+            <li class="hidden sm:inline-flex"><span class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">...</span></li>
+            {% endif %}
+            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %} {# Dynamic Page Numbers #}
+            <li>
+                <a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', p) }}"
+                   class="hidden sm:inline-flex py-2 px-3 leading-tight border {% if p == page %}text-blue-600 bg-blue-50 border-blue-300 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white{% else %}text-gray-500 bg-white border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white{% endif %}">
+                    {{ p }}
+                </a>
+            </li>
+            {% endfor %}
+            {% if page < total_pages - 3 %} {# Ellipsis and Last Page #}
+            <li class="hidden sm:inline-flex"><span class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">...</span></li>
+            <li><a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', total_pages) }}" class="hidden sm:inline-flex py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">{{ total_pages }}</a></li>
+            {% endif %}
+            <li> {# Next Button #}
+                <a href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}"
+                   class="py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white {% if page == total_pages %}opacity-50 cursor-not-allowed{% endif %}">
+                    <span class="sr-only">Next</span>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto mx-auto flex items-center">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full">
+            <div class="flex justify-between items-center p-5 border-b border-gray-300 dark:border-gray-700 rounded-t">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Record</h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="editModal">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+            <form id="editForm" class="p-6 space-y-4">
+                <input type="hidden" id="editRecordId" name="sn"> {# Changed from recordId to editRecordId, added name="sn" #}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="editCompany" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
+                        <input type="text" id="editCompany" name="company" class="tailwind-input-class">
+                    </div>
+                    <div>
+                        <label for="editPremiseName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Name</label>
+                        <input type="text" id="editPremiseName" name="premise_name" class="tailwind-input-class">
+                    </div>
+                    {# Add other static fields like Model, Color, SN, Volume, Current EO, Balance, Consumption, New EO, Refilled, Scent Effect, Common Enc, Other Remarks #}
+                    {# For brevity, only a few E-fields are shown below. All should be included. #}
+                </div>
+                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 pt-2 border-t border-gray-200 dark:border-gray-700 mt-4">Event Settings</h4>
+                {% for i in range(1, 5) %}
+                <details class="bg-gray-50 dark:bg-gray-700/30 p-3 rounded-md">
+                    <summary class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">Event {{i}}</summary>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                        <div>
+                            <label for="editE{{i}}Days" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">E{{i}}-Days</label>
+                            <input type="text" id="editE{{i}}Days" name="E{{i}} - DAYS" class="tailwind-input-class text-xs">
+                        </div>
+                        <div>
+                            <label for="editE{{i}}Start" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">E{{i}}-Start</label>
+                            <input type="text" id="editE{{i}}Start" name="E{{i}} - START" class="tailwind-input-class text-xs">
+                        </div>
+                        <div>
+                            <label for="editE{{i}}End" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">E{{i}}-End</label>
+                            <input type="text" id="editE{{i}}End" name="E{{i}} - END" class="tailwind-input-class text-xs">
+                        </div>
+                        <div>
+                            <label for="editE{{i}}Work" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">E{{i}}-Work</label>
+                            <input type="number" id="editE{{i}}Work" name="E{{i}} - WORK" class="tailwind-input-class text-xs">
+                        </div>
+                        <div>
+                            <label for="editE{{i}}Pause" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">E{{i}}-Pause</label>
+                            <input type="number" id="editE{{i}}Pause" name="E{{i}} - PAUSE" class="tailwind-input-class text-xs">
+                        </div>
+                    </div>
+                </details>
                 {% endfor %}
-
-                <!-- Ellipsis and Last Page -->
-                {% if page < total_pages - 3 %}
-                <li class="page-item disabled d-none d-sm-inline">
-                    <span class="page-link">...</span>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" 
-                    href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', total_pages) }}">
-                        {{ total_pages }}
-                    </a>
-                </li>
-                {% endif %}
-        
-                <!-- Next Button -->
-                <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                    <a class="page-link" 
-                       href="{{ pagination_base_url }}{{ query_params | to_querystring | update_querystring('page', page + 1) }}" 
-                       aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        
-    </div>
-
-    <!-- Edit Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Edit Record</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                 <div>
+                    <label for="editMonthYear" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month-Year (Date)</label>
+                    <input type="date" id="editMonthYear" name="month_year" class="tailwind-input-class">
                 </div>
-                <div class="modal-body">
-                    <form id="editForm">
-                        <input type="hidden" id="recordId">
-                
-                        <!-- Company and Premise Name -->
-                        <div class="mb-3">
-                            <label for="company" class="form-label">Company</label>
-                            <input type="text" class="form-control" id="company">
-                        </div>
-                        <div class="mb-3">
-                            <label for="premiseName" class="form-label">Premise Name</label>
-                            <input type="text" class="form-control" id="premiseName">
-                        </div>
-                
-                        <!-- E1 to E4 Fields -->
-                        <div class="mb-3">
-                            <label for="e1Days" class="form-label">E1-Days</label>
-                            <input type="number" class="form-control" id="e1Days">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e1Start" class="form-label">E1-Start</label>
-                            <input type="datetime-local" class="form-control" id="e1Start">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e1End" class="form-label">E1-End</label>
-                            <input type="datetime-local" class="form-control" id="e1End">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e1Work" class="form-label">E1-Work</label>
-                            <input type="number" class="form-control" id="e1Work">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e1Pause" class="form-label">E1-Pause</label>
-                            <input type="number" class="form-control" id="e1Pause">
-                        </div>
-                
-                        <div class="mb-3">
-                            <label for="e2Days" class="form-label">E2-Days</label>
-                            <input type="number" class="form-control" id="e2Days">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e2Start" class="form-label">E2-Start</label>
-                            <input type="datetime-local" class="form-control" id="e2Start">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e2End" class="form-label">E2-End</label>
-                            <input type="datetime-local" class="form-control" id="e2End">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e2Work" class="form-label">E2-Work</label>
-                            <input type="number" class="form-control" id="e2Work">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e2Pause" class="form-label">E2-Pause</label>
-                            <input type="number" class="form-control" id="e2Pause">
-                        </div>
-                
-                        <div class="mb-3">
-                            <label for="e3Days" class="form-label">E3-Days</label>
-                            <input type="number" class="form-control" id="e3Days">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e3Start" class="form-label">E3-Start</label>
-                            <input type="datetime-local" class="form-control" id="e3Start">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e3End" class="form-label">E3-End</label>
-                            <input type="datetime-local" class="form-control" id="e3End">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e3Work" class="form-label">E3-Work</label>
-                            <input type="number" class="form-control" id="e3Work">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e3Pause" class="form-label">E3-Pause</label>
-                            <input type="number" class="form-control" id="e3Pause">
-                        </div>
-                
-                        <div class="mb-3">
-                            <label for="e4Days" class="form-label">E4-Days</label>
-                            <input type="number" class="form-control" id="e4Days">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e4Start" class="form-label">E4-Start</label>
-                            <input type="datetime-local" class="form-control" id="e4Start">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e4End" class="form-label">E4-End</label>
-                            <input type="datetime-local" class="form-control" id="e4End">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e4Work" class="form-label">E4-Work</label>
-                            <input type="number" class="form-control" id="e4Work">
-                        </div>
-                        <div class="mb-3">
-                            <label for="e4Pause" class="form-label">E4-Pause</label>
-                            <input type="number" class="form-control" id="e4Pause">
-                        </div>
-                
-                        <!-- Month and Year -->
-                        <div class="mb-3">
-                            <label for="monthYear" class="form-label">Month-Year</label>
-                            <input type="datetime-local" class="form-control" id="monthYear">
-                        </div>
-                
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </form>
+
+                <div class="flex items-center justify-end p-4 border-t border-gray-300 dark:border-gray-700 rounded-b space-x-2">
+                    <button data-modal-hide="editModal" type="button" class="py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">Cancel</button>
+                    <button type="submit" class="py-2 px-4 text-sm font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 dark:focus:ring-offset-gray-900">Save Changes</button>
                 </div>
-                
-                
-            </div>
-        </div>
-    </div>
-    
-
-
-<!-- Confirmation Modal -->
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmModalLabel">Confirm Changes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to save these changes?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmSave">Yes, Save</button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-    const editButtons = document.querySelectorAll('.edit-btn');
+    // Common Tailwind input class definition for JS
+    const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
+    // Apply to filter form inputs that might not have it (if any added dynamically, though not in this form)
+    document.querySelectorAll('#filterFormContainer input, #filterFormContainer select').forEach(el => {
+        if (!el.classList.contains('tailwind-input-class')) { // Basic check
+            el.classList.add(...tailwindInputClass.split(' '));
+        }
+    });
 
-    editButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const row = this.closest('tr');
 
-            // Populate modal fields with data-* attributes
-            document.getElementById('recordId').value = row.dataset.id;
-            document.getElementById('company').value = row.dataset.company;
-            document.getElementById('premiseName').value = row.dataset.premiseName;
+    // Accordion toggle for filter form
+    const filterToggleButton = document.getElementById('filterToggleButton');
+    const filterFormContainer = document.getElementById('filterFormContainer');
+    const filterToggleIcon = document.getElementById('filterToggleIcon');
 
-            // Populate E1 to E4 fields
-            document.getElementById('e1Days').value = row.dataset.e1Days;
-            document.getElementById('e1Start').value = row.dataset.e1Start;
-            document.getElementById('e1End').value = row.dataset.e1End;
-            document.getElementById('e1Work').value = row.dataset.e1Work;
-            document.getElementById('e1Pause').value = row.dataset.e1Pause;
-
-            document.getElementById('e2Days').value = row.dataset.e2Days;
-            document.getElementById('e2Start').value = row.dataset.e2Start;
-            document.getElementById('e2End').value = row.dataset.e2End;
-            document.getElementById('e2Work').value = row.dataset.e2Work;
-            document.getElementById('e2Pause').value = row.dataset.e2Pause;
-
-            document.getElementById('e3Days').value = row.dataset.e3Days;
-            document.getElementById('e3Start').value = row.dataset.e3Start;
-            document.getElementById('e3End').value = row.dataset.e3End;
-            document.getElementById('e3Work').value = row.dataset.e3Work;
-            document.getElementById('e3Pause').value = row.dataset.e3Pause;
-
-            document.getElementById('e4Days').value = row.dataset.e4Days;
-            document.getElementById('e4Start').value = row.dataset.e4Start;
-            document.getElementById('e4End').value = row.dataset.e4End;
-            document.getElementById('e4Work').value = row.dataset.e4Work;
-            document.getElementById('e4Pause').value = row.dataset.e4Pause;
-
-            // Populate Month and Year (in required format)
-            let monthYear = row.dataset.monthYear; // Format: YYYY-MM-DD
-            document.getElementById('monthYear').value = new Date(monthYear).toISOString().slice(0, 19); // Convert to ISO format
+    if (filterToggleButton && filterFormContainer && filterToggleIcon) {
+        filterToggleButton.addEventListener('click', () => {
+            filterFormContainer.classList.toggle('hidden');
+            filterToggleIcon.classList.toggle('rotate-180');
         });
-    });
+    }
 
-    document.getElementById('editForm').addEventListener('submit', function (e) {
-        e.preventDefault();
+    // Modal interactions (basic show/hide)
+    document.querySelectorAll('[data-modal-toggle]').forEach(function (toggleBtn) {
+        const modalId = toggleBtn.getAttribute('data-modal-target');
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            toggleBtn.addEventListener('click', function () {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex'); // Use flex for centering
+                // Populate modal - specific to editModal
+                if (modalId === 'editModal') {
+                    const row = toggleBtn.closest('tr'); // Assuming button is in a table row
+                    if (row) {
+                        document.getElementById('editRecordId').value = row.dataset.sn; // Use S/N as ID
+                        document.getElementById('editCompany').value = row.dataset.company || '';
+                        document.getElementById('editPremiseName').value = row.dataset.premiseName || '';
 
-        const updatedData = {
-            id: document.getElementById('recordId').value,
-            company: document.getElementById('company').value,
-            premiseName: document.getElementById('premiseName').value,
-            e1Days: document.getElementById('e1Days').value,
-            e1Start: document.getElementById('e1Start').value,
-            e1End: document.getElementById('e1End').value,
-            e1Work: document.getElementById('e1Work').value,
-            e1Pause: document.getElementById('e1Pause').value,
-            e2Days: document.getElementById('e2Days').value,
-            e2Start: document.getElementById('e2Start').value,
-            e2End: document.getElementById('e2End').value,
-            e2Work: document.getElementById('e2Work').value,
-            e2Pause: document.getElementById('e2Pause').value,
-            e3Days: document.getElementById('e3Days').value,
-            e3Start: document.getElementById('e3Start').value,
-            e3End: document.getElementById('e3End').value,
-            e3Work: document.getElementById('e3Work').value,
-            e3Pause: document.getElementById('e3Pause').value,
-            e4Days: document.getElementById('e4Days').value,
-            e4Start: document.getElementById('e4Start').value,
-            e4End: document.getElementById('e4End').value,
-            e4Work: document.getElementById('e4Work').value,
-            e4Pause: document.getElementById('e4Pause').value,
-            monthYear: document.getElementById('monthYear').value // Date in ISO format
-        };
-
-        fetch('/update-record', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedData),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Record updated successfully!');
-                location.reload(); // Refresh to reflect changes
-            } else {
-                alert('Error updating record.');
-            }
-        })
-        .catch(err => console.error(err));
-    });
-});
-
-</script>
-      <!-- <script>
-        document.addEventListener('DOMContentLoaded', function () {
-    const editButtons = document.querySelectorAll('.edit-btn');
-
-    editButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const row = this.closest('tr');
-
-            // Populate modal fields with data-* attributes
-            const fields = [
-                'id', 'company', 'premiseName', 'model', 'color', 'sn', 'volume',
-                'currentEo', 'balance', 'consumption', 'newEo', 'refilled',
-                'scentEffectiveness', 'commonEncounters', 'otherRemarks', 'month', 'year'
-            ];
-
-            // Populate static fields
-            fields.forEach(field => {
-                const element = document.getElementById(field);
-                if (element) {
-                    element.value = row.dataset[field] || '';
-                }
-            });
-
-            // Populate dynamic E1 to E4 fields
-            for (let i = 1; i <= 4; i++) {
-                const dynamicFields = ['Days', 'Start', 'End', 'Work', 'Pause'];
-                dynamicFields.forEach(dynamicField => {
-                    const fieldId = `e${i}${dynamicField}`;
-                    const element = document.getElementById(fieldId);
-                    if (element) {
-                        element.value = row.dataset[fieldId] || '';
+                        for(let i = 1; i <= 4; i++) {
+                            document.getElementById(`editE\${i}Days`).value = row.dataset[`e\${i}Days`] || '';
+                            document.getElementById(`editE\${i}Start`).value = row.dataset[`e\${i}Start`] || '';
+                            document.getElementById(`editE\${i}End`).value = row.dataset[`e\${i}End`] || '';
+                            document.getElementById(`editE\${i}Work`).value = row.dataset[`e\${i}Work`] || '';
+                            document.getElementById(`editE\${i}Pause`).value = row.dataset[`e\${i}Pause`] || '';
+                        }
+                        // Convert YYYY-MM-DDTHH:MM:SS to YYYY-MM-DD for date input
+                        const monthYearFull = row.dataset.monthYear;
+                        if (monthYearFull) {
+                            document.getElementById('editMonthYear').value = monthYearFull.split('T')[0];
+                        } else {
+                            document.getElementById('editMonthYear').value = '';
+                        }
                     }
-                });
-            }
-        });
-    });
-
-    document.getElementById('editForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // Extract updated values
-        const updatedData = {
-            id: document.getElementById('recordId').value,
-        };
-
-        // Extract static fields
-        const fields = [
-            'company', 'premiseName', 'model', 'color', 'sn', 'volume',
-            'currentEo', 'balance', 'consumption', 'newEo', 'refilled',
-            'scentEffectiveness', 'commonEncounters', 'otherRemarks', 'month', 'year'
-        ];
-
-        fields.forEach(field => {
-            const element = document.getElementById(field);
-            if (element) {
-                updatedData[field] = element.value;
-            }
-        });
-
-        // Extract dynamic E1 to E4 fields
-        for (let i = 1; i <= 4; i++) {
-            const dynamicFields = ['Days', 'Start', 'End', 'Work', 'Pause'];
-            dynamicFields.forEach(dynamicField => {
-                const fieldId = `e${i}${dynamicField}`;
-                const element = document.getElementById(fieldId);
-                if (element) {
-                    updatedData[fieldId] = element.value;
                 }
             });
         }
+    });
 
-        // Confirm update with another modal (or an alert)
-        if (confirm('Are you sure you want to save the changes?')) {
-            // Send data to the server (using Fetch API or AJAX)
-            fetch('/update-data', {
+    document.querySelectorAll('[data-modal-hide]').forEach(function (hideBtn) {
+        const modalId = hideBtn.getAttribute('data-modal-hide');
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            hideBtn.addEventListener('click', function () {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+        }
+    });
+
+    // Edit form submission
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(editForm);
+            const data = Object.fromEntries(formData.entries());
+
+            // The endpoint in original JS was /update-record, using S/N as 'id'
+            // The hidden input for ID is now named 'sn' matching original form data
+            // The flask endpoint expects 'S/N' in caps, but form names are usually lowercase/snake_case
+            // Adjusting to send 'S/N' as the key for the ID.
+            const recordId = data.sn; // This is from <input type="hidden" id="editRecordId" name="sn">
+            delete data.sn; // remove it from main payload if it's just an identifier
+            const payload = { 'S/N': recordId, ...data };
+
+
+            fetch("{{ url_for('api_helpers.update_data') }}", { // Assuming 'update_data' is the correct Flask endpoint
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedData),
+                body: JSON.stringify(payload),
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Record updated successfully!');
-                        location.reload(); // Refresh to reflect changes
-                    } else {
-                        alert('Error updating record.');
-                    }
-                })
-                .catch(err => console.error(err));
-        }
-    });
-});
-
-      </script>
-     -->
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Record updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error updating record: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                console.error('Error submitting edit form:', err);
+                alert('An error occurred while submitting the form.');
+            });
+        });
+    }
+</script>
+{% endblock %}

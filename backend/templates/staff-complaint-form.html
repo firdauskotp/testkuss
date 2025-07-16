@@ -1,372 +1,426 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Case Form</title>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+{% extends "base.html" %}
 
-  <!-- Bootstrap CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block title %}Staff Case Form - Case {{ case_no }}{% endblock %}
+{% block page_title %}Update Case #{{ case_no }}{% endblock %}
 
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
-    }
-    .form-container {
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .form-container h4 {
-      text-decoration: underline;
-    }
-    .acknowledgement-title {
-      text-align: center;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    .table {
-      margin-top: 10px;
-    }
-    .submit-btn {
-      width: 100%;
-    }
-
-    .signature-container {
-        border: 2px solid #ccc;
-        border-radius: 5px;
+{% block head_extra %}
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> {# If any JS still uses Axios #}
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
+    <style>
+      .signature-pad-container {
+        border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+        border-radius: 0.375rem; /* Tailwind rounded-md */
         width: 100%;
         height: 200px;
         position: relative;
         touch-action: none;
-    }
-
-    .signature-pad {
+      }
+      .dark .signature-pad-container {
+        border-color: #4b5563; /* Tailwind dark:border-gray-600 */
+      }
+      canvas.signature-pad {
         width: 100%;
         height: 100%;
-    }
-  </style>
-</head>
-<body>
-  <div class="container mt-5">
-    <p>
-      <a href="{{ url_for('dashboard') }}" class="btn btn-secondary back-btn">Back to Dashboard</a>
-  </p>
-  
-    <h2 class="text-center mb-4">Case {{ case_no }}</h2>
-    <form method="POST"  action="{{ url_for('staff_form', case_no=case_no) }}" enctype="multipart/form-data">
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+      }
+      /* Basic styling for the image modal trigger */
+      #modalImageTrigger {
+        cursor: pointer;
+        transition: opacity 0.2s ease-in-out;
+      }
+      #modalImageTrigger:hover {
+        opacity: 0.8;
+      }
+    </style>
+{% endblock %}
 
-      <div class="form-group">
-        <label for="case_no">Case Number:</label>
-        <input type="text" class="form-control" id="case_no" name="case_no" value=" {{ case_no }}" required disabled>
-      </div>
-      <!-- Premise Name -->
-      <div class="form-group">
-        <label for="premise_name">Premise Name:</label>
-        <input type="text" class="form-control" id="premise_name" name="premise_name" value=" {{ case_data['premise_name'] }}" required disabled>
-      </div>
+{% block content %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto space-y-8">
 
-      <!-- Location -->
-      <div class="form-group">
-        <label for="location">Device Location:</label>
-        <input type="text" class="form-control" id="location" name="location" value=" {{ case_data['location'] }}" required disabled>
-      </div>
+        <div class="text-left mb-6">
+            <a href="{{ url_for('dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                &larr; Back to Dashboard
+            </a>
+        </div>
 
-      <!-- Serial Number -->
-      <!-- <div id="imageError" class="error-message d-none" style="color:red;">Please upload an image of your device.</div> -->
-      {% if case_data.get('image_id') %}
-    <div class="form-group">
-        <label>Uploaded Device Image:</label><br>
-        <img src="{{ url_for('get_device_image', image_id=case_data['image_id']) }}" 
-             alt="Device Image" class="img-fluid" style="max-width: 300px;"  data-bs-toggle="modal" data-bs-target="#imageModal"
-             id="modalImageTrigger">
-    </div>
-{% endif %}
+        <form method="POST" action="{{ url_for('staff.staff_form', case_no=case_no) }}" enctype="multipart/form-data" class="space-y-8">
 
-      <!-- Model -->
-      <div class="form-group">
-        <label for="model">Model:</label>
-        <input type="text" class="form-control" id="model" name="model" value=" {{ case_data['model'] }}" required disabled>
-      </div>
+            <!-- Case Details Section -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Case Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <label for="case_no_display" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Case Number</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="case_no_display" value="{{ case_no }}" readonly class="tailwind-input-class-disabled flex-1">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="premise_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Name</label>
+                        <input type="text" id="premise_name" value="{{ case_data.premise_name | default('') }}" readonly class="tailwind-input-class-disabled">
+                    </div>
+                    <div>
+                        <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location</label>
+                        <input type="text" id="location" value="{{ case_data.location | default('') }}" readonly class="tailwind-input-class-disabled">
+                    </div>
+                    <div>
+                        <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                        <input type="text" id="model" value="{{ case_data.model | default('') }}" readonly class="tailwind-input-class-disabled">
+                    </div>
 
-      <!-- Issues -->
-      <div class="form-group">
-        <label for="issues">Issues:</label>
-        <div>
-            {% set issue_list = ["Weak Scent", "No Oil", "No Mist", "Weak Batteries", "Faulty Power Adapter"] %}
-            {% for issue in issue_list %}
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="{{ issue.replace(' ', '_') }}" name="issues" value="{{ issue }}" 
-                {% if issue in case_data['issues'] %}checked{% endif %} disabled>
-                <label class="form-check-label" for="{{ issue.replace(' ', '_') }}">{{ issue }}</label>
+                    {% if case_data.get('image_id') %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Uploaded Device Image</label>
+                        <img src="{{ url_for('api_helpers.get_device_image', image_id=case_data.image_id) }}"
+                             alt="Device Image" class="mt-1 rounded-md border border-gray-300 dark:border-gray-600" style="max-width: 200px; max-height: 200px;"
+                             data-modal-target="imageModal" data-modal-toggle="imageModal" id="modalImageTrigger">
+                    </div>
+                    {% endif %}
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reported Issues</label>
+                        <div class="mt-1 space-y-1 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/30">
+                            {% set issue_list = ["Weak Scent", "No Oil", "No Mist", "Weak Batteries", "Faulty Power Adapter"] %}
+                            {% for issue in issue_list %}
+                            <div class="flex items-center">
+                                <input id="{{ issue|replace(' ', '_')|lower }}_display" type="checkbox"
+                                       class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 cursor-not-allowed"
+                                       {% if issue in case_data.issues %}checked{% endif %} disabled>
+                                <label for="{{ issue|replace(' ', '_')|lower }}_display" class="ml-2 block text-sm text-gray-500 dark:text-gray-400">{{ issue }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="remarks-issues" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Remarks</label>
+                        <textarea id="remarks-issues" rows="3" readonly class="tailwind-input-class-disabled">{{ case_data.remarks | default('') }}</textarea>
+                    </div>
+                </div>
             </div>
-            {% endfor %}
+
+            <!-- Actions Done Section -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Actions Performed by Staff</h3>
+                <div class="space-y-3">
+                    {% set action_list = [
+                      "Alcohol Cleaning", "Oil Refill", "Timer Settings",
+                      "Replaced Straw / Mist Head", "Replaced Batteries",
+                      "Replaced Faulty Machine (Same Model)", "Changed Machine (Different Model)",
+                      "Replaced Faulty Power Adapter"
+                    ] %}
+                    {% for action in action_list %}
+                    <div class="flex items-center">
+                        <input id="{{ action|replace(' ', '')|replace('/', '')|lower }}" name="actions" value="{{ action }}" type="checkbox"
+                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                               {% if case_data.get("actions_done") and action in case_data["actions_done"] %}checked{% endif %}
+                               {% if case_data.get('status') == 'closed' %}disabled{% endif %}>
+                        <label for="{{ action|replace(' ', '')|replace('/', '')|lower }}" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ action }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Acknowledgement Section -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Acknowledgement & Follow-up</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label for="remarks-acknowledgement" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Staff Remarks</label>
+                        <textarea id="remarks-acknowledgement" name="remarks" rows="3" class="tailwind-input-class"
+                                  {% if case_data.get('status') == 'closed' %}disabled{% endif %}>{{ case_data.get('remarks', '') }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Case Closed?</label>
+                        <div class="flex items-center space-x-6">
+                            <div class="flex items-center">
+                                <input id="caseClosedYes" name="case_closed" type="radio" value="Yes" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                                       {% if case_data.get('case_closed') == 'Yes' or case_data.get('status') == 'closed' %}checked{% endif %}
+                                       {% if case_data.get('status') == 'closed' %}disabled{% endif %}>
+                                <label for="caseClosedYes" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Yes</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="caseClosedNo" name="case_closed" type="radio" value="No" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                                       {% if case_data.get('case_closed') == 'No' %}checked{% endif %}
+                                       {% if case_data.get('status') == 'closed' %}disabled{% endif %}>
+                                <label for="caseClosedNo" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">No, revisit on:</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="appointmentTable" class="{% if case_data.get('case_closed') != 'No' %}hidden{% endif %} mt-4 p-4 border border-gray-200 dark:border-gray-700 rounded-md space-y-4">
+                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Select Appointment Date & Time:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="appointment_date" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                                <input type="date" id="appointment_date" name="appointment_date" value="{{ case_data.get('revisit_date', '') }}"
+                                       class="tailwind-input-class text-sm"
+                                       {% if case_data.get('status') == 'closed' %}disabled{% endif %}>
+                            </div>
+                            <div>
+                                <label for="appointment_time" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Time</label>
+                                <input type="time" id="appointment_time" name="appointment_time" value="{{ case_data.get('revisit_time', '') }}" class="tailwind-input-class text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="staffName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Staff Name</label>
+                        <input type="text" id="staffName" name="staff_name" value="{{ case_data.get('staff_name', session.get('username', '')) }}" required class="tailwind-input-class" readonly>
+                    </div>
+
+                    <div>
+                        <label for="signature" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Signature</label>
+                        <div class="signature-pad-container">
+                            <canvas id="signature-pad" class="signature-pad"></canvas>
+                        </div>
+                        <input type="hidden" name="signature" id="signature-input">
+                        {% if case_data.get('status') != 'closed' %}
+                        <button type="button" id="clear-signature"
+                                class="mt-2 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                            Clear Signature
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                {% if case_data.get('status') != 'closed' %}
+                <button type="submit"
+                        class="py-2.5 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white
+                               bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900">
+                    Update Case
+                </button>
+                {% else %}
+                <p class="text-sm text-gray-500 dark:text-gray-400 italic">Case is closed - no updates allowed</p>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+    <div class="relative p-4 w-full max-w-2xl h-full md:h-auto mx-auto flex items-center">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700 rounded-t">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                    Device Image
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="imageModal">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 text-center">
+                <img id="modalImage" src="" class="max-w-full h-auto max-h-[70vh] mx-auto rounded-md">
+            </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-      <!-- Remarks -->
-      <div class="form-group">
-        <label for="remarks-issues">Remarks (if any):</label>
-        <textarea class="form-control" id="remarks-issues" name="remarks-issues" rows="3" value=" {{ case_data['renarks'] }}"  disabled></textarea>
-      </div>
+{% block scripts %}
+<script>
+    // Common Tailwind classes for inputs (used if JS needs to create similar elements or as a reference)
+    const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
+    const tailwindInputClassDisabled = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed";
 
-      <!-- <h5 style="text-align: center;">ACTIONS DONE</h5>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Alcohol Cleaning" id="alcoholCleaning">
-              <label class="form-check-label" for="alcoholCleaning">Alcohol Cleaning</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Oil Refill" id="oilRefill">
-              <label class="form-check-label" for="oilRefill">Oil Refill</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Timer Settings" id="timerSettings">
-              <label class="form-check-label" for="timerSettings">Timer Settings</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Straw / Mist Head" id="replaceStraw">
-              <label class="form-check-label" for="replaceStraw">Replaced Straw / Mist Head</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Batteries" id="replaceBatteries">
-              <label class="form-check-label" for="replaceBatteries">Replaced Batteries</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Faulty Machine (Same Model)" id="replaceMachineSame">
-              <label class="form-check-label" for="replaceMachineSame">Replaced Faulty Machine (Same Model)</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Changed Machine (Different Model)" id="changeMachineDifferent">
-              <label class="form-check-label" for="changeMachineDifferent">Changed Machine (Different Model)</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions" value="Replaced Faulty Power Adapter" id="replaceAdapter">
-              <label class="form-check-label" for="replaceAdapter">Replaced Faulty Power Adapter</label>
-            </div> -->
-
-            <h5 style="text-align: center;">ACTIONS DONE</h5>
-{% set action_list = [
-  "Alcohol Cleaning", "Oil Refill", "Timer Settings",
-  "Replaced Straw / Mist Head", "Replaced Batteries",
-  "Replaced Faulty Machine (Same Model)", "Changed Machine (Different Model)",
-  "Replaced Faulty Power Adapter"
-] %}
-{% for action in action_list %}
-  <div class="form-check">
-    <input class="form-check-input" type="checkbox" name="actions" value="{{ action }}" id="{{ action|replace(' ', '') }}"
-      {% if case_data.get("actions_done") and action in case_data["actions_done"] %}checked{% endif %} {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>
-    <label class="form-check-label" for="{{ action|replace(' ', '') }}">{{ action }}</label>
-  </div>
-{% endfor %}
-
-            <!-- Acknowledgement -->
-            <h5 class="acknowledgement-title">ACKNOWLEDGEMENT</h5>
-            <div class="form-group">
-              <label for="remarks-acknowledgement">Remarks (if any):</label>
-              <textarea class="form-control" id="remarks-acknowledgement" name="remarks" rows="3" {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>{{ case_data.get('remarks', '') }}</textarea>
-
-            </div>
-            <div class="form-check">
-              <label class="form-check-label" for="caseClosedOrOpen">Case Closed? </label></div>
-            <div class="form-check">
-
-              <input class="form-check-input" type="radio" name="case_closed" value="Yes" id="caseClosedYes" {% if case_data.status is defined and case_data.status == 'closed' %}checked{% endif %} {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>
-
-              <label class="form-check-label" for="caseClosedYes"> Yes</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="case_closed" value="No" id="caseClosedNo" {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>
-
-              <label class="form-check-label" for="caseClosedNo">No, revisit on:</label>
-            </div>
-            
-            <!-- Appointment Table -->
-            <div class="table-responsive mt-3" id="appointmentTable" style="display: none;">
-              <table class="table">
-                <tbody>
-                  <tr>
-                    <td>Select Appointment Date & Time:</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <input type="date" class="form-control" name="appointment_date" value="{{ case_data.get('revisit_date', '') }}" {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>
-
-                    </td>
-                    <td>
-                      <input type="time" class="form-control" name="appointment_time" value="{{ case_data.get('revisit_time', '') }}" {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>
-
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Staff Name -->
-            <div class="form-group">
-              <label for="staffName">Staff Name:</label>
-              <input type="text" class="form-control" id="staffName" name="staff_name" value="{{ case_data.get('staff_name', '') }}" {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>
-            </div>
-
-            <!-- Signature -->
-            <div class="form-group">
-              <label for="signature">Signature:</label>
-              <div class="signature-container">
-                  <canvas id="signature-pad" class="signature-pad"></canvas>
-              </div>
-              <button type="button" class="btn btn-secondary mt-2" id="clear-signature" {% if case_data.status is defined and case_data.status == 'closed' %}disabled{% endif %}>Clear Signature</button>
-              <input type="hidden" name="signature" id="signature-input">
-          </div>
-
-      <!-- Submit Button -->
-      {% if case_data.status is not defined or case_data.status != 'closed' %}
-      <button type="submit" class="btn btn-primary btn-block">Submit Case</button>
-      {% endif %}
-    </form>
-
-    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="imageModalLabel">Device Image</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body text-center">
-            <img id="modalImage" src="" class="img-fluid">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
-
-  <!-- Bootstrap JS and dependencies -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script>
-    document.getElementById("modalImageTrigger").addEventListener("click", function() {
-      document.getElementById("modalImage").src = this.src;
-    });
-  </script>
-  <script>
-    // Show/hide appointment table based on "Case Closed" selection
-    const caseClosedYes = document.getElementById("caseClosedYes");
-    const caseClosedNo = document.getElementById("caseClosedNo");
-    const appointmentTable = document.getElementById("appointmentTable");
-  
-    caseClosedYes.addEventListener("change", () => {
-      if (caseClosedYes.checked) {
-        appointmentTable.style.display = "none";
-      }
-    });
-  
-    caseClosedNo.addEventListener("change", () => {
-      if (caseClosedNo.checked) {
-        appointmentTable.style.display = "block";
-      }
-    });
-
-
-    document.getElementById("case_no").addEventListener("change", function() {
-    const caseNo = this.value.trim();
-    if (!caseNo) return;
-
-    fetch(`/api/case/${caseNo}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert("Case not found!");
-                return;
+    document.addEventListener('DOMContentLoaded', function() {
+        // Apply disabled styles to elements with the class
+        document.querySelectorAll('.tailwind-input-class-disabled').forEach(el => {
+            el.classList.add(...tailwindInputClassDisabled.split(' '));
+            // Ensure base input classes are also there if not already part of the macro/direct class
+            tailwindInputClass.split(' ').forEach(cls => {
+                if (!el.classList.contains(cls)) el.classList.add(cls);
+            });
+        });
+        // Apply general input styles to other inputs/selects/textareas if not already applied
+         document.querySelectorAll('form select, form input[type="text"], form input[type="date"], form input[type="time"], form input[type="number"], form textarea').forEach(el => {
+            if (!el.classList.contains('tailwind-input-class') && !el.classList.contains('tailwind-input-class-disabled') && !el.id.includes('signature')) {
+                el.classList.add(...tailwindInputClass.split(' '));
+                 if (el.disabled || el.readOnly) {
+                    el.classList.add(...tailwindInputClassDisabled.split(' ').filter(c => !c.startsWith('appearance-none'))); // Avoid double appearance-none
+                }
             }
+        });
 
-            // Fill in text fields
-            document.getElementById("premise_name").value = data.premise_name || "";
-            document.getElementById("location").value = data.location || "";
-            document.getElementById("model").value = data.model || "";
-            document.getElementById("remarks-issues").value = data.remarks || "";
 
-            // Uncheck all checkboxes first
-            const issues = ["Weak Scent", "No Oil", "No Mist", "Weak Batteries", "Faulty Power Adapter"];
-            issues.forEach(issue => {
-                const checkbox = document.getElementById(issue.replace(/\s+/g, '_').toLowerCase());
-                if (checkbox) {
-                    checkbox.checked = false; // Reset all first
+        // Case search functionality
+        const searchCaseBtn = document.getElementById('search_case');
+        const caseNoSearchInput = document.getElementById('case_no_search');
+
+        if (searchCaseBtn && caseNoSearchInput) {
+            searchCaseBtn.addEventListener('click', function() {
+                const caseNo = caseNoSearchInput.value.trim();
+                if (caseNo) {
+                    // Redirect to the staff form with the new case number
+                    window.location.href = `/staff/form/${caseNo}`;
+                } else {
+                    alert('Please enter a case number');
                 }
             });
 
-            // Check the relevant ones from database
-            if (Array.isArray(data.issues)) {
-                data.issues.forEach(issue => {
-                    const checkbox = document.getElementById(issue.replace(/\s+/g, '_').toLowerCase());
-                    if (checkbox) {
-                        checkbox.checked = true;
-                    }
+            // Allow search on Enter key
+            caseNoSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchCaseBtn.click();
+                }
+            });
+        }
+
+        const modalImageTrigger = document.getElementById("modalImageTrigger");
+        const imageModal = document.getElementById("imageModal");
+        const modalImage = document.getElementById("modalImage");
+
+        if (modalImageTrigger && imageModal && modalImage) {
+            modalImageTrigger.addEventListener("click", function() {
+                modalImage.src = this.src;
+                imageModal.classList.remove('hidden');
+                imageModal.classList.add('flex'); // For centering
+            });
+        }
+
+        // Generic modal hide logic
+        document.querySelectorAll('[data-modal-hide]').forEach(function (hideBtn) {
+            const modalId = hideBtn.getAttribute('data-modal-hide');
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                hideBtn.addEventListener('click', function () {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
                 });
             }
-        })
-        .catch(error => console.error("Error fetching case data:", error));
-});
+        });
 
-  </script>
-  <!-- Signature Pad Library -->
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
 
-<script>
-    // Initialize Signature Pad
-    const canvas = document.getElementById("signature-pad");
-    const signaturePad = new SignaturePad(canvas, {
-        minWidth: 1,
-        maxWidth: 3,
-        penColor: "black"
-    });
-    const savedSignature = "{{ case_data.get('signature', '') }}";
+        // Show/hide appointment table
+        const caseClosedYes = document.getElementById("caseClosedYes");
+        const caseClosedNo = document.getElementById("caseClosedNo");
+        const appointmentTable = document.getElementById("appointmentTable");
 
-if (savedSignature && savedSignature.startsWith("data:image")) {
-  const img = new Image();
-  img.onload = () => {
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  };
-  img.src = savedSignature;
-}
-    // Adjust canvas size on load
-    function resizeCanvas() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear(); // Clear after resize
-    }
-    
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
-
-    // Clear signature button
-    document.getElementById("clear-signature").addEventListener("click", function() {
-        signaturePad.clear();
-    });
-
-    // Save signature as Base64 before submitting
-    document.querySelector("form").addEventListener("submit", function(event) {
-        if (!signaturePad.isEmpty()) {
-            document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+        function toggleAppointmentTable() {
+            if (caseClosedNo && caseClosedNo.checked) {
+                appointmentTable.classList.remove("hidden");
+            } else {
+                appointmentTable.classList.add("hidden");
+            }
         }
+        if(caseClosedYes) caseClosedYes.addEventListener("change", toggleAppointmentTable);
+        if(caseClosedNo) caseClosedNo.addEventListener("change", toggleAppointmentTable);
+        // Initial check
+        // toggleAppointmentTable(); // Handled by Jinja condition now
+
+
+        // Signature Pad
+        const canvas = document.getElementById("signature-pad");
+        const signaturePad = new SignaturePad(canvas, {
+            minWidth: 1,
+            maxWidth: 2.5,
+            penColor: document.documentElement.getAttribute('data-theme') === 'dark' ? "white" : "black"
+        });
+
+        // Disable signature pad if case is closed
+        const caseStatus = '{{ case_data.get("status", "") }}';
+        if (caseStatus === 'closed') {
+            signaturePad.off();
+            canvas.style.pointerEvents = 'none';
+            canvas.style.opacity = '0.6';
+        }
+
+        const savedSignature = '{{ case_data.get("signature", "") }}' || '';
+
+        if (savedSignature && savedSignature.startsWith("data:image")) {
+            // Delay loading to ensure canvas is sized if it depends on CSS fully loading
+            setTimeout(() => {
+                if(canvas.offsetWidth > 0 && canvas.offsetHeight > 0) { // Check if canvas is visible and sized
+                    const img = new Image();
+                    img.onload = () => {
+                        const ctx = canvas.getContext("2d");
+                        // Ensure canvas is clear before drawing, respecting current transform
+                        const currentTransform = ctx.getTransform();
+                        ctx.setTransform(1,0,0,1,0,0); // Reset transform for clear
+                        ctx.clearRect(0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
+                        ctx.setTransform(currentTransform); // Restore original transform
+
+                        // Scale image draw to fit canvas if needed, or draw at 1:1
+                        // For simplicity, draw directly. May need adjustments if image is larger than canvas.
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = savedSignature;
+                } else {
+                     // Fallback or retry if canvas not sized
+                    console.warn("Signature canvas not ready for drawing saved signature.");
+                }
+            }, 200); // Small delay
+        }
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            if (canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                signaturePad.clear();
+                 // Redraw saved signature if it exists after resize
+                if (savedSignature && savedSignature.startsWith("data:image") && !signaturePad.isEmpty()) {
+                     // This part is tricky as signaturePad.fromDataURL would overwrite,
+                     // we need to re-apply the original image data if it was there.
+                     // For simplicity, if user hasn't drawn, and there's saved data, try to reload.
+                     // This might need more robust handling if user draws then resizes.
+                    const tempImg = new Image();
+                    tempImg.onload = () => { canvas.getContext("2d").drawImage(tempImg,0,0); };
+                    tempImg.src = savedSignature;
+                }
+            }
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas(); // Initial call
+
+        const clearSignatureBtn = document.getElementById("clear-signature");
+        if (clearSignatureBtn) {
+            clearSignatureBtn.addEventListener("click", function() {
+                if (caseStatus !== 'closed') {
+                    signaturePad.clear();
+                }
+            });
+        }
+
+        document.querySelector("form").addEventListener("submit", function(event) {
+            if (!signaturePad.isEmpty()) {
+                document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+            }
+        });
+
+        // Theme change listener for signature pad color
+        if (window.matchMedia) {
+          const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+          mediaQueryList.addEventListener('change', event => {
+            signaturePad.penColor = event.matches ? "white" : "black";
+            signaturePad.clear(); // Or try to redraw with new color if content exists
+          });
+        }
+        // Also check on theme toggle button click (if theme-toggle.js doesn't handle this)
+        const themeToggleButton = document.getElementById('theme-toggle-btn');
+        if (themeToggleButton) {
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                        signaturePad.penColor = document.documentElement.getAttribute('data-theme') === 'dark' ? "white" : "black";
+                        signaturePad.clear(); // Or redraw
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true });
+        }
+
+
+        // The fetch logic for case data based on case_no input seems to be for a different form or workflow,
+        // as this page receives case_data directly from Flask. So, that specific JS part is omitted here.
     });
 </script>
-
-</body>
-</html>
+{% endblock %}

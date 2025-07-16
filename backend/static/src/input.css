@@ -1,0 +1,84 @@
+/* Existing Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme variables */
+:root {
+  --bg-primary: theme('colors.white');
+  --bg-secondary: theme('colors.gray.100');
+  --text-primary: theme('colors.gray.900');
+  --text-secondary: theme('colors.gray.700');
+  --border-color: theme('colors.gray.300');
+  --link-color: theme('colors.blue.600');
+  --link-hover-color: theme('colors.blue.800');
+
+  /* GitHub-esque light theme (approximations) */
+  --gh-bg-canvas: theme('colors.white');
+  --gh-bg-primary: theme('colors.white');
+  --gh-bg-secondary: #f6f8fa; /* GitHub's lighter gray */
+  --gh-text-primary: #24292e; /* GitHub's primary text */
+  --gh-text-secondary: #586069; /* GitHub's secondary text */
+  --gh-border-primary: #e1e4e8; /* GitHub's border */
+  --gh-border-secondary: #d1d5da;
+  --gh-link-primary: #0366d6;
+  --gh-button-bg: #fafbfc;
+  --gh-button-text: #24292e;
+  --gh-button-border: rgba(27, 31, 35, 0.15);
+  --gh-header-bg: #24292e; /* Dark header like GitHub */
+  --gh-header-text: theme('colors.white');
+}
+
+html[data-theme='dark'] {
+  --bg-primary: theme('colors.gray.900');
+  --bg-secondary: theme('colors.gray.800');
+  --text-primary: theme('colors.gray.100');
+  --text-secondary: theme('colors.gray.300');
+  --border-color: theme('colors.gray.700');
+  --link-color: theme('colors.blue.400');
+  --link-hover-color: theme('colors.blue.300');
+
+  /* GitHub-esque dark theme (approximations) */
+  --gh-bg-canvas: #0d1117; /* GitHub's dark canvas */
+  --gh-bg-primary: #0d1117;
+  --gh-bg-secondary: #161b22; /* GitHub's darker gray */
+  --gh-text-primary: #c9d1d9; /* GitHub's dark primary text */
+  --gh-text-secondary: #8b949e; /* GitHub's dark secondary text */
+  --gh-border-primary: #30363d; /* GitHub's dark border */
+  --gh-border-secondary: #21262d;
+  --gh-link-primary: #58a6ff;
+  --gh-button-bg: #21262d;
+  --gh-button-text: #c9d1d9;
+  --gh-button-border: #30363d;
+  --gh-header-bg: #161b22; /* Slightly lighter dark header */
+  --gh-header-text: theme('colors.white');
+}
+
+/* Basic body styling using the variables */
+body {
+  background-color: var(--gh-bg-canvas);
+  color: var(--gh-text-primary);
+  @apply font-sans; /* Example: using a Tailwind font utility */
+}
+
+/* Example of how you might use these variables for other elements later */
+/*
+.my-component {
+  background-color: var(--gh-bg-primary);
+  border: 1px solid var(--gh-border-primary);
+}
+a {
+  color: var(--gh-link-primary);
+}
+*/
+
+/* Added from base.html */
+.mobile-nav-link {
+    @apply block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:bg-gray-700 dark:hover:bg-gray-700;
+}
+.mobile-nav-heading {
+    @apply px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider;
+}
+.tailwind-input-class{
+  @apply appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50
+}

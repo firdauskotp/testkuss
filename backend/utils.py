@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 import calendar
@@ -10,11 +11,7 @@ def log_activity(name, action, database):
         "timestamp": datetime.now(),
     }
     database.insert_one(log_entry)
-def parse_date_safe(d):
-    try:
-        return datetime.fromisoformat(d)
-    except Exception:
-        return None
+
 def safe_int(value):
     try:
         return int(value)
@@ -32,7 +29,7 @@ def send_email_to_admin(case_no, user_email, from_email, mail):
     """Notify admin about a new case creation."""
     subject = f"New Case #{case_no} Created"
     body = f"A new case with case number #{case_no} has been created. Please check the system for details."
-    send_email(user_email, from_email, subject, body, mail)
+    send_email(os.getenv('ADMIN_EMAIL_ADDRESS'), from_email, subject, body, mail)
 
 
 # def send_email(to_email, subject, body):
@@ -55,25 +52,15 @@ def send_email_to_admin(case_no, user_email, from_email, mail):
 def send_email(to_email, from_email, subject, body, mail):
     """Generic function to send an email using Flask-Mail."""
     try:
-        msg = Message(subject, sender=from_email, recipients=[to_email])
+        msg = Message(subject, sender= from_email, recipients=[to_email])
         msg.body = body
-        if 'attachments' in kwargs and kwargs['attachments']:
-            for attachment in kwargs['attachments']:
-                # Expected attachment format: {'filename': 'file.pdf', 'content_type': 'application/pdf', 'data': b'...' }
-                msg.attach(
-                    filename=attachment['filename'],
-                    content_type=attachment['content_type'],
-                    data=attachment['data']
-                )
-
-        # Basic logging, consider using app.logger for more robust logging
-        print(f"Attempting to send email: To={to_email}, From={from_email}, Subject={subject}")
+        print(body)
+        print(to_email)
+        print(from_email)
+        print(subject)
         mail.send(msg)
-        print(f"Email supposedly sent to {to_email}")
     except Exception as e:
-        # Basic error logging
-        print(f"Failed to send email to {to_email}. Error: {e}")
-        # Consider using app.logger.error(f"Failed to send email: {e}") for more formal logging
+        print(f"Failed to send email: {e}")
 
 
 def replicate_monthly_routes(database):
