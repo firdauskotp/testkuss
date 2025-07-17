@@ -134,46 +134,104 @@ def update_querystring(querystring, key, value):
 @app.route("/health")
 def health_check():
     """Health check endpoint for production monitoring."""
-    try:
+    from .utils import handle_route_error
+    
+    @handle_route_error
+    def _health_check():
         # Test database connection
         db.command('ping')
-        return jsonify({
+        
+        # Test Redis connection if available
+        health_status = {
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'database': 'connected'
-        }), 200
-    except Exception as e:
-        app.logger.error(f"Health check failed: {e}")
-        return jsonify({
-            'status': 'unhealthy',
-            'timestamp': datetime.now().isoformat(),
-            'error': str(e)
-        }), 503
+            'database': 'connected',
+            'version': '1.0.0'
+        }
+        
+        app.logger.info("Health check completed successfully")
+        return jsonify(health_status), 200
+    
+    return _health_check()
 
 # --- Dashboard Route ---
 @app.route("/dashboard")
 def dashboard():
-    if 'username' not in session:
-        flash("Please log in to access the dashboard.", "warning")
-        return redirect(url_for('auth.admin_login'))
+    """Main dashboard route with enhanced error handling and logging"""
+    from .utils import handle_route_error, require_auth
+    
+    @require_auth('admin')
+    @handle_route_error
+    def _dashboard():
+        username = session.get("username", "unknown")
+        app.logger.info(f"Dashboard accessed by admin: {username}")
+        
+        try:
+            # Fetch counts for dashboard cards with error handling
+            help_request_count = collection.count_documents({})
+            change_count = change_collection.count_documents({})
+            refund_count = refund_collection.count_documents({})
+            remarks_count = remark_collection.count_documents({'urgent': False})
+            urgent_remarks_count = remark_collection.count_documents({'urgent': True})
+            
+            dashboard_data = {
+                "username": username,
+                "help_request_count": help_request_count,
+                "change_count": change_count,
+                "refund_count": refund_count,
+                "remarks_count": remarks_count,
+                "urgent_remarks_count": urgent_remarks_count
+            }
+            
+            app.logger.info(f"Dashboard data loaded for {username}: {dashboard_data}")
+            
+            return render_template("dashboard.html", **dashboard_data)
+            
+        except Exception as e:
+            app.logger.error(f"Dashboard data loading failed for {username}: {e}")
+            # Return dashboard with default values if data loading fails
+            return render_template("dashboard.html", 
+                                username=username,
+                                help_request_count=0,
+                                change_count=0,
+                                refund_count=0,
+                                remarks_count=0,
+                                urgent_remarks_count=0)
+    
+    return _dashboard()
 
-    # Fetch counts for dashboard cards
-    # Ensure these collection names match those imported from .col
-    help_request_count = collection.count_documents({}) # This is complaint_collection from col.py
-    change_count = change_collection.count_documents({})
-    refund_count = refund_collection.count_documents({})
-    remarks_count = remark_collection.count_documents({'urgent': False})
-    urgent_remarks_count = remark_collection.count_documents({'urgent': True})
+# --- Global Error Handlers ---
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors"""
+    app.logger.warning(f"404 error: {request.url} - IP: {request.environ.get('REMOTE_ADDR')}")
+    if request.is_json:
+        return jsonify({'error': 'Resource not found'}), 404
+    flash("The requested page could not be found.", "warning")
+    return redirect(url_for('auth.index'))
 
-    return render_template(
-        "dashboard.html",
-        username=session["username"],
-        help_request_count=help_request_count,
-        change_count=change_count,
-        refund_count=refund_count,
-        remarks_count=remarks_count,
-        urgent_remarks_count=urgent_remarks_count
-    )
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors"""
+    error_id = f"server_error_{int(datetime.now().timestamp())}"
+    app.logger.error(f"500 error [{error_id}]: {error} - URL: {request.url}")
+    if request.is_json:
+        return jsonify({
+            'error': 'Internal server error',
+            'error_id': error_id
+        }), 500
+    flash("An internal error occurred. Please try again later.", "danger")
+    return redirect(url_for('auth.index'))
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    """Handle 403 errors"""
+    app.logger.warning(f"403 error: {request.url} - IP: {request.environ.get('REMOTE_ADDR')}")
+    if request.is_json:
+        return jsonify({'error': 'Access forbidden'}), 403
+    flash("You don't have permission to access this resource.", "danger")
+    return redirect(url_for('auth.admin_login'))
+
 # --- End Dashboard Route ---
 
 # Register Blueprints
