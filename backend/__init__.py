@@ -1,5 +1,8 @@
 from .libs import *
 from .col import *
+import logging
+from logging.handlers import RotatingFileHandler
+import os
 
 # Blueprint imports are moved after app, fs, and mail are defined to avoid circular imports.
 
@@ -10,6 +13,48 @@ CORS(app)
 load_dotenv()
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
+# Configure logging for production
+if not app.debug:
+    # Create logs directory if it doesn't exist
+    if not os.path.exists('backend/logs'):
+        os.makedirs('backend/logs')
+    
+    # Set up file handler with rotation
+    file_handler = RotatingFileHandler('backend/logs/app.log', maxBytes=10240000, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Application startup')
+
+# Validate critical environment variables
+required_env_vars = ['SECRET_KEY', 'MONGO_URL']
+missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+if missing_vars:
+    app.logger.error(f"Missing required environment variables: {missing_vars}")
+    raise ValueError(f"Missing required environment variables: {missing_vars}")
+
+# Session security configuration
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
+app.config['SESSION_COOKIE_SECURE'] = not app.debug  # HTTPS only in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+
+# Initialize Flask-Limiter for rate limiting
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -40,6 +85,13 @@ app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
 app.config['MODE'] = os.getenv('MODE')
 app.config['MAIL_SENDER_ADDRESS'] = os.getenv('MAIL_SENDER_ADDRESS')
 
+# Validate email configuration
+email_vars = ['SMTP_GOOGLE_SERVER', 'SMTP_TEST_USERNAME', 'SMTP_TEST_APP_PASSWORD', 'MAIL_SENDER_ADDRESS']
+missing_email_vars = [var for var in email_vars if not os.getenv(var)]
+if missing_email_vars:
+    app.logger.warning(f"Missing email configuration variables: {missing_email_vars}")
+    app.logger.warning("Email functionality may not work properly")
+
 # mail instance is already created above, just ensure all configs are set before it's potentially used by scheduler or other parts.
 
 @scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
@@ -48,6 +100,17 @@ def scheduled_route_update():
 
 scheduler.init_app(app)
 scheduler.start()
+
+# Security headers for production
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"
+    return response
 
 # update_data() is now in api_helpers_bp
 @app.context_processor
@@ -66,6 +129,26 @@ def update_querystring(querystring, key, value):
     query_dict = dict([kv.split('=') for kv in querystring.split('&') if '=' in kv])
     query_dict[key] = value
     return urlencode(query_dict)
+
+# --- Health Check Route ---
+@app.route("/health")
+def health_check():
+    """Health check endpoint for production monitoring."""
+    try:
+        # Test database connection
+        db.command('ping')
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'database': 'connected'
+        }), 200
+    except Exception as e:
+        app.logger.error(f"Health check failed: {e}")
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e)
+        }), 503
 
 # --- Dashboard Route ---
 @app.route("/dashboard")

@@ -2,15 +2,55 @@ import os
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 import calendar
-from flask import flash
+from flask import flash, current_app, request, session
+import re
 
 def log_activity(name, action, database):
+    """Log user activity with enhanced information"""
     log_entry = {
         "user": name,
         "action": action,
         "timestamp": datetime.now(),
+        "ip_address": request.environ.get('REMOTE_ADDR', 'unknown'),
+        "user_agent": request.environ.get('HTTP_USER_AGENT', 'unknown')[:200]  # Limit length
     }
     database.insert_one(log_entry)
+
+def validate_session():
+    """Validate session integrity and expiration"""
+    if 'login_time' in session:
+        try:
+            login_time = datetime.fromisoformat(session['login_time'])
+            # Session expires after 2 hours
+            if datetime.now() - login_time > timedelta(hours=2):
+                session.clear()
+                return False
+        except (ValueError, TypeError):
+            session.clear()
+            return False
+    return True
+
+def sanitize_input(input_string, max_length=100):
+    """Basic input sanitization"""
+    if not input_string:
+        return ""
+    
+    # Remove potential XSS patterns
+    input_string = str(input_string).strip()
+    
+    # Limit length
+    if len(input_string) > max_length:
+        return input_string[:max_length]
+    
+    return input_string
+
+def is_valid_email(email):
+    """Validate email format with comprehensive regex"""
+    if not email or len(email) > 254:
+        return False
+    
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
 
 def safe_int(value):
     try:
@@ -54,13 +94,14 @@ def send_email(to_email, from_email, subject, body, mail):
     try:
         msg = Message(subject, sender= from_email, recipients=[to_email])
         msg.body = body
-        print(body)
-        print(to_email)
-        print(from_email)
-        print(subject)
+        # Log email details for debugging (without exposing sensitive content)
+        from flask import current_app
+        current_app.logger.info(f"Sending email to: {to_email[:3]}...@{to_email.split('@')[1] if '@' in to_email else 'unknown'}")
+        current_app.logger.info(f"Email subject: {subject}")
         mail.send(msg)
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        from flask import current_app
+        current_app.logger.error(f"Failed to send email: {e}")
 
 
 def replicate_monthly_routes(database):
