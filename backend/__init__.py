@@ -1,5 +1,8 @@
 from .libs import *
 from .col import *
+import logging
+from logging.handlers import RotatingFileHandler
+import os
 
 # Blueprint imports are moved after app, fs, and mail are defined to avoid circular imports.
 
@@ -10,6 +13,48 @@ CORS(app)
 load_dotenv()
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
+# Configure logging for production
+if not app.debug:
+    # Create logs directory if it doesn't exist
+    if not os.path.exists('backend/logs'):
+        os.makedirs('backend/logs')
+    
+    # Set up file handler with rotation
+    file_handler = RotatingFileHandler('backend/logs/app.log', maxBytes=10240000, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Application startup')
+
+# Validate critical environment variables
+required_env_vars = ['SECRET_KEY', 'MONGO_URL']
+missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+if missing_vars:
+    app.logger.error(f"Missing required environment variables: {missing_vars}")
+    raise ValueError(f"Missing required environment variables: {missing_vars}")
+
+# Session security configuration
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
+app.config['SESSION_COOKIE_SECURE'] = not app.debug  # HTTPS only in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+
+# Initialize Flask-Limiter for rate limiting
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -40,6 +85,13 @@ app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
 app.config['MODE'] = os.getenv('MODE')
 app.config['MAIL_SENDER_ADDRESS'] = os.getenv('MAIL_SENDER_ADDRESS')
 
+# Validate email configuration
+email_vars = ['SMTP_GOOGLE_SERVER', 'SMTP_TEST_USERNAME', 'SMTP_TEST_APP_PASSWORD', 'MAIL_SENDER_ADDRESS']
+missing_email_vars = [var for var in email_vars if not os.getenv(var)]
+if missing_email_vars:
+    app.logger.warning(f"Missing email configuration variables: {missing_email_vars}")
+    app.logger.warning("Email functionality may not work properly")
+
 # mail instance is already created above, just ensure all configs are set before it's potentially used by scheduler or other parts.
 
 @scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
@@ -48,6 +100,17 @@ def scheduled_route_update():
 
 scheduler.init_app(app)
 scheduler.start()
+
+# Security headers for production
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"
+    return response
 
 # update_data() is now in api_helpers_bp
 @app.context_processor
@@ -67,30 +130,108 @@ def update_querystring(querystring, key, value):
     query_dict[key] = value
     return urlencode(query_dict)
 
+# --- Health Check Route ---
+@app.route("/health")
+def health_check():
+    """Health check endpoint for production monitoring."""
+    from .utils import handle_route_error
+    
+    @handle_route_error
+    def _health_check():
+        # Test database connection
+        db.command('ping')
+        
+        # Test Redis connection if available
+        health_status = {
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'database': 'connected',
+            'version': '1.0.0'
+        }
+        
+        app.logger.info("Health check completed successfully")
+        return jsonify(health_status), 200
+    
+    return _health_check()
+
 # --- Dashboard Route ---
 @app.route("/dashboard")
 def dashboard():
-    if 'username' not in session:
-        flash("Please log in to access the dashboard.", "warning")
-        return redirect(url_for('auth.admin_login'))
+    """Main dashboard route with enhanced error handling and logging"""
+    from .utils import handle_route_error, require_auth
+    
+    @require_auth('admin')
+    @handle_route_error
+    def _dashboard():
+        username = session.get("username", "unknown")
+        app.logger.info(f"Dashboard accessed by admin: {username}")
+        
+        try:
+            # Fetch counts for dashboard cards with error handling
+            help_request_count = collection.count_documents({})
+            change_count = change_collection.count_documents({})
+            refund_count = refund_collection.count_documents({})
+            remarks_count = remark_collection.count_documents({'urgent': False})
+            urgent_remarks_count = remark_collection.count_documents({'urgent': True})
+            
+            dashboard_data = {
+                "username": username,
+                "help_request_count": help_request_count,
+                "change_count": change_count,
+                "refund_count": refund_count,
+                "remarks_count": remarks_count,
+                "urgent_remarks_count": urgent_remarks_count
+            }
+            
+            app.logger.info(f"Dashboard data loaded for {username}: {dashboard_data}")
+            
+            return render_template("dashboard.html", **dashboard_data)
+            
+        except Exception as e:
+            app.logger.error(f"Dashboard data loading failed for {username}: {e}")
+            # Return dashboard with default values if data loading fails
+            return render_template("dashboard.html", 
+                                username=username,
+                                help_request_count=0,
+                                change_count=0,
+                                refund_count=0,
+                                remarks_count=0,
+                                urgent_remarks_count=0)
+    
+    return _dashboard()
 
-    # Fetch counts for dashboard cards
-    # Ensure these collection names match those imported from .col
-    help_request_count = collection.count_documents({}) # This is complaint_collection from col.py
-    change_count = change_collection.count_documents({})
-    refund_count = refund_collection.count_documents({})
-    remarks_count = remark_collection.count_documents({'urgent': False})
-    urgent_remarks_count = remark_collection.count_documents({'urgent': True})
+# --- Global Error Handlers ---
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors"""
+    app.logger.warning(f"404 error: {request.url} - IP: {request.environ.get('REMOTE_ADDR')}")
+    if request.is_json:
+        return jsonify({'error': 'Resource not found'}), 404
+    flash("The requested page could not be found.", "warning")
+    return redirect(url_for('auth.index'))
 
-    return render_template(
-        "dashboard.html",
-        username=session["username"],
-        help_request_count=help_request_count,
-        change_count=change_count,
-        refund_count=refund_count,
-        remarks_count=remarks_count,
-        urgent_remarks_count=urgent_remarks_count
-    )
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors"""
+    error_id = f"server_error_{int(datetime.now().timestamp())}"
+    app.logger.error(f"500 error [{error_id}]: {error} - URL: {request.url}")
+    if request.is_json:
+        return jsonify({
+            'error': 'Internal server error',
+            'error_id': error_id
+        }), 500
+    flash("An internal error occurred. Please try again later.", "danger")
+    return redirect(url_for('auth.index'))
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    """Handle 403 errors"""
+    app.logger.warning(f"403 error: {request.url} - IP: {request.environ.get('REMOTE_ADDR')}")
+    if request.is_json:
+        return jsonify({'error': 'Access forbidden'}), 403
+    flash("You don't have permission to access this resource.", "danger")
+    return redirect(url_for('auth.admin_login'))
+
 # --- End Dashboard Route ---
 
 # Register Blueprints
