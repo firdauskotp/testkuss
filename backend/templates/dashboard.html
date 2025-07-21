@@ -28,14 +28,16 @@
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ help_request_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Help Request</p>
         </a>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+
+        <a href="{{ url_for('data_reports.device_master_list') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ change_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Device(s) Replacement</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+        </a>
+        <a href="{{ url_for('data_reports.reports') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ refund_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Discontinued Client(s)</p>
-        </div>
+        </a>
+
         <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='normal') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
             <h4 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ remarks_count }}</h4>
             <p class="text-gray-700 dark:text-gray-300 mt-1">Remark</p>
@@ -77,7 +79,6 @@
         </a>
     </div>
 
-    {# All modals removed - cards now link directly to their destinations #}
 {% endblock %}
 
 {% block scripts %}
