@@ -1,4 +1,4 @@
-from libs import *
+from .libs import *
 
 load_dotenv()
 
@@ -33,7 +33,7 @@ route_list_collection = dashboard_db['routes']
 # device_collection = dashboard_db['device']
 change_collection = dashboard_db['change']
 refund_collection = dashboard_db['refund']
-
+industry_list_collection = dashboard_db['industry']
 logs_db=mongo['logs']
 logs_collection=logs_db['logs']
 
