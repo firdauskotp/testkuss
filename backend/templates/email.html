@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ subject }}</title>
+</head>
+<body>
+  <div style="padding: 20px; font-family: Arial, sans-serif;">
+    <p><strong>From:</strong> {{ sender_email }}</p>
+    <p><strong>To:</strong> {{ receiver_email }}</p>
+    <hr>
+    <div>{{ email_content | safe }}</div>
+  </div>
+</body>
+</html>

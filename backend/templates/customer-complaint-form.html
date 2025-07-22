@@ -1,133 +1,215 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Case Form</title>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
+{% extends "base.html" %}
 
-  <!-- Bootstrap CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .logout-btn {
-      background-color: #dc3545;
-      color: white !important;
-      border: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="container mt-5">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-        <div class="container">
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-              <li class="nav-item">
-                <a class="nav-link logout-btn" href="/logout">Logout</a>
-              </li>
-            </ul>
-          </div>
+{% block title %}New Support Case{% endblock %}
+{% block page_title %}Create a New Support Case{% endblock %}
+
+{% block head_extra %}
+    {# Custom CSS for this page, if any, would go here #}
+{% endblock %}
+
+{% block content %}
+<nav>
+    <ul class="flex flex-col sm:flex-row items-center justify-between bg-gray-800 text-white p-4">
+        <li class="mb-2 sm:mb-0">
+            <a href="{{ url_for('auth.logout') }}" class="mobile-nav-link bg-red-500 hover:bg-red-600 text-white">Logout</a>
+        </li>
+    </ul>
+</nav>
+<div class="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-12rem)]">
+    <div class="w-full max-w-2xl space-y-8">
+        {# Flash messages can be added here if this form uses them server-side #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 text-sm rounded-md border
+                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                            " role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
+            <form id="caseForm" method="POST" action="{{ url_for('customer.customer_form') }}" enctype="multipart/form-data" class="space-y-6">
+                <div>
+                    <label for="premise_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Name</label>
+                    <input type="text" id="premise_name" name="premise_name" required
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                </div>
+
+                <!-- Container for repeatable device entries -->
+                <div id="devices-container" class="space-y-8">
+                    <div class="device-entry mt-6 pt-6 border-t border-gray-300 dark:border-gray-700 space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Device <span class="device-index">1</span></h4>
+                            <button type="button" class="remove-device-btn py-1 px-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 dark:focus:ring-offset-gray-900" style="display:none;">Remove Device</button>
+                        </div>
+                        <div>
+                            <label for="devices[0][location]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location (e.g., 1st Floor, Toilet)</label>
+                            <input type="text" name="devices[0][location]" id="devices[0][location]" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        </div>
+                        <div>
+                            <label for="devices[0][image]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload Device Image</label>
+                            <input type="file" name="devices[0][image]" id="devices[0][image]" accept="image/*" class="block w-full text-sm text-gray-900 dark:text-gray-50 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-gray-600 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-gray-500">
+                            <div id="imageError_0" class="hidden mt-1 text-sm text-red-600 dark:text-red-400">Please upload an image of your device.</div>
+                        </div>
+                        <div>
+                            <label for="devices[0][model]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                            <input type="text" name="devices[0][model]" id="devices[0][model]" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Issues (Select at least one):</label>
+                            <div id="checkboxError_0" class="hidden mb-2 text-sm text-red-600 dark:text-red-400">Please select at least one issue for this device.</div>
+                            {% for issue_val, issue_text in [
+                                ('Weak Scent', 'Weak Scent'),
+                                ('No Oil', 'No Oil'),
+                                ('No Mist', 'No Mist'),
+                                ('Weak Batteries', 'Weak Batteries'),
+                                ('Faulty Power Adapter', 'Faulty Power Adapter')
+                            ] %}
+                            <div class="flex items-center">
+                                <input id="devices[0][issues]_{{issue_val.lower().replace(' ', '_')}}" name="devices[0][issues]" value="{{ issue_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                                <label for="devices[0][issues]_{{issue_val.lower().replace(' ', '_')}}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ issue_text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <label for="devices[0][remarks]" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks (if any)</label>
+                            <textarea name="devices[0][remarks]" id="devices[0][remarks]" rows="2" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!-- Container for repeatable device entries -->
+
+                <button type="button" id="addDeviceBtn" class="mt-4 w-full flex justify-center py-2.5 px-4 border border-dashed border-gray-400 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                    + Add Another Device
+                </button>
+
+                <div class="mt-6">
+
+                <div class="mt-6">
+                    <button type="submit"
+                            class="w-full flex justify-center py-2.5 px-4 border border-transparent
+                                   rounded-md shadow-sm text-sm font-medium text-white
+                                   bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
+                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                        Submit Case
+                    </button>
+                </div>
+            </form>
         </div>
-      </nav>
-    <h2 class="text-center mb-4">Create a New Case</h2>
-    
-    <form id="caseForm" method="POST" action="/customer-help" enctype="multipart/form-data">
-      <!-- Premise Name -->
-      <div class="form-group">
-        <label for="premise_name">Premise Name:</label>
-        <input type="text" class="form-control" id="premise_name" name="premise_name" required>
-      </div>
+    </div>
+</div>
+{% endblock %}
 
-      <!-- Location -->
-      <div class="form-group">
-        <label for="location">Device Location (1st Floor, Toilet, etc):</label>
-        <input type="text" class="form-control" id="location" name="location" required>
-      </div>
+{% block scripts %}
+<script>
+  let deviceIndex = 0; // Start with 0 for the first device, will be incremented for new devices
 
-      <div class="form-group">
-      <div id="imageError" class="error-message d-none" style="color:red;">Please upload an image of your device.</div>
-
-        <label for="image">Upload Device Image:</label>
-        <input type="file" class="form-control-file" id="image" name="image" accept="image/*">
-      </div>
-
-
-      <!-- Model -->
-      <div class="form-group">
-        <label for="model">Model:</label>
-        <input type="text" class="form-control" id="model" name="model" required>
-      </div>
-
-      <!-- Issues -->
-      <div class="form-group">
-      <div id="checkboxError" class="error-message d-none" style="color:red;">Please select at least one issue.</div>
-
-        <label for="issues">Issues:</label>
-        <div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="weak_scent" name="issues" value="Weak Scent">
-            <label class="form-check-label" for="weak_scent">Weak Scent</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="no_oil" name="issues" value="No Oil">
-            <label class="form-check-label" for="no_oil">No Oil</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="no_mist" name="issues" value="No Mist">
-            <label class="form-check-label" for="no_mist">No Mist</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="weak_batteries" name="issues" value="Weak Batteries">
-            <label class="form-check-label" for="weak_batteries">Weak Batteries</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="faulty_power_adapter" name="issues" value="Faulty Power Adapter">
-            <label class="form-check-label" for="faulty_power_adapter">Faulty Power Adapter</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Remarks -->
-      <div class="form-group">
-        <label for="remarks">Remarks (if any):</label>
-        <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" class="btn btn-primary btn-block">Submit Case</button>
-    </form>
-  </div>
-
-  <!-- Bootstrap JS and dependencies -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.4.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script>
-    document.getElementById('caseForm').addEventListener('submit', function(event) {
-      const checkboxes = document.querySelectorAll('input[name="issues"]:checked');
-      const errorMessage = document.getElementById('checkboxError');
-
-      if (checkboxes.length === 0) {
-        errorMessage.classList.remove('d-none'); // Show error message
-        event.preventDefault(); // Prevent form submission
+  function updateRemoveButtons() {
+    const deviceEntries = document.querySelectorAll('.device-entry');
+    deviceEntries.forEach((entry, index) => {
+      const removeBtn = entry.querySelector('.remove-device-btn');
+      if (deviceEntries.length > 1) {
+        removeBtn.style.display = 'inline-flex';
       } else {
-        errorMessage.classList.add('d-none'); // Hide error message
+        removeBtn.style.display = 'none';
       }
-
-      const imageInput = document.getElementById('image');
-      const imageError = document.getElementById('imageError');
-
-      if (!imageInput.files.length) {
-        imageError.classList.remove('d-none'); // Show error message
-        event.preventDefault(); // Prevent form submission
-      } else {
-        imageError.classList.add('d-none'); // Hide error message
-      }
-
+      // Update device index text
+      entry.querySelector('.device-index').textContent = index + 1;
     });
-  </script>
-</body>
-</html>
+  }
+
+  document.getElementById('addDeviceBtn').addEventListener('click', function() {
+    deviceIndex++;
+    const devicesContainer = document.getElementById('devices-container');
+    const firstDeviceEntry = document.querySelector('.device-entry'); // Clone the first one as a template
+    const newDeviceEntry = firstDeviceEntry.cloneNode(true);
+
+    newDeviceEntry.querySelectorAll('[id]').forEach(el => {
+        const oldId = el.id;
+        const newId = oldId.replace(/\[0\]/g, `[${deviceIndex}]`).replace(/_0/g, `_${deviceIndex}`);
+        if (el.name && el.name.includes('[issues]')) { // Special handling for checkbox IDs to keep them unique
+             el.id = oldId.replace(/devices\[0\]\[issues\]_/g, `devices[${deviceIndex}][issues]_`);
+        } else {
+             el.id = newId;
+        }
+    });
+    newDeviceEntry.querySelectorAll('[name]').forEach(el => {
+        el.name = el.name.replace(/\[0\]/g, `[${deviceIndex}]`);
+    });
+    newDeviceEntry.querySelectorAll('label[for]').forEach(el => {
+        const oldFor = el.getAttribute('for');
+        const newFor = oldFor.replace(/\[0\]/g, `[${deviceIndex}]`).replace(/_0/g, `_${deviceIndex}`);
+         if (el.previousElementSibling && el.previousElementSibling.name && el.previousElementSibling.name.includes('[issues]')) {
+             el.setAttribute('for', oldFor.replace(/devices\[0\]\[issues\]_/g, `devices[${deviceIndex}][issues]_`));
+        } else {
+            el.setAttribute('for', newFor);
+        }
+    });
+
+    // Clear values and error messages in the new entry
+    newDeviceEntry.querySelectorAll('input[type="text"], input[type="file"], textarea, input[type="checkbox"]').forEach(input => {
+        if (input.type === 'checkbox') {
+            input.checked = false;
+        } else {
+            input.value = '';
+        }
+    });
+    newDeviceEntry.querySelectorAll('.hidden[id^="imageError_"], .hidden[id^="checkboxError_"]').forEach(errorDiv => {
+        errorDiv.classList.add('hidden'); // Ensure they are hidden
+    });
+
+    // Add remove button listener
+    newDeviceEntry.querySelector('.remove-device-btn').addEventListener('click', function() {
+        this.closest('.device-entry').remove();
+        updateRemoveButtons();
+    });
+
+    devicesContainer.appendChild(newDeviceEntry);
+    updateRemoveButtons();
+  });
+
+  // Initial call to set up remove buttons correctly if there's only one device initially
+  updateRemoveButtons();
+
+  document.getElementById('caseForm').addEventListener('submit', function(event) {
+    let overallIsValid = true;
+    const deviceEntries = document.querySelectorAll('.device-entry');
+
+    deviceEntries.forEach((entry, index) => {
+        const checkboxes = entry.querySelectorAll(`input[name="devices[${index}][issues]"]:checked`);
+        const checkboxError = entry.querySelector(`#checkboxError_${index}`);
+
+        if (checkboxes.length === 0) {
+            if(checkboxError) checkboxError.classList.remove('hidden');
+            overallIsValid = false;
+        } else {
+            if(checkboxError) checkboxError.classList.add('hidden');
+        }
+
+        const imageInput = entry.querySelector(`input[name="devices[${index}][image]"]`);
+        const imageError = entry.querySelector(`#imageError_${index}`);
+        if (imageInput && imageError) { // image input is not required for all devices, only if added
+            if (!imageInput.files.length) { // For simplicity, making image required if field exists
+                imageError.classList.remove('hidden');
+                overallIsValid = false;
+            } else {
+                imageError.classList.add('hidden');
+            }
+        }
+    });
+
+    if (!overallIsValid) {
+      event.preventDefault();
+    }
+  });
+</script>
+{% endblock %}

@@ -10,3 +10,4 @@ gunicorn
 Flask-CORS
 flask-apscheduler
 fpdf2
+pymongo

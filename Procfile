@@ -1,1 +1,1 @@
-web: gunicorn -w 4 -b 0.0.0.0:3000 app:app
+web: cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 4

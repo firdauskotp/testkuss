@@ -1,0 +1,16 @@
+flask
+flask-pymongo
+flask-mail
+flask-limiter
+dnspython
+pandas
+openpyxl
+certifi
+python-dotenv
+gunicorn
+Flask-CORS
+flask-apscheduler
+pytest
+pytest-mock
+pytest-flask
+fpdf

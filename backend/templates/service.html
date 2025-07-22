@@ -1,478 +1,341 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Service Form</title>
-  <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/x-icon">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .signature-container {
-      border: 2px solid #ccc;
-      border-radius: 5px;
-      width: 100%;
-      height: 200px;
-      position: relative;
-      touch-action: none;
-    }
-    .signature-pad {
-      width: 100%;
-      height: 100%;
-    }
-    #premise-checkboxes-container {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ced4da;
-      padding: 10px;
-      border-radius: .25rem;
-    }
-    .pic-info {
-      font-size: 0.9em;
-      margin-bottom: 10px;
-      padding: 5px;
-      background-color: #f8f9fa;
-      border-radius: .2rem;
-    }
-    .important-notes-section {
-        font-size: 0.85em;
-    }
-    .important-notes-section ul {
-        margin-bottom: 0;
-    }
-    .scent-details-section h6 {
-        margin-top: 0.5rem;
-    }
-  </style>
-</head>
-<body class="bg-light">
-<div class="container mt-5">
-  <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">Back to Dashboard</a>
-  <h1 class="text-center">SERVICE FORM</h1>
-  <form method="POST" action="{{ url_for('service') }}">
-    <div class="mb-3">
-      <label class="form-label">Technician Name:</label>
-      <input type="text" class="form-control" value="{{ technician_name }}" readonly>
-    </div>
+{% extends "base.html" %}
 
-    <div class="mb-3">
-      <label class="form-label">Date and Time:</label>
-      <input type="text" class="form-control" value="{{ current_time }}" readonly>
-    </div>
+{% block title %}Field Service Report{% endblock %}
+{% block page_title %}Field Service Report{% endblock %}
 
-    <div class="row mb-3">
-      <label class="form-label">Service Time:</label>
-      <div class="col-md-4">
-        <select class="form-select" name="service_month" required>
-          <option value="" disabled selected>Month</option>
-          {% for month in ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'] %}
-            <option value="{{ month }}">{{ month }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <select class="form-select" name="service_year" required>
-          <option value="" disabled selected>Year</option>
-          {% for y in range(2025, 2030) %}
-            <option value="{{ y }}">{{ y }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <select class="form-select" name="service_day" required>
-          <option value="" disabled selected>Day</option>
-          {% for d in range(1, 32) %}
-            <option value="{{ d }}">{{ d }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
-        <div class="mb-3">
-            <label for="company" class="form-label">Company</label>
-            <select class="form-select" id="company" name="company" required>
-              <option value="" disabled {% if not initial_company %}selected{% endif %}>Select a company</option>
-              {% for company_item in companies %}
-              <option value="{{ company_item }}" {% if initial_company == company_item %}selected{% endif %}>{{ company_item }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Premises:</label>
-            <div id="premise-checkboxes-container">
-              <p class="text-muted">Please select a company to see premises.</p>
-            </div>
-          </div>
-
-          <hr>
-          <h4 class="text-primary">Device Details & PIC Information</h4>
-          <div id="device-section">
-            <p id="device-placeholder-message">Please select one or more premises to view devices and PIC information.</p>
-          </div>
-
-          <hr class="mt-4">
-          <h4>Acknowledgement</h4>
-          <hr>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Actions Done:</label>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Alcohol Cleaning" id="action_alcohol_cleaning">
-              <label class="form-check-label" for="action_alcohol_cleaning">Alcohol Cleaning</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Oil Refill" id="action_oil_refill">
-              <label class="form-check-label" for="action_oil_refill">Oil Refill</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Checked timer settings" id="action_checked_timer">
-              <label class="form-check-label" for="action_checked_timer">Checked timer settings</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced straw / mist heads" id="action_replaced_straw">
-              <label class="form-check-label" for="action_replaced_straw">Replaced straw / mist heads</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced batteries" id="action_replaced_batteries">
-              <label class="form-check-label" for="action_replaced_batteries">Replaced batteries</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced faulty machine (same model)" id="action_replaced_faulty_same">
-              <label class="form-check-label" for="action_replaced_faulty_same">Replaced faulty machine (same model)</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Changed machine (different model)" id="action_changed_machine_diff">
-              <label class="form-check-label" for="action_changed_machine_diff">Changed machine (different model)</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="actions_done" value="Replaced faulty power adapter" id="action_replaced_adapter">
-              <label class="form-check-label" for="action_replaced_adapter">Replaced faulty power adapter</label>
-            </div>
-          </div>
-
-          <div class="mb-3 mt-3">
-            <label for="acknowledgement_remarks" class="form-label fw-bold">Remarks (if any):</label>
-            <textarea class="form-control" id="acknowledgement_remarks" name="acknowledgement_remarks" rows="3"></textarea>
-          </div>
-
-          <div class="mb-3">
-            <label for="acknowledgement_staff_name" class="form-label fw-bold">Staff Name:</label>
-            <input type="text" class="form-control" id="acknowledgement_staff_name" name="acknowledgement_staff_name" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="signature" class="form-label fw-bold">Signature:</label>
-            <div class="signature-container">
-              <canvas id="signature-pad" class="signature-pad"></canvas>
-            </div>
-            <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Clear Signature</button>
-            <input type="hidden" name="signature" id="signature-input">
-          </div>
-
-          <button type="submit" class="btn btn-primary w-100">Submit Service Report</button>
-  </form>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2"></script>
-
-<script>
-  const EO_LIST_JS = {{ eo_list|tojson }};
-  const ALL_PREMISES_LIST_JS = {{ all_premises_list|tojson }};
-
-  const canvas = document.getElementById("signature-pad");
-  const signaturePad = new SignaturePad(canvas, { minWidth: 1, maxWidth: 3, penColor: "black" });
-
-  function resizeCanvas() {
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    canvas.width = canvas.offsetWidth * ratio;
-    canvas.height = canvas.offsetHeight * ratio;
-    canvas.getContext("2d").scale(ratio, ratio);
-    signaturePad.clear();
-  }
-  window.addEventListener("resize", resizeCanvas);
-  resizeCanvas();
-
-  document.getElementById("clear-signature").addEventListener("click", () => signaturePad.clear());
-  document.querySelector("form").addEventListener("submit", () => {
-    if (!signaturePad.isEmpty()) {
-      document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
-    }
-  });
-
-  function escapeHTML(str) {
-    if (str === null || str === undefined) return '';
-    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  }
-
-  function createDeviceCardHTML(device, eoList, allPremisesList) {
-    const originalSNValue = device['S/N'] || device['_id']; // Use S/N first, fallback to _id
-    const deviceId = escapeHTML(originalSNValue); // Used for HTML attributes
-    const displaySN = escapeHTML(device['S/N'] || 'N/A');
-
-    let eventsHTML = '';
-    for (let i = 1; i <= 4; i++) {
-        eventsHTML += `
-            <div class="border p-2 mb-2">
-                <strong>Event ${i}</strong>
-                <div class="row">
-                    <div class="col-md-6"><label>Current E${i} Days:</label><input type="text" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - DAYS'] || '')}" readonly></div>
-                    <div class="col-md-6"><label>New E${i} Days:</label><input type="text" class="form-control form-control-sm" name="event_${deviceId}_days${i}" value="${escapeHTML(device['E' + i + ' - DAYS'] || '')}"></div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col"><label>Start</label><input type="time" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - START'] || '')}" readonly><input type="time" class="form-control form-control-sm mt-1" name="event_${deviceId}_start${i}" value="${escapeHTML(device['E' + i + ' - START'] || '')}"></div>
-                    <div class="col"><label>End</label><input type="time" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - END'] || '')}" readonly><input type="time" class="form-control form-control-sm mt-1" name="event_${deviceId}_end${i}" value="${escapeHTML(device['E' + i + ' - END'] || '')}"></div>
-                    <div class="col"><label>Work</label><input type="text" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - WORK'] || '')}" readonly><input type="text" class="form-control form-control-sm mt-1" name="event_${deviceId}_work${i}" value="${escapeHTML(device['E' + i + ' - WORK'] || '')}"></div>
-                    <div class="col"><label>Pause</label><input type="text" class="form-control form-control-sm" value="${escapeHTML(device['E' + i + ' - PAUSE'] || '')}" readonly><input type="text" class="form-control form-control-sm mt-1" name="event_${deviceId}_pause${i}" value="${escapeHTML(device['E' + i + ' - PAUSE'] || '')}"></div>
-                </div>
-            </div>`;
-    }
-    let eoOptions = eoList.map(eo => `<option value="${escapeHTML(eo)}">${escapeHTML(eo)}</option>`).join('');
-    let premiseOptions = allPremisesList.map(p => `<option value="${escapeHTML(p)}">${escapeHTML(p)}</option>`).join('');
-
-    let notesHTML = '<div class="mt-3 border-top pt-2 important-notes-section">';
-    notesHTML += '<h6>Important Notes:</h6>';
-    if (device.important_notes && device.important_notes.length > 0) {
-        notesHTML += '<ul class="list-unstyled small" style="padding-left: 10px;">';
-        device.important_notes.forEach(note => {
-            notesHTML += `<li>- ${escapeHTML(note)}</li>`;
-        });
-        notesHTML += '</ul>';
-    } else {
-        notesHTML += '<p class="small"><em>No important notes for this device.</em></p>';
-    }
-    notesHTML += '</div>';
-
-    const lastRecordedScentVolume = device.last_recorded_scent_volume || device.current_scent_fill_level;
-    const scentVolumeValue = (lastRecordedScentVolume && parseFloat(lastRecordedScentVolume) !== 0) ? escapeHTML(lastRecordedScentVolume) : '';
-
-    // Add hidden input for serviced_device_sns
-    const hiddenSNInput = `<input type="hidden" name="serviced_device_sns" value="${escapeHTML(originalSNValue)}">`;
-
-    return `
-        <div class="card mb-4 p-3 bg-white border rounded device-card" data-device-id="${deviceId}">
-            ${hiddenSNInput}
-            <h5 class="text-secondary">Device S/N (Editable): <input type="text" class="form-control form-control-sm d-inline-block w-auto" name="sn_${deviceId}" id="sn_${deviceId}" value="${displaySN}"></h5>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3"><label for="model_${deviceId}" class="form-label">Model</label><input type="text" class="form-control form-control-sm" id="model_${deviceId}" name="model_${deviceId}" value="${escapeHTML(device.Model || 'N/A')}" readonly></div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3"><label for="color_${deviceId}" class="form-label">Color (Editable)</label><input type="text" class="form-control form-control-sm" id="color_${deviceId}" name="color_${deviceId}" value="${escapeHTML(device.Color || '')}"></div>
-                </div>
-            </div>
-            <div class="mb-3"><label for="device_capacity_${deviceId}" class="form-label">Device Capacity (Volume)</label><input type="text" class="form-control form-control-sm" id="device_capacity_${deviceId}" name="device_capacity_${deviceId}" value="${escapeHTML(device.Volume || 'N/A')}" readonly></div>
-            <div class="mb-3"><label for="eo_${deviceId}" class="form-label">Current EO</label><input type="text" class="form-control form-control-sm" id="eo_${deviceId}" name="eo_${deviceId}" value="${escapeHTML(device['Current EO'] || 'N/A')}" readonly></div>
-            <div class="mb-3"><label for="location_${deviceId}" class="form-label">Location</label><input type="text" class="form-control form-control-sm" id="location_${deviceId}" name="location_${deviceId}" value="${escapeHTML(device.location || '')}"></div>
-
-            ${notesHTML}
-
-            <div class="mt-3 border-top pt-2 scent-details-section">
-                <h6>Scent Service Details (for Current Scent: ${escapeHTML(device['Current EO'] || 'N/A')})</h6>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="scent_volume_${deviceId}" class="form-label">Scent Volume (Actual)</label>
-                        <input type="number" class="form-control form-control-sm scent-volume-input" name="scent_volume_${deviceId}" id="scent_volume_${deviceId}" value="${scentVolumeValue}" placeholder="Enter actual volume">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="scent_balance_${deviceId}" class="form-label">Scent Balance</label>
-                        <input type="number" class="form-control form-control-sm scent-balance-input" name="scent_balance_${deviceId}" id="scent_balance_${deviceId}" placeholder="Enter balance">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="scent_consumption_${deviceId}" class="form-label">Scent Consumption</label>
-                        <input type="number" class="form-control form-control-sm scent-consumption-output" name="scent_consumption_${deviceId}" id="scent_consumption_${deviceId}" placeholder="Auto-calculated" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-3 border-top pt-2"><h6>Device Controls:</h6></div>
-            <div class="mb-3"><label class="form-label">Change Scent</label><select class="form-select form-select-sm" name="scent_change_${deviceId}" id="scent_change_${deviceId}"><option value="">No Change</option>${eoOptions}</select></div>
-            <div class="form-check mb-3"><input class="form-check-input device-inactive" type="checkbox" value="1" id="inactive_${deviceId}" name="inactive_${deviceId}"><label class="form-check-label text-danger" for="inactive_${deviceId}">Mark Device as Inactive</label></div>
-            <div class="mb-3"><label for="relocate_${deviceId}" class="form-label">Relocate Device To:</label><select class="form-select form-select-sm" name="relocate_${deviceId}" id="relocate_${deviceId}"><option value="">Do not relocate</option>${premiseOptions}</select></div>
-
-            <div class="mt-3 border-top pt-2"><h6>Event Settings:</h6></div>
-            ${eventsHTML}
-        </div>`;
-  }
-
-  function populatePremises(company) {
-      const premiseCheckboxContainer = document.getElementById('premise-checkboxes-container');
-      premiseCheckboxContainer.innerHTML = '<p class="text-muted">Loading premises...</p>';
-      axios.get(`/get-premises-json/${company}`)
-          .then(response => {
-              premiseCheckboxContainer.innerHTML = '';
-              if (response.data && response.data.premises && response.data.premises.length > 0) {
-                  response.data.premises.forEach(premiseName => {
-                      const checkboxId = `premise_${escapeHTML(premiseName.replace(/\s+/g, '_'))}`;
-                      const div = document.createElement('div');
-                      div.className = 'form-check';
-                      div.innerHTML = `<input class="form-check-input premise-checkbox" type="checkbox" name="selected_premises" value="${escapeHTML(premiseName)}" id="${checkboxId}"><label class="form-check-label" for="${checkboxId}">${escapeHTML(premiseName)}</label>`;
-                      premiseCheckboxContainer.appendChild(div);
-                  });
-              } else {
-                  premiseCheckboxContainer.innerHTML = '<p class="text-muted">No premises found for this company.</p>';
-              }
-          })
-          .catch(error => {
-              console.error("Error fetching premises:", error);
-              premiseCheckboxContainer.innerHTML = '<p class="text-danger">Error loading premises. Please try again.</p>';
-          });
-  }
-
-  const initialCompany = "{{ initial_company or '' }}";
-  if (initialCompany) {
-      populatePremises(initialCompany);
-  }
-
-  document.getElementById('company').addEventListener('change', function () {
-    const selectedCompany = this.value;
-    document.getElementById("device-section").innerHTML = '<p id="device-placeholder-message">Please select one or more premises to view devices and PIC information.</p>';
-    if (selectedCompany) {
-      populatePremises(selectedCompany);
-    } else {
-      document.getElementById('premise-checkboxes-container').innerHTML = '<p class="text-muted">Please select a company to see premises.</p>';
-    }
-  });
-
-  const deviceSection = document.getElementById('device-section');
-  const premiseCheckboxContainer = document.getElementById('premise-checkboxes-container');
-
-  premiseCheckboxContainer.addEventListener('change', function(event) {
-    if (event.target.classList.contains('premise-checkbox')) {
-        const checkedPremises = Array.from(document.querySelectorAll('.premise-checkbox:checked')).map(cb => cb.value);
-        const companyName = document.getElementById('company').value;
-
-        if (!companyName) {
-            deviceSection.innerHTML = '<p id="device-placeholder-message">Please select a company first.</p>';
-            return;
-        }
-
-        if (checkedPremises.length > 0) {
-            deviceSection.innerHTML = '<p class="text-muted">Loading devices and PIC information...</p>';
-
-            axios.post('/get-devices-for-premises', {
-                selected_premises: checkedPremises,
-                company_name: companyName
-            })
-            .then(deviceResponse => {
-                const devicesByPremise = deviceResponse.data;
-
-                axios.post('/get-pics-for-premises', {
-                    selected_premises: checkedPremises,
-                    company_name: companyName
-                })
-                .then(picResponse => {
-                    deviceSection.innerHTML = '';
-                    const picsByPremise = picResponse.data;
-                    let contentRenderedOverall = false;
-
-                    checkedPremises.forEach(premiseName => {
-                        const devicesForThisPremise = devicesByPremise[premiseName] || [];
-                        const picData = picsByPremise[premiseName];
-
-                        if (devicesForThisPremise.length > 0 || picData) {
-                            contentRenderedOverall = true;
-                            const premiseHeadingId = `devices-heading-${escapeHTML(premiseName.replace(/\s+/g, '_'))}`;
-                            const premiseHeader = document.createElement('h3');
-                            premiseHeader.id = premiseHeadingId;
-                            premiseHeader.textContent = `Premise: ${escapeHTML(premiseName)}`;
-                            deviceSection.appendChild(premiseHeader);
-
-                            if (picData) {
-                                const picHtml = `<div class="pic-info"><strong>PIC:</strong> ${escapeHTML(picData.name || 'N/A')} - ${escapeHTML(picData.designation || 'N/A')} (Contact: ${escapeHTML(picData.contact || 'N/A')}, Email: ${escapeHTML(picData.email || 'N/A')})</div>`;
-                                premiseHeader.insertAdjacentHTML('afterend', picHtml);
-                            } else {
-                                const noPicHtml = `<div class="pic-info"><strong>PIC:</strong> Not found for this premise.</div>`;
-                                premiseHeader.insertAdjacentHTML('afterend', noPicHtml);
-                            }
-
-                            let devicesHtmlBuffer = '';
-                            devicesForThisPremise.forEach(device => {
-                                devicesHtmlBuffer += createDeviceCardHTML(device, EO_LIST_JS, ALL_PREMISES_LIST_JS);
-                            });
-                            const picInfoDiv = premiseHeader.nextElementSibling;
-                            if (picInfoDiv) { picInfoDiv.insertAdjacentHTML('afterend', devicesHtmlBuffer); }
-                            else { premiseHeader.insertAdjacentHTML('afterend', devicesHtmlBuffer); }
-                        }
-                    });
-
-                    if (!contentRenderedOverall) {
-                        deviceSection.innerHTML = '<p>No devices or PIC information found for the selected premise(s).</p>';
-                    }
-                })
-                .catch(picError => {
-                    console.error('Error fetching PIC data:', picError);
-                    deviceSection.innerHTML = '';
-                    let foundDevicesAtAll = false;
-                    for (const premiseName in devicesByPremise) {
-                        if (devicesByPremise[premiseName] && devicesByPremise[premiseName].length > 0) {
-                            foundDevicesAtAll = true;
-                            const premiseHeader = document.createElement('h3');
-                            premiseHeader.textContent = `Devices for ${escapeHTML(premiseName)}`;
-                            deviceSection.appendChild(premiseHeader);
-                            const errorPicHtml = `<div class="pic-info"><strong>PIC:</strong> Error loading PIC data.</div>`;
-                            premiseHeader.insertAdjacentHTML('afterend', errorPicHtml);
-
-                            let devicesHtmlBuffer = '';
-                            devicesByPremise[premiseName].forEach(device => {
-                                devicesHtmlBuffer += createDeviceCardHTML(device, EO_LIST_JS, ALL_PREMISES_LIST_JS);
-                            });
-                            const picInfoDiv = premiseHeader.nextElementSibling;
-                            if (picInfoDiv) picInfoDiv.insertAdjacentHTML('afterend', devicesHtmlBuffer);
-                            else premiseHeader.insertAdjacentHTML('afterend', devicesHtmlBuffer);
-                        }
-                    }
-                    if (!foundDevicesAtAll) {
-                         deviceSection.innerHTML = '<p>No devices found and error loading PIC data.</p>';
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching devices:', error);
-                deviceSection.innerHTML = '<p class="text-danger">Error loading devices. Please try again.</p>';
-            });
-        } else {
-            deviceSection.innerHTML = '<p id="device-placeholder-message">Please select one or more premises to view devices and PIC information.</p>';
-        }
-    }
-  });
-
-  deviceSection.addEventListener('input', function(event) {
-      if (event.target.classList.contains('scent-volume-input') || event.target.classList.contains('scent-balance-input')) {
-          const card = event.target.closest('.device-card');
-          if (!card) return;
-          const deviceId = card.dataset.deviceId;
-
-          const volumeInput = card.querySelector(`#scent_volume_${deviceId}`);
-          const balanceInput = card.querySelector(`#scent_balance_${deviceId}`);
-          const consumptionOutput = card.querySelector(`#scent_consumption_${deviceId}`);
-
-          const volume = parseFloat(volumeInput.value) || 0;
-          const balance = parseFloat(balanceInput.value) || 0;
-
-          if (volumeInput.value === '' && balanceInput.value === '') {
-            consumptionOutput.value = '';
-          } else {
-            consumptionOutput.value = volume - balance;
-          }
+{% block head_extra %}
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
+    <style>
+      .signature-pad-container { /* Renamed from .signature-container to avoid conflict if any global style exists */
+        border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+        width: 100%;
+        height: 200px;
+        position: relative;
+        touch-action: none;
       }
-  });
+      .dark .signature-pad-container {
+        border-color: #4b5563; /* Tailwind dark:border-gray-600 */
+      }
+      canvas.signature-pad { /* Explicitly target canvas */
+        width: 100%;
+        height: 100%;
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+      }
+    </style>
+{% endblock %}
 
-  deviceSection.addEventListener('change', function(event) {
-    if (event.target.classList.contains('device-inactive')) {
-        const isChecked = event.target.checked;
-        const card = event.target.closest('.device-card');
-        if (!card) return;
+{% block content %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-8">
 
-        const elementsToDisable = card.querySelectorAll('input:not(.device-inactive), select, textarea');
-        elementsToDisable.forEach(el => {
-            el.disabled = isChecked;
-        });
+        <div class="text-left mb-6">
+            <a href="{{ url_for('dashboard') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('forms.service') }}" class="space-y-8" {# Assuming 'service' is the correct endpoint name #}
+              data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
+              data-get-pic-url-template="{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}"
+              data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}">
+
+            <!-- Technician, Date, Service Time -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Service Meta Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Technician Name</label>
+                        <input type="text" value="{{ technician_name }}" readonly
+                               class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date and Time (Submission)</label>
+                        <input type="text" value="{{ current_time }}" readonly
+                               class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Monrh</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <select name="service_month" required class="tailwind-input-class">
+                            <option value="" disabled selected>Month</option>
+                            {% for month_num, month_name in [(1,'JAN'),(2,'FEB'),(3,'MAR'),(4,'APR'),(5,'MAY'),(6,'JUN'),(7,'JUL'),(8,'AUG'),(9,'SEP'),(10,'OCT'),(11,'NOV'),(12,'DEC')] %}
+                                <option value="{{ month_num }}">{{ month_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Company, Premise, PIC, Notes -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Client Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
+                        <select id="company" name="company" required class="tailwind-input-class">
+                            <option value="" selected disabled>Select a company</option>
+                            {% for c in companies %} <option value="{{ c }}">{{ c }}</option> {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="premise" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise</label>
+                        <select id="premise" name="premise" required disabled class="tailwind-input-class disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-500 cursor-not-allowed">
+                            <option value="" selected disabled>Select a premise</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="pic_contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIC Contact</label>
+                        <input type="text" id="pic_contact" name="pic_contact" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="change_notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Notes (Overview from System)</label>
+                        <textarea id="change_notes" name="change_notes" disabled class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400" rows="3" placeholder="System will auto-fill notes based on device changes"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Details Section Placeholder -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Device Details</h3>
+                <div id="device-section" class="space-y-6">
+                    <div class="device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                        <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device 1</h5> {# Assuming static or will be looped #}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                            <div>
+                                <label for="model_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                                <select name="model_1" id="model_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option selected disabled value="">Select a model</option>
+                                    {# Populate with actual model options if available from context, else leave as is #}
+                                    {% for model_item in models_context_variable_if_it_exists %} <option value="{{ model_item }}">{{ model_item }}</option> {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="color_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                                <select name="color_1" id="color_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                     <option selected disabled value="">Select a color</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="eo_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
+                                <select name="eo_1" id="eo_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option selected disabled value="">Select an EO</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="location_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                <input type="text" name="location_1" id="location_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50" placeholder="Device Location">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="scent_change_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
+                                <select name="scent_change_1" id="scent_change_1" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option value="">No Change</option>
+                                    {# Populate with EO options if available #}
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="relocate_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
+                                <select name="relocate_1" id="relocate_1" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
+                                    <option value="">Do not relocate</option>
+                                    {# Populate with premise options if available #}
+                                </select>
+                            </div>
+                            <div class="md:col-span-2 flex items-center mt-2">
+                                <input id="inactive_1" name="inactive_1" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
+                                <label for="inactive_1" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive</label>
+                            </div>
+                        </div>
+                        <!-- Events for Device 1 -->
+                         {% for device in devices%}
+                        {% for e_num in range(1, 5) %}
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <h6 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Event {{ e_num }} Settings</h6>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3"> {# Adjusted grid for 5 items #}
+                                <div class="lg:col-span-1"> {# Days can take more space if needed, or keep all equal #}
+                                    <label for="event_1_days_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Current Days: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - DAYS'] | default('N/A') }}</span></label>
+                                    <input type="text" name="event_1_days_{{ e_num }}" id="event_1_days_{{ e_num }}" placeholder="New Days" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label for="event_1_start_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Start: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - START'] | default('N/A') }}</span></label>
+                                    <input type="time" name="event_1_start_{{ e_num }}" id="event_1_start_{{ e_num }}" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label for="event_1_end_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">End: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - END'] | default('N/A') }}</span></label>
+                                    <input type="time" name="event_1_end_{{ e_num }}" id="event_1_end_{{ e_num }}" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label for="event_1_work_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Work (s): <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - WORK'] | default('N/A') }}</span></label>
+                                    <input type="number" name="event_1_work_{{ e_num }}" id="event_1_work_{{ e_num }}" placeholder="Work" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
+                                </div>
+                                <div>
+                                    <label for="event_1_pause_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Pause (s): <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - PAUSE'] | default('N/A') }}</span></label>
+                                    <input type="number" name="event_1_pause_{{ e_num }}" id="event_1_pause_{{ e_num }}" placeholder="Pause" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                    {# Add button for more devices if this section is meant to be dynamic via JS later #}
+                    {# <button type="button" id="addAnotherDeviceBtn" class="tailwind-button-dashed-fullwidth mt-4">+ Add Another Device</button> #}
+                </div>
+            </div>
+
+            <!-- Acknowledgement -->
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Acknowledgement</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Actions Done:</label>
+                        <div class="space-y-2">
+                            {% for action_val, action_text in [
+                                ('Alcohol Cleaning', 'Alcohol Cleaning'),
+                                ('Oil Refill', 'Oil Refill'),
+                                ('Checked Timer Settings', 'Checked Timer Settings'),
+                                ('Replaced Straw/ Mist Head', 'Replaced Straw/ Mist Head'),
+                                ('Replaced Batteries', 'Replaced Batteries'),
+                                ('Replaced Faulty Machine', 'Replaced Faulty Machine')
+                            ] %}
+                            <div class="flex items-center">
+                                <input id="action_{{ loop.index }}" name="actions" value="{{ action_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                                <label for="action_{{ loop.index }}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ action_text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div>
+                        <label for="remarks" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks:</label>
+                        <textarea name="remarks" id="remarks" rows="3" class="tailwind-input-class"></textarea>
+                    </div>
+                    <div>
+                        <label for="staffName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Staff Name:</label>
+                        <input type="text" name="staffName" id="staffName" required class="tailwind-input-class">
+                    </div>
+                    <div>
+                        <label for="signature" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Signature:</label>
+                        <div class="signature-pad-container">
+                            <canvas id="signature-pad" class="signature-pad"></canvas>
+                        </div>
+                        <input type="hidden" name="signature" id="signature-input">
+                        <button type="button" id="clear-signature"
+                                class="mt-2 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                            Clear Signature
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button type="submit"
+                        class="py-2.5 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white
+                               bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600
+                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900">
+                    Submit Service Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Common Tailwind input class for JS
+    const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
+
+    // SignaturePad logic
+    const canvas = document.getElementById("signature-pad");
+    const signaturePad = new SignaturePad(canvas, {
+        minWidth: 1,
+        maxWidth: 2.5,
+        penColor: document.documentElement.classList.contains('dark') ? "white" : "black"
+    });
+
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear();
     }
-  });
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
 
+    document.getElementById("clear-signature").addEventListener("click", () => {
+        signaturePad.clear();
+    });
+
+    document.querySelector("form").addEventListener("submit", function (event) {
+        if (!signaturePad.isEmpty()) {
+            document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+        }
+    });
+
+    const companyDropdown = document.getElementById('company');
+    const premiseDropdown = document.getElementById('premise');
+    const picContactInput = document.getElementById('pic_contact');
+    const deviceSection = document.getElementById('device-section');
+
+    companyDropdown.addEventListener('change', function() {
+        const companyName = this.value;
+        premiseDropdown.innerHTML = '<option value="" selected disabled>Loading...</option>';
+        deviceSection.innerHTML = ''; // Clear devices
+
+        if (companyName) {
+            axios.get(`/api/get-premises-for-company/${companyName}`)
+                .then(response => {
+                    premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
+                    response.data.forEach(premise => {
+                        premiseDropdown.innerHTML += `<option value="${premise}">${premise}</option>`;
+                    });
+                    premiseDropdown.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching premises:', error);
+                    premiseDropdown.innerHTML = '<option value="" selected disabled>Error loading premises</option>';
+                });
+        } else {
+            premiseDropdown.innerHTML = '<option value="" selected disabled>Select a company first</option>';
+            premiseDropdown.disabled = true;
+        }
+    });
+
+    premiseDropdown.addEventListener('change', function() {
+        const premiseName = this.value;
+        deviceSection.innerHTML = '<p>Loading devices...</p>';
+
+        if (premiseName) {
+            // Fetch PIC details
+            axios.get(`/api/pic-details/${premiseName}`)
+                .then(response => {
+                    picContactInput.value = response.data.name ? `${response.data.name} (${response.data.contact})` : 'N/A';
+                })
+                .catch(error => console.error('Error fetching PIC details:', error));
+
+            // Fetch and display devices
+            axios.get(`/api/get-device-details/${premiseName}`)
+                .then(response => {
+                    deviceSection.innerHTML = ''; // Clear loading message
+                    if (response.data.html) {
+                        deviceSection.innerHTML = response.data.html;
+                    } else {
+                        deviceSection.innerHTML = '<p>No devices found for this premise.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching devices:', error);
+                    deviceSection.innerHTML = '<p>Error loading devices.</p>';
+                });
+        } else {
+            deviceSection.innerHTML = '';
+            picContactInput.value = '';
+        }
+    });
+});
 </script>
-</body>
-</html>
+{% endblock %}
