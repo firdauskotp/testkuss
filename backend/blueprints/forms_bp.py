@@ -11,7 +11,8 @@ from ..col import (
     change_collection as change_form_collection, # Renamed for clarity
     refund_collection, logs_collection
 )
-from ..utils import log_activity, safe_int, handle_route_error, require_auth, sanitize_input
+from ..utils import log_activity, safe_int, handle_route_error, require_auth, sanitize_input, send_dynamic_email
+from backend import mail
 
 forms_bp = Blueprint(
     'forms',
@@ -239,13 +240,26 @@ def change_form():
             "increase_intensity": request.form.get("increaseIntensity") == "on", "move_device": request.form.get("moveDevice") == "on",
             "move_device_to": request.form.get("moveDeviceText"), "relocate_device": request.form.get("relocateDevice") == "on",
             "relocate_device_to": request.form.get("relocateDeviceDropdown"), "collect_back": request.form.get("collectBack") == "on",
-            "remark": request.form.get("remark"), "submitted_at": datetime.now() }
+            "remark": request.form.get("remark"), "submitted_at": datetime.now(), "e_settings": {} }
+
+        devices = request.form.getlist("devices")
+        for device in devices:
+            data["e_settings"][device] = {}
+            for i in range(1, 5):
+                data["e_settings"][device][f"E{i} - DAYS"] = request.form.get(f"{device}_E{i}_DAYS")
+                data["e_settings"][device][f"E{i} - START"] = request.form.get(f"{device}_E{i}_START")
+                data["e_settings"][device][f"E{i} - END"] = request.form.get(f"{device}_E{i}_END")
+                data["e_settings"][device][f"E{i} - PAUSE"] = request.form.get(f"{device}_E{i}_PAUSE")
+                data["e_settings"][device][f"E{i} - WORK"] = request.form.get(f"{device}_E{i}_WORK")
         if data["collect_back"]:
             refund_collection.insert_one(data)
             log_activity(session["username"],"collected back : " +str(data['premises']) + str(data['devices']),logs_collection)
         else:
             change_form_collection.insert_one(data)
             log_activity(session["username"],"updated settings : " +str(data['premises']) + str(data['devices']),logs_collection)
+            customer = profile_list_collection.find_one({"company": data["company"]})
+            if customer and customer.get("email"):
+                send_dynamic_email("change_form_confirmation", {**data, "customer_email": customer["email"]}, mail)
         flash("Data updated", "success")
         return redirect(url_for("dashboard"))
     companies = services_collection.distinct('company')

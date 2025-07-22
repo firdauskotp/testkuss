@@ -197,6 +197,37 @@ def get_eos(): # Used in change-form.html
             eos.add(d_item['Current EO'])
     return jsonify({'eos': list(eos)})
 
+@api_helpers_bp.route('/get-e-settings', methods=['POST'])
+def get_e_settings():
+    devices_locations = request.json.get('devices', [])
+    e_settings = {}
+    for d_item in device_list_collection.find({'location': {'$in': devices_locations}}):
+        device_name = d_item.get('location')
+        if device_name:
+            e_settings[device_name] = {
+                'E1 - DAYS': d_item.get('E1 - DAYS'),
+                'E1 - START': d_item.get('E1 - START'),
+                'E1 - END': d_item.get('E1 - END'),
+                'E1 - PAUSE': d_item.get('E1 - PAUSE'),
+                'E1 - WORK': d_item.get('E1 - WORK'),
+                'E2 - DAYS': d_item.get('E2 - DAYS'),
+                'E2 - START': d_item.get('E2 - START'),
+                'E2 - END': d_item.get('E2 - END'),
+                'E2 - PAUSE': d_item.get('E2 - PAUSE'),
+                'E2 - WORK': d_item.get('E2 - WORK'),
+                'E3 - DAYS': d_item.get('E3 - DAYS'),
+                'E3 - START': d_item.get('E3 - START'),
+                'E3 - END': d_item.get('E3 - END'),
+                'E3 - PAUSE': d_item.get('E3 - PAUSE'),
+                'E3 - WORK': d_item.get('E3 - WORK'),
+                'E4 - DAYS': d_item.get('E4 - DAYS'),
+                'E4 - START': d_item.get('E4 - START'),
+                'E4 - END': d_item.get('E4 - END'),
+                'E4 - PAUSE': d_item.get('E4 - PAUSE'),
+                'E4 - WORK': d_item.get('E4 - WORK'),
+            }
+    return jsonify({'e_settings': e_settings})
+
 
 @api_helpers_bp.route('/profile/edit/<record_id>', methods=['POST'])
 def edit_profile_record(record_id):

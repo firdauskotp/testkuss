@@ -141,27 +141,29 @@
                     </div>
                     <div>
                         <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
-                                                {% set year_for_range = 2024 %} {# Default year #}
-                        
-                        {% if current_date is defined and current_date %}
-                            {% if current_date is string %}
-                                {# current_date is a string. Try to extract year from its beginning. #}
-                                {# For example, if current_date is "2025" or "2025-01-10" #}
-                                {% set extracted_year_str = current_date[:4] %}
-                                {% set converted_year = extracted_year_str | int(0) %} {# Convert to int, default to 0 on failure #}
-                                {% if converted_year > 1900 and converted_year < 2200 %} {# Basic sanity check for a plausible year #}
-                                    {% set year_for_range = converted_year %}
+                        <select name="year" id="year" class="tailwind-input-class">
+                            {% set year_for_range = 2024 %} {# Default year #}
+
+                            {% if current_date is defined and current_date %}
+                                {% if current_date is string %}
+                                    {# current_date is a string. Try to extract year from its beginning. #}
+                                    {# For example, if current_date is "2025" or "2025-01-10" #}
+                                    {% set extracted_year_str = current_date[:4] %}
+                                    {% set converted_year = extracted_year_str | int(0) %} {# Convert to int, default to 0 on failure #}
+                                    {% if converted_year > 1900 and converted_year < 2200 %} {# Basic sanity check for a plausible year #}
+                                        {% set year_for_range = converted_year %}
+                                    {% endif %}
+                                {% elif hasattr(current_date, 'year') and current_date.year is number %}
+                                    {# current_date is an object (e.g., datetime) with a numeric .year attribute #}
+                                    {% set year_for_range = current_date.year %}
                                 {% endif %}
-                            {% elif hasattr(current_date, 'year') and current_date.year is number %}
-                                {# current_date is an object (e.g., datetime) with a numeric .year attribute #}
-                                {% set year_for_range = current_date.year %}
                             {% endif %}
-                        {% endif %}
-                        
-                        {% for y in range(year_for_range, year_for_range + 6) %}
-                            {# Your content for each year 'y' goes here. For example: #}
-                            <option value="{{ y }}">{{ y }}</option>
-                        {% endfor %}
+
+                            {% for y in range(year_for_range, year_for_range + 6) %}
+                                {# Your content for each year 'y' goes here. For example: #}
+                                <option value="{{ y }}">{{ y }}</option>
+                            {% endfor %}
+                        </select>
                       
                         
                     </div>
@@ -187,6 +189,9 @@
                 </div>
                 <div id="eo-container" class="mt-4 p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-md min-h-[40px]">
                      <p class="text-xs text-gray-500 dark:text-gray-400">Detected essential oils will appear here.</p>
+                </div>
+                <div id="e-settings-container" class="mt-4 p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-md min-h-[40px]" style="display: none;">
+                    <h3 class="text-l font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">E-Settings</h3>
                 </div>
             </div>
 
@@ -214,6 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const premisesContainer = document.getElementById("premises-container");
     const devicesContainer = document.getElementById("devices-container");
     const eoContainer = document.getElementById("eo-container");
+    const eSettingsContainer = document.getElementById("e-settings-container");
 
     // Common Tailwind class for dynamically added checkboxes and their labels
     const checkboxWrapperClass = "flex items-center space-x-2 p-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700";
@@ -308,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     const input = document.createElement("input");
                     input.type = "checkbox";
-                    input.className = checkboxInputClass;
+                    input.className = checkboxInputClass + " device-checkbox";
                     input.name = "devices"; // All selected devices will have this name
                     input.id = `device_${result.premise.replace(/\s+/g, '-')}_${i}`; // Unique ID
                     input.value = device; // Assuming device is a string (name/ID)
@@ -327,6 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
                  devicesContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">No devices found for selected premises.</p>';
             }
             hookDeviceEOListener();
+            hookDeviceESettingsListener();
         });
     }
 
@@ -364,6 +371,59 @@ document.addEventListener("DOMContentLoaded", () => {
                 .catch(err => {
                     eoContainer.innerHTML = '<p class="text-xs text-red-500 dark:text-red-400">Error loading EOs.</p>';
                     console.error("Error fetching EOs:", err);
+                });
+            }
+        });
+    }
+
+    function hookDeviceESettingsListener() {
+        const newDevicesContainer = devicesContainer.cloneNode(true);
+        devicesContainer.parentNode.replaceChild(newDevicesContainer, devicesContainer);
+        devicesContainer = newDevicesContainer;
+
+        devicesContainer.addEventListener("change", (event) => {
+            if (event.target.classList.contains('device-checkbox') || event.target.name === 'devices') {
+                const selectedDevices = Array.from(document.querySelectorAll("input[name='devices']:checked")).map(cb => cb.value);
+
+                if (selectedDevices.length === 0) {
+                    eSettingsContainer.style.display = 'none';
+                    eSettingsContainer.innerHTML = '';
+                    return;
+                }
+
+                eSettingsContainer.style.display = 'block';
+                eSettingsContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">Loading E-Settings...</p>';
+
+                fetch("{{ url_for('api_helpers.get_e_settings') }}", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ devices: selectedDevices })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.e_settings) {
+                        let html = '<h3 class="text-l font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">E-Settings</h3>';
+                        for (const device in data.e_settings) {
+                            html += `<h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mt-4">${device}</h4>`;
+                            const settings = data.e_settings[device];
+                            for (let i = 1; i <= 4; i++) {
+                                html += `<div class="grid grid-cols-2 gap-4 mt-2">`;
+                                html += `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">E${i} - DAYS</label><input type="text" name="${device}_E${i}_DAYS" value="${settings[`E${i} - DAYS`]}" class="tailwind-input-class"></div>`;
+                                html += `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">E${i} - START</label><input type="text" name="${device}_E${i}_START" value="${settings[`E${i} - START`]}" class="tailwind-input-class"></div>`;
+                                html += `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">E${i} - END</label><input type="text" name="${device}_E${i}_END" value="${settings[`E${i} - END`]}" class="tailwind-input-class"></div>`;
+                                html += `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">E${i} - PAUSE</label><input type="text" name="${device}_E${i}_PAUSE" value="${settings[`E${i} - PAUSE`]}" class="tailwind-input-class"></div>`;
+                                html += `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300">E${i} - WORK</label><input type="text" name="${device}_E${i}_WORK" value="${settings[`E${i} - WORK`]}" class="tailwind-input-class"></div>`;
+                                html += `</div>`;
+                            }
+                        }
+                        eSettingsContainer.innerHTML = html;
+                    } else {
+                        eSettingsContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">No E-Settings found for selected devices.</p>';
+                    }
+                })
+                .catch(err => {
+                    eSettingsContainer.innerHTML = '<p class="text-xs text-red-500 dark:text-red-400">Error loading E-Settings.</p>';
+                    console.error("Error fetching E-Settings:", err);
                 });
             }
         });

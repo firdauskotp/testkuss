@@ -13,3 +13,4 @@ flask-apscheduler
 pytest
 pytest-mock
 pytest-flask
+fpdf
