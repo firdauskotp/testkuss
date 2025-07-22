@@ -332,29 +332,27 @@ document.addEventListener("DOMContentLoaded", () => {
             if(totalDevices === 0) {
                  devicesContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">No devices found for selected premises.</p>';
             }
-            hookDeviceEOListener();
-            hookDeviceESettingsListener();
+            handleDeviceSelectionChange();
         });
     }
 
-
-    function hookDeviceEOListener() {
-        // Remove previous listeners to avoid multiple calls if this function is called multiple times
-        const newDevicesContainer = devicesContainer.cloneNode(true);
-        devicesContainer.parentNode.replaceChild(newDevicesContainer, devicesContainer);
-        devicesContainer = newDevicesContainer; // Update reference
-
+    function handleDeviceSelectionChange() {
         devicesContainer.addEventListener("change", (event) => {
             if (event.target.classList.contains('device-checkbox') || event.target.name === 'devices') {
                 const selectedDevices = Array.from(document.querySelectorAll("input[name='devices']:checked")).map(cb => cb.value);
 
                 if (selectedDevices.length === 0) {
                     eoContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">Detected essential oils will appear here.</p>';
+                    eSettingsContainer.style.display = 'none';
+                    eSettingsContainer.innerHTML = '';
                     return;
                 }
-                eoContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">Loading EOs...</p>';
 
-                fetch("{{ url_for('api_helpers.get_eos') }}", { // Using url_for for the endpoint
+                eoContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">Loading EOs...</p>';
+                eSettingsContainer.style.display = 'block';
+                eSettingsContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">Loading E-Settings...</p>';
+
+                fetch("{{ url_for('api_helpers.get_eos') }}", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ devices: selectedDevices })
@@ -372,27 +370,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     eoContainer.innerHTML = '<p class="text-xs text-red-500 dark:text-red-400">Error loading EOs.</p>';
                     console.error("Error fetching EOs:", err);
                 });
-            }
-        });
-    }
-
-    function hookDeviceESettingsListener() {
-        const newDevicesContainer = devicesContainer.cloneNode(true);
-        devicesContainer.parentNode.replaceChild(newDevicesContainer, devicesContainer);
-        devicesContainer = newDevicesContainer;
-
-        devicesContainer.addEventListener("change", (event) => {
-            if (event.target.classList.contains('device-checkbox') || event.target.name === 'devices') {
-                const selectedDevices = Array.from(document.querySelectorAll("input[name='devices']:checked")).map(cb => cb.value);
-
-                if (selectedDevices.length === 0) {
-                    eSettingsContainer.style.display = 'none';
-                    eSettingsContainer.innerHTML = '';
-                    return;
-                }
-
-                eSettingsContainer.style.display = 'block';
-                eSettingsContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">Loading E-Settings...</p>';
 
                 fetch("{{ url_for('api_helpers.get_e_settings') }}", {
                     method: "POST",
