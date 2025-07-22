@@ -5,11 +5,11 @@ from datetime import datetime
 from bson import ObjectId # Make sure ObjectId is imported if used for _id string conversion (though not explicitly in this snippet)
 
 from ..col import collection,industry_list_collection # Customer cases/complaints
-from ..utils import handle_route_error, require_auth, sanitize_input # Error handling utilities
+from ..utils import handle_route_error, require_auth, sanitize_input, send_dynamic_email # Error handling utilities
 # For fs, mail and other utils, it's better if they are registered with the app and accessed via current_app or specific getters
 from backend import fs as main_fs_instance # GridFS instance from main app (e.g. backend/__init__.py or app.py)
 # from ..app import mail as main_mail_instance # If mail is needed in this blueprint
-
+from backend import mail as main_mail_instance
 staff_actions_bp = Blueprint(
     'staff',
     __name__,
@@ -131,6 +131,15 @@ def staff_form(case_no):
         
         if case_closed == "Yes":
             collection.update_one({"case_no": case_no}, {"$set": {"status": "closed", "closed_by": admin_username, "closed_at": datetime.now()}})
+            send_dynamic_email(
+    template_key="case_completed_notification",
+    variables={
+        "case_id": case_no,
+        "premise_name": case_data["premise_name"],
+        "customer_email": case_data["user_email"]
+    },
+    mail=main_mail_instance
+)
             current_app.logger.info(f"Case #{case_no} closed by admin: {admin_username}")
             flash(f"Case #{case_no} has been closed.", "success")
             return redirect(url_for("dashboard"))

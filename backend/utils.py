@@ -2,11 +2,13 @@ import os
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 import calendar
-from flask import flash, current_app, request, session, jsonify, redirect, url_for
+from flask import flash, current_app, render_template_string, request, session, jsonify, redirect, url_for
 import re
 import functools
 import traceback
 from pymongo.errors import PyMongoError
+from col import collection
+import json
 
 def log_activity(name, action, database):
     """Log user activity with enhanced information"""
@@ -240,19 +242,168 @@ def send_email_to_admin(case_no, user_email, from_email, mail):
 #     except Exception as e:
 #         print(f"Failed to send email: {e}")
 
-def send_email(to_email, from_email, subject, body, mail):
-    """Generic function to send an email using Flask-Mail."""
+# def send_email(to_email, from_email, subject, body, mail):
+#     """Generic function to send an email using Flask-Mail."""
+#     try:
+#         msg = Message(subject, sender= from_email, recipients=[to_email])
+#         msg.body = body
+#         # Log email details for debugging (without exposing sensitive content)
+#         from flask import current_app
+#         current_app.logger.info(f"Sending email to: {to_email[:3]}...@{to_email.split('@')[1] if '@' in to_email else 'unknown'}")
+#         current_app.logger.info(f"Email subject: {subject}")
+#         mail.send(msg)
+#     except Exception as e:
+#         from flask import current_app
+#         current_app.logger.error(f"Failed to send email: {e}")
+
+from fpdf import FPDF
+import io
+from datetime import datetime
+
+def generate_case_pdf(case_id):
+    """Generate PDF summary for completed help request case."""
+
+
+    # Step 1: Get case data
+    case = collection.find_one({"case_no": case_id})
+    if not case:
+        raise ValueError(f"No case found with ID {case_id}")
+
+    # Step 2: Prepare PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=f"Help Request Case Summary - #{case_id}", ln=1, align="C")
+    pdf.ln(5)
+
+    def add_field(label, value):
+        pdf.set_font("Arial", "B", size=10)
+        pdf.cell(50, 7, txt=label)
+        pdf.set_font("Arial", size=10)
+        if isinstance(value, bool):
+            pdf.multi_cell(0, 7, txt="Yes" if value else "No", ln=1)
+        elif isinstance(value, list):
+            if not value:
+                pdf.multi_cell(0, 7, txt="N/A", ln=1)
+            else:
+                for item in value:
+                    pdf.cell(5)
+                    pdf.multi_cell(0, 7, txt=f"- {item}", ln=1)
+        else:
+            pdf.multi_cell(0, 7, txt=str(value) if value else "N/A", ln=1)
+
+    # Step 3: Add content
+    add_field("Premise Name:", case.get("premise_name"))
+    add_field("Customer Email:", case.get("user_email"))
+    add_field("Created At:", case.get("created_at").strftime("%Y-%m-%d %H:%M") if case.get("created_at") else "N/A")
+
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", size=11)
+    pdf.cell(200, 10, txt="Device Issues:", ln=1)
+    pdf.set_font("Arial", size=10)
+
+    for i, device in enumerate(case.get("devices", []), start=1):
+        pdf.set_font("Arial", "B", size=10)
+        pdf.cell(0, 7, txt=f"Device {i}", ln=1)
+        add_field("  Model:", device.get("model"))
+        add_field("  Location:", device.get("location"))
+        add_field("  Issues:", device.get("issues"))
+        add_field("  Remarks:", device.get("remarks"))
+        pdf.ln(3)
+
+    # Add staff-side updates if present
+    pdf.ln(3)
+    if case.get("staff_name"):
+        pdf.set_font("Arial", "B", size=11)
+        pdf.cell(200, 10, txt="Staff Response", ln=1)
+        pdf.set_font("Arial", size=10)
+        add_field("Staff Name:", case.get("staff_name"))
+        add_field("Actions Done:", case.get("actions_done"))
+        add_field("Remarks:", case.get("remarks"))
+        add_field("Revisit Date:", case.get("revisit_date"))
+        add_field("Revisit Time:", case.get("revisit_time"))
+        add_field("Updated By:", case.get("updated_by"))
+        add_field("Updated At:", case.get("updated_at").strftime("%Y-%m-%d %H:%M") if case.get("updated_at") else "N/A")
+
+    # Step 4: Return bytes
+    return pdf.output(dest="S").encode('latin-1')
+
+def generate_file_for(template_key, variables):
+    if template_key == "case_completed_notification":
+        return generate_case_pdf(variables["case_id"])  # returns bytes
+    else:
+        return b""
+    
+def send_dynamic_email(template_key, variables, mail):
+    """
+    1) loads email_templates.json  
+    2) renders subject & HTML body (Jinja in JSON)  
+    3) attaches any attachment_template (filename rendered by Jinja, file bytes from your generator)  
+    4) calls send_email()  
+    """
+    # 1) load + look up
+    with open('email_templates.json') as f:
+        templates = json.load(f)
+    tpl = templates.get(template_key)
+    if not tpl:
+        raise KeyError(f"No such template: {template_key}")
+
+    # 2) render subject & body
+    subject = render_template_string(tpl['subject'], **variables)
+    body_html = render_template_string(tpl['email_content'], **variables)
+
+    # 3) prepare attachments list
+    attachments = []
+    if tpl.get('attachment_template'):
+        # render the filename
+        filename = render_template_string(tpl['attachment_template'], **variables)
+        # generate or load the file bytes (you supply this)
+        file_bytes = generate_file_for(template_key, variables)
+        # e.g. PDF
+        attachments.append((filename, 'application/pdf', file_bytes))
+
+    # 4) finally send
+    send_email(
+        to_email   = render_template_string(tpl['receiver_email'], **variables),
+        from_email = tpl['sender_email'],
+        subject    = subject,
+        body_html  = body_html,
+        mail       = mail,
+        attachments=attachments
+    )
+
+
+def send_email(to_email, from_email, subject, body_html, mail, attachments=None):
+    """
+    Generic wrapper on Flask-Mail’s Message.
+    Accepts:
+     - body_html (string, assumed safe HTML)
+     - attachments: list of (filename, mimetype, bytes) or file-paths
+    """
+    msg = Message(subject, sender=from_email, recipients=[to_email])
+    msg.html = body_html
+
+    # attach any files
+    for att in attachments or []:
+        if isinstance(att, str) and os.path.exists(att):
+            with open(att, 'rb') as f:
+                data = f.read()
+            msg.attach(os.path.basename(att), 
+                       'application/octet-stream', 
+                       data)
+        else:
+            # tuple (filename, mime, bytes)
+            name, mime, data = att
+            msg.attach(name, mime, data)
+
+    # logs
+    current_app.logger.info(f"Sending email to: {to_email}")
+    current_app.logger.info(f"Subject: {subject}")
     try:
-        msg = Message(subject, sender= from_email, recipients=[to_email])
-        msg.body = body
-        # Log email details for debugging (without exposing sensitive content)
-        from flask import current_app
-        current_app.logger.info(f"Sending email to: {to_email[:3]}...@{to_email.split('@')[1] if '@' in to_email else 'unknown'}")
-        current_app.logger.info(f"Email subject: {subject}")
         mail.send(msg)
     except Exception as e:
-        from flask import current_app
         current_app.logger.error(f"Failed to send email: {e}")
+        raise
 
 
 def replicate_monthly_routes(database):

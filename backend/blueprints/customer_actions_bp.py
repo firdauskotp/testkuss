@@ -5,7 +5,7 @@ from datetime import datetime
 
 # Assuming database collections, mail functions, fs are accessible
 from ..col import collection # 'collection' for customer cases
-from ..utils import send_email_to_customer, send_email_to_admin, handle_route_error, require_auth, sanitize_input # Email utilities and error handling
+from ..utils import send_email_to_customer, send_email_to_admin, handle_route_error, require_auth, sanitize_input, send_dynamic_email # Email utilities and error handling
 # Changed to import directly from .app to avoid circular import with backend/__init__.py
 from backend import fs # GridFS instance from main app (__init__.py or app.py)
 from backend import mail as main_mail_instance # Mail instance from main app (__init__.py or app.py)
@@ -137,8 +137,27 @@ def customer_form():
             # Log this for admin attention
         
         try:
-            send_email_to_customer(case_no, user_email, mail_sender_address, main_mail_instance)
-            send_email_to_admin(case_no, user_email, mail_sender_address, main_mail_instance)
+            send_dynamic_email(
+    template_key="help_request_new_case_created",
+    variables={
+        "case_id": case_no,
+        "premise_name": premise_name,
+        "customer_email": user_email
+    },
+    mail=main_mail_instance
+)
+            send_dynamic_email(
+    template_key="team_help_request_new_case_received",
+    variables={
+        "case_id": case_no,
+        "premise_name": premise_name,
+        "device_location": devices_data[0]['location'] if devices_data else "",
+        "issues": ", ".join(devices_data[0]['issues']) if devices_data else "",
+        "remarks": devices_data[0]['remarks'] if devices_data else "",
+        "team_email": current_app.config['ADMIN_EMAIL_ADDRESS']
+    },
+    mail=main_mail_instance
+)
             current_app.logger.info(f"Email notifications sent for case #{case_no}")
         except Exception as e:
             current_app.logger.error(f"Email notification failed for case #{case_no}: {str(e)}")
