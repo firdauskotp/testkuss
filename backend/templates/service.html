@@ -37,8 +37,8 @@
             </a>
         </div>
 
-        <form method="POST" action="{{ url_for('forms.service') }}" class="space-y-8" {# Assuming 'service' is the correct endpoint name #}
-              data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
+        <form method="POST" action="{{ url_for('forms.service') }}" class="space-y-8"
+              data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_NAME__') }}"
               data-get-pic-url-template="{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}"
               data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}">
 
@@ -243,7 +243,7 @@
             if (!companyName) return;
 
             premiseDropdown.innerHTML = '<option value="" selected disabled>Loading...</option>';
-            const url = getPremisesUrlTemplate.replace('__COMPANY_ID__', encodeURIComponent(companyName));
+            const url = getPremisesUrlTemplate.replace('__COMPANY_NAME__', encodeURIComponent(companyName));
 
             axios.get(url)
                 .then(response => {
