@@ -53,7 +53,8 @@ limiter = Limiter(
     key_func=get_remote_address,
     app=app,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
+    storage_uri="memory://",
+    enabled=not os.environ.get("TESTING")
 )
 
 UPLOAD_FOLDER = "static/uploads"

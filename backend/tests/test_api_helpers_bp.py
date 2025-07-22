@@ -15,7 +15,7 @@ def login_admin(client, mocker, app, admin_username="testapiadmin", admin_id="te
 
 # --- Test for an image fetching route (e.g., get_image) ---
 def test_get_image_success(client, app, mocker):
-    # login_admin(client, mocker, app) # If endpoint requires admin login
+    login_admin(client, mocker, app) # If endpoint requires admin login
 
     mock_file_id_str = "605c73a9759a2d2c58a9f001"
     mock_gridfs_file = mocker.Mock()
@@ -36,7 +36,7 @@ def test_get_image_success(client, app, mocker):
     mock_fs_get.assert_called_once_with(ObjectId(mock_file_id_str))
 
 def test_get_image_not_found(client, app, mocker):
-    # login_admin(client, mocker, app) # If endpoint requires admin login
+    login_admin(client, mocker, app) # If endpoint requires admin login
 
     mock_file_id_str = "605c73a9759a2d2c58a9f002"
     # The get_image route in api_helpers_bp.py has a try-except returning jsonify, 404
@@ -53,7 +53,7 @@ def test_get_image_not_found(client, app, mocker):
 
 # --- Test for a data fetching route (e.g., get_premises) ---
 def test_get_premises_success(client, app, mocker):
-    # login_admin(client, mocker, app) # If endpoint requires admin login
+    login_admin(client, mocker, app) # If endpoint requires admin login
 
     company_name = "TestCompany"
     mock_premises_data = ["Premise A", "Premise B"]
@@ -67,16 +67,11 @@ def test_get_premises_success(client, app, mocker):
     response = client.get(premises_url)
 
     assert response.status_code == 200
-    # The route renders a template 'partials/premise_checkboxes.html'.
-    # So we should check for HTML content, not JSON.
-    assert response.mimetype == "text/html"
-    assert b"Premise A" in response.data # Check if premise names are in the rendered HTML
-    assert b"Premise B" in response.data
-    # Example assertion for checkbox structure if known:
-    assert b'<input type="checkbox" class="form-check-input premise-checkbox" value="Premise A"' in response.data
+    assert response.mimetype == "application/json"
+    assert response.json == {"premises": mock_premises_data}
 
 def test_get_premises_empty(client, app, mocker):
-    # login_admin(client, mocker, app) # If endpoint requires admin login
+    login_admin(client, mocker, app) # If endpoint requires admin login
     company_name = "EmptyCo"
     mocker.patch('backend.blueprints.api_helpers_bp.services_collection.distinct', return_value=[])
 
@@ -84,14 +79,33 @@ def test_get_premises_empty(client, app, mocker):
         premises_url = url_for('api_helpers.get_premises', company=company_name)
     response = client.get(premises_url)
     assert response.status_code == 200
-    # Check if the template correctly handles empty list (e.g., no checkboxes rendered or a specific message)
-    # Assuming if empty, no checkboxes with value will be present
-    assert b'value="Premise A"' not in response.data
-    # The partial might not have a specific "No premises found" message, it might just render nothing.
+    assert response.mimetype == "application/json"
+    assert response.json == {"premises": []}
+
+def test_get_device_details_success(client, app, mocker):
+    login_admin(client, mocker, app) # If endpoint requires admin login
+
+    premise_name = "TestPremise"
+    mock_device_data = [
+        {"_id": "605c73a9759a2d2c58a9f003", "Model": "Model A", "Color": "Red"},
+        {"_id": "605c73a9759a2d2c58a9f004", "Model": "Model B", "Color": "Blue"},
+    ]
+    # Path for device_list_collection used in api_helpers_bp.py
+    mocker.patch('backend.blueprints.api_helpers_bp.device_list_collection.find', return_value=mock_device_data)
+
+    with app.test_request_context():
+        # Ensure endpoint name is correct
+        devices_url = url_for('api_helpers.get_device_details', premise_name=premise_name)
+
+    response = client.get(devices_url)
+
+    assert response.status_code == 200
+    assert response.mimetype == "application/json"
+    assert response.json == {"devices": mock_device_data}
 
 # --- Test for an update route (e.g., update_data) ---
 def test_update_data_success(client, app, mocker):
-    # login_admin(client, mocker, app) # Assuming this route is protected
+    login_admin(client, mocker, app) # Assuming this route is protected
 
     mock_update_result = mocker.Mock()
     mock_update_result.modified_count = 1
@@ -109,7 +123,7 @@ def test_update_data_success(client, app, mocker):
     mock_update.assert_called_once_with({'S/N': 123}, {'$set': {'field_to_update': 'new_value'}})
 
 def test_update_data_no_modification(client, app, mocker):
-    # login_admin(client, mocker, app) # Assuming this route is protected
+    login_admin(client, mocker, app) # Assuming this route is protected
     mock_update_result = mocker.Mock()
     mock_update_result.modified_count = 0
     mocker.patch('backend.blueprints.api_helpers_bp.services_collection.update_one', return_value=mock_update_result)
@@ -124,7 +138,7 @@ def test_update_data_no_modification(client, app, mocker):
     assert response.json['message'] == 'Record not found or no changes made'
 
 def test_update_data_invalid_sn_format(client, app, mocker):
-    # login_admin(client, mocker, app) # Assuming this route is protected
+    login_admin(client, mocker, app) # Assuming this route is protected
 
     # No need to mock update_one as it should fail before that
     post_data = {'sn': 'invalid_sn_str', 'field_to_update': 'new_value'}
