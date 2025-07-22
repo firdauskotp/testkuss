@@ -175,17 +175,66 @@ def get_device_details(premise_name):
         devices.append(device)
     return jsonify(html=render_template("partials/device-details.html", devices=devices))
 
-@api_helpers_bp.route('/get-premises/<company>') # Path from original app.py
+@api_helpers_bp.route('/get-premises/<company>')
 def get_premises(company):
-    # This was used in change-form.html to render a partial template with checkboxes
-    premises_names = services_collection.distinct('Premise Name', {'company': company})
-    return render_template('partials/premise_checkboxes.html', premises=premises_names)
+    """
+    Accepts a company name and returns a JSON list of associated premise names.
+    This is intended for dynamic dropdown population in modern forms.
+    """
+    if not company:
+        return jsonify({"error": "Company name is required"}), 400
 
-@api_helpers_bp.route('/get-devices/<premise>') # Path from original app.py
-def get_devices(premise): # Used in change-form.html
-    # This was used to return a list of device locations (which might be device names or identifiers)
-    devices_cursor = device_list_collection.find({'tied_to_premise': premise}, {'location': 1, '_id':0})
-    return jsonify({'devices': [d['location'] for d in devices_cursor if 'location' in d]})
+    try:
+        # The original logic used services_collection, which is correct for finding premises by company.
+        # Using .distinct() is efficient for getting unique premise names.
+        premises_names = services_collection.distinct('Premise Name', {'company': company})
+
+        # The service.html JavaScript expects a JSON object with a 'premises' key.
+        # This aligns with the structure used in other, similar API endpoints.
+        return jsonify(premises=premises_names)
+
+    except Exception as e:
+        # Basic error handling for database issues or other unexpected problems.
+        current_app.logger.error(f"Error fetching premises for company '{company}': {e}")
+        return jsonify({"error": "An internal error occurred"}), 500
+
+@api_helpers_bp.route('/get-devices-for-premise/<premise_name>')
+def get_devices_for_premise(premise_name):
+    """
+    Accepts a premise name and returns a JSON list of device details for that premise.
+    This is designed to populate the service form with device-specific information.
+    """
+    if not premise_name:
+        return jsonify({"error": "Premise name is required"}), 400
+
+    try:
+        # Fetch all devices tied to the given premise name.
+        # Projecting the necessary fields to keep the payload clean and efficient.
+        devices_cursor = device_list_collection.find(
+            {'tied_to_premise': premise_name},
+            {
+                "_id": 1, "Model": 1, "Color": 1, "Current EO": 1, "location": 1,
+                "E1 - DAYS": 1, "E1 - START": 1, "E1 - END": 1, "E1 - WORK": 1, "E1 - PAUSE": 1,
+                "E2 - DAYS": 1, "E2 - START": 1, "E2 - END": 1, "E2 - WORK": 1, "E2 - PAUSE": 1,
+                "E3 - DAYS": 1, "E3 - START": 1, "E3 - END": 1, "E3 - WORK": 1, "E3 - PAUSE": 1,
+                "E4 - DAYS": 1, "E4 - START": 1, "E4 - END": 1, "E4 - WORK": 1, "E4 - PAUSE": 1,
+                "image_id": 1 # Include image_id if it exists
+            }
+        )
+
+        devices_list = []
+        for device in devices_cursor:
+            # Convert ObjectId to string for JSON serialization.
+            device['_id'] = str(device['_id'])
+            if 'image_id' in device and isinstance(device['image_id'], ObjectId):
+                device['image_id'] = str(device['image_id'])
+            devices_list.append(device)
+
+        return jsonify(devices=devices_list)
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching devices for premise '{premise_name}': {e}")
+        return jsonify({"error": "An internal error occurred"}), 500
 
 @api_helpers_bp.route('/get-eos', methods=['POST']) # Path from original app.py
 def get_eos(): # Used in change-form.html
