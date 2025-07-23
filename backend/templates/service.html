@@ -40,6 +40,7 @@
         <form method="POST" action="{{ url_for('forms.service') }}" class="space-y-8" {# Assuming 'service' is the correct endpoint name #}
               data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
               data-get-pic-url-template="{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}"
+              data-get-premise-image-url-template="{{ url_for('api_helpers.get_premise_image', premise_name='__PREMISE_ID__') }}"
               data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}">
 
             <!-- Technician, Date, Service Time -->
@@ -91,6 +92,10 @@
                     <div class="md:col-span-2">
                         <label for="pic_contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIC Contact</label>
                         <input type="text" id="pic_contact" name="pic_contact" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Picture</label>
+                        <img id="premise_image" src="" alt="Premise Image" class="hidden w-full h-auto rounded-lg shadow-md">
                     </div>
                     <div class="md:col-span-2">
                         <label for="change_notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Notes (Overview from System)</label>
@@ -244,7 +249,6 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
     // Common Tailwind input class for JS
     const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
 
@@ -252,8 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById("signature-pad");
     const signaturePad = new SignaturePad(canvas, {
         minWidth: 1,
-        maxWidth: 2.5,
-        penColor: document.documentElement.classList.contains('dark') ? "white" : "black"
+        maxWidth: 2.5, // Adjusted for better appearance
+        penColor: document.documentElement.getAttribute('data-theme') === 'dark' ? "white" : "black" // Theme aware
     });
 
     function resizeCanvas() {
@@ -261,10 +265,10 @@ document.addEventListener('DOMContentLoaded', function() {
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear();
+        signaturePad.clear(); // Clear after resize to avoid issues
     }
     window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
+    resizeCanvas(); // Initial resize
 
     document.getElementById("clear-signature").addEventListener("click", () => {
         signaturePad.clear();
@@ -273,69 +277,170 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector("form").addEventListener("submit", function (event) {
         if (!signaturePad.isEmpty()) {
             document.getElementById("signature-input").value = signaturePad.toDataURL("image/png");
+        } else {
+            // Optional: require signature
+            // alert("Please provide a signature.");
+            // event.preventDefault();
         }
+    });
+
+    // Update signature pad color on theme change (if possible, by listening to theme-toggle.js event or overriding its applyTheme)
+    // For now, this is a simple approach. A more robust way is needed if theme can change while page is open.
+    if (window.matchMedia) {
+      const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQueryList.addEventListener('change', event => {
+        signaturePad.penColor = event.matches ? "white" : "black";
+        signaturePad.clear(); // Clear to apply new color if needed
+      });
+    }
+
+
+    // JS for dependent dropdowns and device inactive state (from original file, needs class/ID checks)
+    const serviceForm = document.querySelector('form[action="{{ url_for("forms.service") }}"]');
+    const getPremisesUrlTemplate = serviceForm.dataset.getPremisesUrlTemplate;
+    const getPicUrlTemplate = serviceForm.dataset.getPicUrlTemplate;
+    const getPremiseImageUrlTemplate = serviceForm.dataset.getPremiseImageUrlTemplate;
+    const getChangeNotesUrlTemplate = serviceForm.dataset.getChangeNotesUrlTemplate;
+
+    document.querySelectorAll('.device-inactive').forEach((checkbox) => {
+        checkbox.addEventListener('change', function () {
+            const card = this.closest('.device-card'); // Ensure this class is on the device card
+            const inputs = card.querySelectorAll('input:not(.device-inactive), select, textarea');
+            inputs.forEach(input => {
+                input.disabled = this.checked;
+                if (this.checked) {
+                    input.classList.add('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed');
+                } else {
+                    input.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed');
+                }
+            });
+        });
     });
 
     const companyDropdown = document.getElementById('company');
     const premiseDropdown = document.getElementById('premise');
     const picContactInput = document.getElementById('pic_contact');
-    const deviceSection = document.getElementById('device-section');
+    const premiseImage = document.getElementById('premise_image');
+    const changeNotesTextarea = document.getElementById('change_notes');
+    // Add other device related dropdowns if they are part of the dynamic logic
+    // const modelDeviceDropdown = document.getElementById('model_idx'); // Example
 
-    companyDropdown.addEventListener('change', function() {
-        const companyName = this.value;
-        premiseDropdown.innerHTML = '<option value="" selected disabled>Loading...</option>';
-        deviceSection.innerHTML = ''; // Clear devices
+    if (companyDropdown) {
+        companyDropdown.addEventListener('change', function () {
+            const companyId = this.value;
+            premiseDropdown.innerHTML = '<option value="" selected disabled>Loading...</option>';
+            premiseDropdown.disabled = true;
+            // Reset subsequent fields if any
+            if(picContactInput) picContactInput.value = '';
+            if(premiseImage) {
+                premiseImage.src = '';
+                premiseImage.classList.add('hidden');
+            }
+            if(changeNotesTextarea) changeNotesTextarea.value = '';
 
-        if (companyName) {
-            axios.get(`/api/get-premises-for-company/${companyName}`)
+            if (!companyId) {
+                premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
+                return;
+            }
+
+            axios.get(getPremisesUrlTemplate.replace('__COMPANY_ID__', encodeURIComponent(companyId)))
                 .then(response => {
                     premiseDropdown.innerHTML = '<option value="" selected disabled>Select a premise</option>';
-                    response.data.forEach(premise => {
-                        premiseDropdown.innerHTML += `<option value="${premise}">${premise}</option>`;
-                    });
+                    if (response.data && Array.isArray(response.data.premises)) {
+                         response.data.premises.forEach(p_name => {
+                            premiseDropdown.innerHTML += `<option value="${p_name}">${p_name}</option>`;
+                        });
+                    }
                     premiseDropdown.disabled = false;
                 })
                 .catch(error => {
                     console.error('Error fetching premises:', error);
-                    premiseDropdown.innerHTML = '<option value="" selected disabled>Error loading premises</option>';
+                    premiseDropdown.innerHTML = '<option value="" selected disabled>Error loading</option>';
                 });
-        } else {
-            premiseDropdown.innerHTML = '<option value="" selected disabled>Select a company first</option>';
-            premiseDropdown.disabled = true;
+        });
+    }
+
+    if (premiseDropdown) {
+        premiseDropdown.addEventListener('change', function () {
+            const premiseId = this.value;
+            if (!premiseId) return;
+
+            // Fetch PIC Contact
+            if (picContactInput) {
+                axios.get(getPicUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
+                    .then(response => {
+                        if (response.data && response.data.name && response.data.contact) {
+                             picContactInput.value = `${response.data.name} (${response.data.contact})`;
+                        } else {
+                            picContactInput.value = 'N/A';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching PIC contact:', error);
+                        picContactInput.value = 'Error';
+                    });
+            }
+
+            // Fetch Premise Image
+            if (premiseImage) {
+                axios.get(getPremiseImageUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
+                    .then(response => {
+                        if (response.data && response.data.image_url) {
+                            premiseImage.src = response.data.image_url;
+                            premiseImage.classList.remove('hidden');
+                        } else {
+                            premiseImage.src = '';
+                            premiseImage.classList.add('hidden');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching premise image:', error);
+                        premiseImage.src = '';
+                        premiseImage.classList.add('hidden');
+                    });
+            }
+
+            // Fetch Change Notes
+            if (changeNotesTextarea) {
+                 axios.get(getChangeNotesUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
+                    .then(response => {
+                        if (response.data && response.data.notes) {
+                            changeNotesTextarea.value = response.data.notes;
+                        } else {
+                            changeNotesTextarea.value = 'No specific change notes found.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching change notes:', error);
+                        changeNotesTextarea.value = 'Error loading notes.';
+                    });
+            }
+        });
+    }
+
+    // Script for dynamic year in service_year dropdown
+    const serviceYearDropdown = document.querySelector('select[name="service_year"]');
+    if (serviceYearDropdown) {
+        const currentActualYear = new Date().getFullYear();
+        let yearOptions = `<option value="" disabled ${serviceYearDropdown.value === "" ? "selected" : ""}>Year</option>`;
+        for (let y = currentActualYear - 1; y <= currentActualYear + 5; y++) {
+            yearOptions += `<option value="${y}" ${parseInt(serviceYearDropdown.value) === y ? "selected" : ""}>${y}</option>`;
+        }
+        serviceYearDropdown.innerHTML = yearOptions;
+    }
+    // Helper to apply common input class
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="time"], input[type="date"], select, textarea').forEach(el => {
+        if (!el.classList.contains('tailwind-input-class') && !el.id.includes('signature') && !el.classList.contains('device-inactive') && !el.type.includes('checkbox')) {
+             if(el.closest && !el.closest('.signature-pad-container')) { // don't style signature pad related things
+                el.classList.add(...tailwindInputClass.split(' '));
+                if (el.disabled || el.readOnly) {
+                    el.classList.add('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed', 'text-gray-500', 'dark:text-gray-400');
+                }
+             }
         }
     });
 
-    premiseDropdown.addEventListener('change', function() {
-        const premiseName = this.value;
-        deviceSection.innerHTML = '<p>Loading devices...</p>';
 
-        if (premiseName) {
-            // Fetch PIC details
-            axios.get(`/api/pic-details/${premiseName}`)
-                .then(response => {
-                    picContactInput.value = response.data.name ? `${response.data.name} (${response.data.contact})` : 'N/A';
-                })
-                .catch(error => console.error('Error fetching PIC details:', error));
-
-            // Fetch and display devices
-            axios.get(`/api/get-device-details/${premiseName}`)
-                .then(response => {
-                    deviceSection.innerHTML = ''; // Clear loading message
-                    if (response.data.html) {
-                        deviceSection.innerHTML = response.data.html;
-                    } else {
-                        deviceSection.innerHTML = '<p>No devices found for this premise.</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching devices:', error);
-                    deviceSection.innerHTML = '<p>Error loading devices.</p>';
-                });
-        } else {
-            deviceSection.innerHTML = '';
-            picContactInput.value = '';
-        }
-    });
 });
 </script>
 {% endblock %}

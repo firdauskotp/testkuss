@@ -168,17 +168,18 @@ def get_device_details(premise_name):
     devices_cursor = device_list_collection.find({"tied_to_premise": premise_name})
     devices = []
     for device in devices_cursor:
-        if '_id' in device:
-            device['_id'] = str(device['_id'])
+        if '_id' in device: device['_id'] = str(device['_id'])
+        # Convert other ObjectIds if present and needed by template, e.g. image_id
         if 'image_id' in device and isinstance(device['image_id'], ObjectId):
-            device['image_id'] = str(device['image_id'])
+             device['image_id'] = str(device['image_id'])
         devices.append(device)
+    return jsonify(html=render_template("partials/device-details.html", devices=devices))
 
-    # Render a partial template with the device details.
-    # This HTML will be injected into the service form.
-    html = render_template("partials/device_details.html", devices=devices)
-    return jsonify(html=html)
-
+@api_helpers_bp.route('/get-premises/<company>') # Path from original app.py
+def get_premises(company):
+    # This was used in change-form.html to render a partial template with checkboxes
+    premises_names = services_collection.distinct('Premise Name', {'company': company})
+    return jsonify({'premises': premises_names})
 
 @api_helpers_bp.route('/get-devices/<premise>') # Path from original app.py
 def get_devices(premise): # Used in change-form.html
@@ -282,6 +283,16 @@ def get_pic_details_for_premise(premise_name):
     if pic_data:
         return jsonify(pic_data)
     return jsonify({"name": "N/A", "contact": "N/A"}) # Default if no PIC found
+
+@api_helpers_bp.route('/premise-image/<premise_name>')
+def get_premise_image(premise_name):
+    premise_data = profile_list_collection.find_one(
+        {"premise_name": premise_name},
+        {"image_id": 1, "_id": 0}
+    )
+    if premise_data and 'image_id' in premise_data:
+        return jsonify({"image_url": url_for('api_helpers.get_image', file_id=str(premise_data['image_id']))})
+    return jsonify({"image_url": ""})
 
 @api_helpers_bp.route('/change-notes-for-premise/<premise_name>')
 def get_change_notes_for_premise(premise_name):

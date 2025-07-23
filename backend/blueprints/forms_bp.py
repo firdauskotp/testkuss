@@ -291,21 +291,86 @@ def pre_service():
 
 @forms_bp.route('/service', methods=['GET', 'POST'])
 def service():
-    technician_name = session.get("username", "N/A")
+    technician_name = session["username"]
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    companies = sorted(services_collection.distinct('company'))
+    companies = services_collection.distinct('company')
 
-    devices_data = []
+    device_entries = []
     if request.method == 'POST':
-        # ... (rest of your POST logic)
-        flash("Field service report submitted successfully!", "success")
-        return redirect(url_for("forms.service"))
+        premise_name = request.form.get("premiseName")
+        actions_taken = request.form.getlist("actions")
+        remarks = request.form.get("remarks")
+        staff_name = request.form.get("staffName")
+        signature = request.form.get("signature")
 
-    # This part handles the initial GET request.
-    # The devices will be loaded via AJAX, so we don't need to pass them here.
+        # Fetch selected premise details
+        premise_details = profile_list_collection.find_one({"premise_name": premise_name})
+        if not premise_details:
+            flash("Invalid premise selected!", "danger")
+            return redirect(url_for("field_service"))
+
+        # Fetch devices linked to the premise
+        devices = list(device_list_collection.find({"tied_to_premise": premise_name}))
+
+        # Fetch PICs linked to the premise
+        pic_records = list(profile_list_collection.find({"tied_to_premise": premise_name}))
+
+        # Process devices
+        for i, device in enumerate(devices, start=1):
+            balance = int(request.form.get(f'balance{i}', 0))
+            volume_required = int(device.get("Volume", 0))
+            consumption = volume_required - balance
+
+            device_entry = {
+                "location": device.get("location"),
+                "serial_number": device.get("S/N"),
+                "model": device.get("Model"),
+                "scent": device.get("Current EO"),
+                "volume_required": volume_required,
+                "balance": balance,
+                "consumption": consumption,
+                "events": []
+            }
+
+            # Process events (E1 to E4)
+            for e in range(1, 5):
+                event_data = {
+                    "days": device.get(f"E{e} - DAYS"),
+                    "start_time": device.get(f"E{e} - START"),
+                    "end_time": device.get(f"E{e} - END"),
+                    "work": device.get(f"E{e} - WORK"),
+                    "pause": device.get(f"E{e} - PAUSE"),
+                }
+                device_entry["events"].append(event_data)
+
+            device_entries.append(device_entry)
+
+        # Create a record for MongoDB
+        field_service_record = {
+            "technician_name": technician_name,
+            "timestamp": current_time,
+            "premise_name": premise_name,
+            "client_pics": pic_records,
+            "devices": device_entries,
+            "actions_taken": actions_taken,
+            "remarks": remarks,
+            "staff_name": staff_name,
+            "signature": signature,
+        }
+
+        change_form_collection.insert_one(field_service_record)
+
+        flash("Field service report submitted successfully!", "success")
+        return redirect(url_for("field_service", companies=companies))
+
+    # Fetch all premises for dropdown
+    premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
+
+    # Fetch all devices for GET (optional: you may want to show all or none until a premise is selected)
+    # For now, just pass an empty list for devices
     return render_template(
         "service.html",
-        devices=devices_data,
+        devices=device_entries,  # Always a list
         companies=companies,
         technician_name=technician_name,
         current_time=current_time

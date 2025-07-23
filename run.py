@@ -1,8 +1,6 @@
 import os
-from dotenv import load_dotenv
 from backend import app
 
-load_dotenv()
 
 if __name__ == "__main__":
     # Use environment variables for production configuration
