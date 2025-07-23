@@ -293,11 +293,13 @@ def pre_service():
 def service():
     technician_name = session["username"]
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    companies = services_collection.distinct('company')
+
+    # Fetch all unique premise names from the profile_list_collection
+    premises = profile_list_collection.distinct('premise_name')
 
     device_entries = []
     if request.method == 'POST':
-        premise_name = request.form.get("premiseName")
+        premise_name = request.form.get("premise")
         actions_taken = request.form.getlist("actions")
         remarks = request.form.get("remarks")
         staff_name = request.form.get("staffName")
@@ -307,13 +309,13 @@ def service():
         premise_details = profile_list_collection.find_one({"premise_name": premise_name})
         if not premise_details:
             flash("Invalid premise selected!", "danger")
-            return redirect(url_for("field_service"))
+            return redirect(url_for(".service"))
 
         # Fetch devices linked to the premise
         devices = list(device_list_collection.find({"tied_to_premise": premise_name}))
 
         # Fetch PICs linked to the premise
-        pic_records = list(profile_list_collection.find({"tied_to_premise": premise_name}))
+        pic_records = list(profile_list_collection.find({"tied_to_premise": premise_name, "designation": {"$exists": True}}))
 
         # Process devices
         for i, device in enumerate(devices, start=1):
@@ -361,17 +363,12 @@ def service():
         change_form_collection.insert_one(field_service_record)
 
         flash("Field service report submitted successfully!", "success")
-        return redirect(url_for("field_service", companies=companies))
+        return redirect(url_for(".service"))
 
-    # Fetch all premises for dropdown
-    premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
-
-    # Fetch all devices for GET (optional: you may want to show all or none until a premise is selected)
-    # For now, just pass an empty list for devices
     return render_template(
         "service.html",
-        devices=device_entries,  # Always a list
-        companies=companies,
+        devices=device_entries,
+        premises=premises,
         technician_name=technician_name,
         current_time=current_time
     )

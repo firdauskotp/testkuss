@@ -175,6 +175,17 @@ def get_device_details(premise_name):
         devices.append(device)
     return jsonify(html=render_template("partials/device-details.html", devices=devices))
 
+@api_helpers_bp.route('/get-devices-for-premise/<premise_name>')
+def get_devices_for_premise(premise_name):
+    devices_cursor = device_list_collection.find({"tied_to_premise": premise_name})
+    devices = []
+    for device in devices_cursor:
+        if '_id' in device: device['_id'] = str(device['_id'])
+        if 'image_id' in device and isinstance(device['image_id'], ObjectId):
+             device['image_id'] = str(device['image_id'])
+        devices.append(device)
+    return jsonify(html=render_template("partials/device_checkboxes.html", devices=devices))
+
 @api_helpers_bp.route('/get-premises/<company>') # Path from original app.py
 def get_premises(company):
     # This was used in change-form.html to render a partial template with checkboxes
@@ -271,18 +282,15 @@ def delete_profile_record(record_id):
         return jsonify({"success": False, "message": "Record not found"}), 404
 
 
-@api_helpers_bp.route('/pic-details/<premise_name>') # Changed from /get-pic/ to be more descriptive
+@api_helpers_bp.route('/pic-details/<premise_name>')
 def get_pic_details_for_premise(premise_name):
-    # Individual session check removed, handled by before_request
-    # Fetch the first PIC found for that premise for simplicity
-    # In reality, a premise might have multiple PICs; the JS might need to handle a list
     pic_data = profile_list_collection.find_one(
-        {"tied_to_premise": premise_name, "designation": {"$exists": True}}, # Filter for actual PIC entries
-        {"name": 1, "contact": 1, "email": 1, "_id": 0} # Projection
+        {"premise_name": premise_name, "designation": {"$exists": True}},
+        {"name": 1, "contact": 1, "email": 1, "_id": 0}
     )
     if pic_data:
         return jsonify(pic_data)
-    return jsonify({"name": "N/A", "contact": "N/A"}) # Default if no PIC found
+    return jsonify({"name": "N/A", "contact": "N/A"})
 
 @api_helpers_bp.route('/premise-image/<premise_name>')
 def get_premise_image(premise_name):
