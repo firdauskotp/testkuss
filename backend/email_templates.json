@@ -77,6 +77,13 @@
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from KUSS!<br><br>The case <strong>{{ case_id }}</strong> for <strong>{{ premise_name }}</strong> has been completed and acknowledged by your staff.<br><br>To view the record, please open the attached PDF file.<br><br>Thank you very much and have a great day.<br>Kuss System",
       "attachment_template": "case_completed_{{ case_id }}.pdf"
+    },
+    "change_form_confirmation": {
+      "subject": "Change Request Confirmation for {{ company }}",
+      "sender_email": "medoroyalrma@gmail.com",
+      "receiver_email": "{{ customer_email }}",
+      "email_content": "Hello from Kuss Essentials!<br><br>This email is to confirm that we have received your change request for <strong>{{ company }}</strong>.<br><br>To view the details of the changes, please open the attached PDF file in this email.<br><br>Thank you very much,<br>Kuss Essentials",
+      "attachment_template": "change_request_{{ company | replace(' ', '_') }}_{{ date }}.pdf"
     }
   }
   

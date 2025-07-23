@@ -7,7 +7,7 @@ import re
 import functools
 import traceback
 from pymongo.errors import PyMongoError
-from col import collection
+from .col import collection
 import json
 
 def log_activity(name, action, database):
@@ -328,9 +328,30 @@ def generate_case_pdf(case_id):
     # Step 4: Return bytes
     return pdf.output(dest="S").encode('latin-1')
 
+def generate_change_form_pdf(data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Change Request Details", ln=True, align="C")
+
+    for key, value in data.items():
+        if key == "e_settings":
+            pdf.cell(200, 10, txt="E-Settings:", ln=True)
+            for device, settings in value.items():
+                pdf.cell(200, 10, txt=f"  Device: {device}", ln=True)
+                for e_key, e_value in settings.items():
+                    pdf.cell(200, 10, txt=f"    {e_key}: {e_value}", ln=True)
+        else:
+            pdf.cell(200, 10, txt=f"{key.replace('_', ' ').title()}: {value}", ln=True)
+
+    return pdf.output(dest="S").encode('latin-1')
+
 def generate_file_for(template_key, variables):
     if template_key == "case_completed_notification":
         return generate_case_pdf(variables["case_id"])  # returns bytes
+    if template_key == "change_form_confirmation":
+        return generate_change_form_pdf(variables)
     else:
         return b""
     
