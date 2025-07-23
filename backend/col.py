@@ -37,5 +37,9 @@ industry_list_collection = dashboard_db['industry']
 logs_db=mongo['logs']
 logs_collection=logs_db['logs']
 
+import gridfs
+
 test_db=mongo['test']
 test_collection=test_db['test']
+
+fs = gridfs.GridFS(db)

@@ -40,8 +40,8 @@
         <form method="POST" action="{{ url_for('forms.service') }}" class="space-y-8" {# Assuming 'service' is the correct endpoint name #}
               data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
               data-get-pic-url-template="{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}"
-              data-get-devices-url-template="{{ url_for('api_helpers.get_device_details', premise_name='__PREMISE_ID__') }}"
-              data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}">
+              data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}"
+              data-get-device-details-url-template="{{ url_for('api_helpers.get_device_details_for_premise', premise_name='__PREMISE_ID__') }}">
 
             <!-- Technician, Date, Service Time -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
@@ -296,6 +296,7 @@
     const getPremisesUrlTemplate = serviceForm.dataset.getPremisesUrlTemplate;
     const getPicUrlTemplate = serviceForm.dataset.getPicUrlTemplate;
     const getChangeNotesUrlTemplate = serviceForm.dataset.getChangeNotesUrlTemplate;
+    const getDeviceDetailsUrlTemplate = serviceForm.dataset.getDeviceDetailsUrlTemplate;
 
     document.querySelectorAll('.device-inactive').forEach((checkbox) => {
         checkbox.addEventListener('change', function () {
@@ -395,75 +396,48 @@
                         changeNotesTextarea.value = 'Error loading notes.';
                     });
             }
-            // Potentially load device details for this premise here if required by the form logic
-            // For now, the device card is a template. If devices are dynamically loaded,
-            // that JS logic would go here, similar to new-customer.html.
-            loadDeviceDetails(premiseId);
-        });
-    }
-
-    function loadDeviceDetails(premiseId) {
-        const deviceSection = document.getElementById('device-section');
-        const getDevicesUrl = serviceForm.dataset.getDevicesUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId));
-
-        deviceSection.innerHTML = '<p class="text-gray-500 dark:text-gray-400">Loading devices...</p>';
-
-        axios.get(getDevicesUrl)
-            .then(response => {
-                deviceSection.innerHTML = ''; // Clear loading message
-                if (response.data && Array.isArray(response.data.devices) && response.data.devices.length > 0) {
-                    response.data.devices.forEach((device, index) => {
-                        const deviceCard = `
-                            <div class="device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                                <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device ${index + 1}</h5>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                                    <div>
-                                        <label for="model_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-                                        <input type="text" name="model_${index}" id="model_${index}" value="${device.Model || ''}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+            if (getDeviceDetailsUrlTemplate) {
+                axios.get(getDeviceDetailsUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
+                    .then(response => {
+                        const deviceSection = document.getElementById('device-section');
+                        deviceSection.innerHTML = ''; // Clear existing device cards
+                        if (response.data && Array.isArray(response.data.devices)) {
+                            response.data.devices.forEach((device, index) => {
+                                const deviceId = index + 1;
+                                const deviceCard = `
+                                <div class="device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                                    <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device ${deviceId}</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                        <div>
+                                            <label for="model_${deviceId}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                                            <input type="text" name="model_${deviceId}" id="model_${deviceId}" value="${device.Model}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                                        </div>
+                                        <div>
+                                            <label for="color_${deviceId}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                                            <input type="text" name="color_${deviceId}" id="color_${deviceId}" value="${device.Color}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                                        </div>
+                                        <div>
+                                            <label for="eo_${deviceId}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
+                                            <input type="text" name="eo_${deviceId}" id="eo_${deviceId}" value="${device['Current EO']}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
+                                        </div>
+                                        <div>
+                                            <label for="location_${deviceId}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                            <input type="text" name="location_${deviceId}" id="location_${deviceId}" value="${device.location}" required class="tailwind-input-class">
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <img src="/api/image/${device.image_id}" alt="Device Image" class="w-full h-auto rounded-lg">
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label for="color_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
-                                        <input type="text" name="color_${index}" id="color_${index}" value="${device.Color || ''}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
-                                    </div>
-                                    <div>
-                                        <label for="eo_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
-                                        <input type="text" name="eo_${index}" id="eo_${index}" value="${device['Current EO'] || ''}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
-                                    </div>
-                                    <div>
-                                        <label for="location_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                                        <input type="text" name="location_${index}" id="location_${index}" value="${device.location || ''}" required class="tailwind-input-class">
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label for="scent_change_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
-                                        <select name="scent_change_${index}" id="scent_change_${index}" class="tailwind-input-class">
-                                            <option value="">No Change</option>
-                                            {# Populate with EO options if available #}
-                                        </select>
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label for="relocate_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
-                                        <select name="relocate_${index}" id="relocate_${index}" class="tailwind-input-class">
-                                            <option value="">Do not relocate</option>
-                                            {# Populate with premise options if available #}
-                                        </select>
-                                    </div>
-                                    <div class="md:col-span-2 flex items-center mt-2">
-                                        <input id="inactive_${index}" name="inactive_${index}" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
-                                        <label for="inactive_${index}" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive</label>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        deviceSection.innerHTML += deviceCard;
+                                </div>`;
+                                deviceSection.innerHTML += deviceCard;
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching device details:', error);
                     });
-                } else {
-                    deviceSection.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No devices found for this premise.</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching device details:', error);
-                deviceSection.innerHTML = '<p class="text-red-500">Error loading device details.</p>';
-            });
+            }
+        });
     }
 
     // Script for dynamic year in service_year dropdown
