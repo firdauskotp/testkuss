@@ -299,7 +299,7 @@
     const serviceForm = document.querySelector('form[action="{{ url_for("forms.service") }}"]');
     const getPicUrlTemplate = "{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}";
     const getDeviceDetailsUrlTemplate = "{{ url_for('api_helpers.get_device_details', premise_name='__PREMISE_ID__') }}";
-    const getChangeNotesUrlTemplate = serviceForm.dataset.getChangeNotesUrlTemplate;
+    const getChangeNotesUrlTemplate = "{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}";
 
     document.querySelectorAll('.device-inactive').forEach((checkbox) => {
         checkbox.addEventListener('change', function () {
