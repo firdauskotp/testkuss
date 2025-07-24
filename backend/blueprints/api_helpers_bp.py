@@ -172,7 +172,7 @@ def get_device_details(premise_name):
         if 'image_id' in device and isinstance(device['image_id'], ObjectId):
              device['image_id'] = str(device['image_id'])
         devices.append(device)
-    return jsonify(devices=devices)
+    return jsonify(html=render_template("partials/device-details.html", devices=devices))
 
 @api_helpers_bp.route('/get-premises/<company>') # Path from original app.py
 def get_premises(company):
@@ -273,7 +273,7 @@ def delete_profile_record(record_id):
 @api_helpers_bp.route('/pic-details/<premise_name>')
 def get_pic_details_for_premise(premise_name):
     pic_data = profile_list_collection.find_one(
-        {"premise_name": premise_name, "designation": {"$exists": True}},
+        {"tied_to_premise": premise_name, "designation": {"$exists": True}},
         {"name": 1, "contact": 1, "email": 1, "_id": 0}
     )
     if pic_data:

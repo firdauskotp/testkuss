@@ -345,34 +345,8 @@
             if (deviceSection) {
                 axios.get(getDeviceDetailsUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId)))
                     .then(response => {
-                        if (response.data && response.data.devices) {
-                            deviceSection.innerHTML = ''; // Clear existing device cards
-                            response.data.devices.forEach((device, index) => {
-                                const deviceCard = `
-                                    <div class="device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                                        <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device ${index + 1}</h5>
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                                            <div>
-                                                <label for="model_${index + 1}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-                                                <input type="text" name="model_${index + 1}" id="model_${index + 1}" value="${device.Model}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
-                                            </div>
-                                            <div>
-                                                <label for="color_${index + 1}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
-                                                <input type="text" name="color_${index + 1}" id="color_${index + 1}" value="${device.Color}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
-                                            </div>
-                                            <div>
-                                                <label for="eo_${index + 1}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
-                                                <input type="text" name="eo_${index + 1}" id="eo_${index + 1}" value="${device['Current EO']}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
-                                            </div>
-                                            <div>
-                                                <label for="location_${index + 1}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                                                <input type="text" name="location_${index + 1}" id="location_${index + 1}" value="${device.location}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400">
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                                deviceSection.innerHTML += deviceCard;
-                            });
+                        if (response.data && response.data.html) {
+                            deviceSection.innerHTML = response.data.html;
                         } else {
                             deviceSection.innerHTML = '<p>No devices found for this premise.</p>';
                         }
