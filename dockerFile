@@ -25,7 +25,6 @@ COPY . .
 
 # Build CSS and install Python dependencies
 RUN npm run build:css && \
-    cd backend && \
     pip3 install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 

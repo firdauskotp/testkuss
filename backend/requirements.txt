@@ -1,6 +1,7 @@
 flask
 flask-pymongo
 flask-mail
+flask-limiter
 dnspython
 pandas
 openpyxl
