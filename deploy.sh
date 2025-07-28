@@ -3,14 +3,14 @@
 # Flask Application Deployment Script
 # Usage: ./deploy.sh [start|stop|restart|status|logs]
 
-# Configuration
-APP_NAME="testkuss"
-APP_DIR="/Users/ahmet/Development/mididle/testkuss"
+# Configuration - Auto-detect current directory and use environment variables
+APP_NAME="${APP_NAME:-testkuss}"
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$APP_DIR/venv"
 WSGI_MODULE="backend:app"
-BIND_ADDRESS="0.0.0.0:5000"
-WORKERS=4
-TIMEOUT=120
+BIND_ADDRESS="${BIND_ADDRESS:-0.0.0.0:5000}"
+WORKERS="${WORKERS:-4}"
+TIMEOUT="${TIMEOUT:-120}"
 PID_FILE="$APP_DIR/gunicorn.pid"
 LOG_FILE="$APP_DIR/logs/gunicorn.log"
 ERROR_LOG_FILE="$APP_DIR/logs/gunicorn_error.log"
@@ -38,6 +38,20 @@ print_warning() {
 
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to show current configuration
+show_config() {
+    echo -e "${BLUE}=== Deployment Configuration ===${NC}"
+    echo -e "${BLUE}App Name:${NC} $APP_NAME"
+    echo -e "${BLUE}App Directory:${NC} $APP_DIR"
+    echo -e "${BLUE}Virtual Environment:${NC} $VENV_DIR"
+    echo -e "${BLUE}WSGI Module:${NC} $WSGI_MODULE"
+    echo -e "${BLUE}Bind Address:${NC} $BIND_ADDRESS"
+    echo -e "${BLUE}Workers:${NC} $WORKERS"
+    echo -e "${BLUE}PID File:${NC} $PID_FILE"
+    echo -e "${BLUE}================================${NC}"
+    echo ""
 }
 
 # Function to check if virtual environment exists
@@ -85,7 +99,13 @@ create_dirs() {
 
 # Function to start the application
 start_app() {
-    cd "$APP_DIR"
+    show_config
+    
+    # Change to application directory
+    cd "$APP_DIR" || {
+        print_error "Cannot change to application directory: $APP_DIR"
+        exit 1
+    }
     
     if [ -f "$PID_FILE" ]; then
         PID=$(cat "$PID_FILE")
@@ -213,7 +233,14 @@ show_logs() {
 
 # Function to setup the application
 setup_app() {
-    cd "$APP_DIR"
+    show_config
+    
+    # Change to application directory
+    cd "$APP_DIR" || {
+        print_error "Cannot change to application directory: $APP_DIR"
+        exit 1
+    }
+    
     print_status "Setting up $APP_NAME..."
     
     check_venv

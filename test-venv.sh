@@ -3,14 +3,27 @@
 # Test Virtual Environment Setup Script
 # Usage: ./test-venv.sh
 
+# Auto-detect current directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/venv"
+
 echo "Testing virtual environment setup..."
+echo "Script directory: $SCRIPT_DIR"
+echo "Virtual environment directory: $VENV_DIR"
+echo ""
+
+# Change to script directory
+cd "$SCRIPT_DIR" || {
+    echo "❌ Cannot change to script directory: $SCRIPT_DIR"
+    exit 1
+}
 
 # Check if venv directory exists
-if [ -d "venv" ]; then
+if [ -d "$VENV_DIR" ]; then
     echo "✅ Virtual environment directory exists"
     
     # Try to activate
-    source venv/bin/activate
+    source "$VENV_DIR/bin/activate"
     
     if [ "$VIRTUAL_ENV" != "" ]; then
         echo "✅ Virtual environment activated successfully"
