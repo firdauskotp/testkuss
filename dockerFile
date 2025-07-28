@@ -1,13 +1,12 @@
-# Use the official Python 3.8 slim image as the base image
 FROM python:3.11-slim
 
-# Add Dokploy-specific labels
+# Labels for maintainers and app
 LABEL maintainer="dokploy"
 LABEL application="kuss"
 
-# Install Node.js and npm first
+# Install system dependencies and Node.js
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y curl build-essential && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && \
@@ -16,22 +15,22 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /app
 
-# Copy package files and install npm dependencies
+# Copy npm package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
-# Copy application files
+# Copy all application files
 COPY . .
 
-# Build CSS and install Python dependencies
+# Build CSS assets and install Python dependencies
 RUN npm run build:css && \
     cd backend && \
-    pip3 install --upgrade pip && \
+    pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Use PORT environment variable for Heroku compatibility
+# Set environment variable for port
 ENV PORT=5000
-EXPOSE $PORT
+EXPOSE 5000
 
-# Update CMD to match Procfile format
-CMD cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 4
+# Start the application using gunicorn
+CMD ["sh", "-c", "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 4"]
