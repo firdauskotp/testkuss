@@ -14,6 +14,17 @@ load_dotenv()
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
+# Flask-Security configuration
+from .security import configure_security
+security = configure_security(app)
+
+# Flask-WTF configuration for CSRF protection
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect(app)
+# Re-enable CSRF protection now that login is working
+csrf.init_app(app)
+app.config['WTF_CSRF_ENABLED'] = True  # Re-enable CSRF protection
+
 # Configure logging for production
 if not app.debug:
     # Create logs directory if it doesn't exist
@@ -27,6 +38,13 @@ if not app.debug:
     ))
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
+    
+    # Add Telegram logging handler for error notifications
+    try:
+        from .telegram_handler import add_telegram_handler
+        add_telegram_handler(app)
+    except Exception as e:
+        app.logger.warning(f"Failed to add Telegram logging handler: {e}")
     
     app.logger.setLevel(logging.INFO)
     app.logger.info('Application startup')
@@ -62,20 +80,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 scheduler = APScheduler()
 
-# Key initializations before blueprint imports
-fs = gridfs.GridFS(db)
-mail = Mail(app) # mail needs app, so app must be defined before mail
-
-# Now import blueprints
-from .blueprints.auth_bp import auth_bp
-from .blueprints.user_management_bp import user_management_bp
-from .blueprints.customer_actions_bp import customer_actions_bp
-from .blueprints.staff_actions_bp import staff_actions_bp
-from .blueprints.data_reports_bp import data_reports_bp
-from .blueprints.forms_bp import forms_bp
-from .blueprints.global_settings_bp import global_settings_bp
-from .blueprints.api_helpers_bp import api_helpers_bp
-
+# Configure email settings
 app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -84,6 +89,24 @@ app.config['MAIL_USERNAME'] = os.getenv('SMTP_TEST_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
 app.config['MODE'] = os.getenv('MODE')
 app.config['MAIL_SENDER_ADDRESS'] = os.getenv('MAIL_SENDER_ADDRESS')
+
+# Key initializations after configuration
+fs = gridfs.GridFS(db)
+mail = Mail(app) # mail needs app with proper configuration
+
+# Now import blueprints after fs and mail are defined
+from .blueprints.new_auth_bp import new_auth_bp
+from .blueprints.user_management_bp import user_management_bp
+from .blueprints.customer_actions_bp import customer_actions_bp
+from .blueprints.staff_actions_bp import staff_actions_bp
+from .blueprints.data_reports_bp import data_reports_bp
+from .blueprints.forms_bp import forms_bp
+from .blueprints.global_settings_bp import global_settings_bp
+from .blueprints.api_helpers_bp import api_helpers_bp
+from .blueprints.admin_bp import admin_bp, admin, init_admin
+
+# Initialize Flask-Admin after importing admin_bp
+init_admin(app)
 
 # Validate email configuration
 email_vars = ['SMTP_GOOGLE_SERVER', 'SMTP_TEST_USERNAME', 'SMTP_TEST_APP_PASSWORD', 'MAIL_SENDER_ADDRESS']
@@ -111,6 +134,40 @@ def add_security_headers(response):
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"
     return response
+
+# Super admin authentication middleware
+@app.before_request
+def check_super_admin_auth():
+    """Check authentication for super admin routes"""
+    from flask import request, redirect, url_for, flash
+    from flask_security import current_user
+    
+    # Only check super admin routes
+    if request.path.startswith('/super-admin'):
+        app.logger.info(f"Super admin route accessed: {request.path}")
+        
+        # Check if user is authenticated
+        if not current_user.is_authenticated:
+            app.logger.warning(f"Unauthenticated access to super admin route: {request.path}")
+            flash("Please log in to access the super admin panel.", "warning")
+            return redirect(url_for('new_auth.index'))
+        
+        # Check if user has admin role
+        if not current_user.has_role('admin'):
+            app.logger.warning(f"Non-admin user {current_user.email} tried to access super admin route: {request.path}")
+            flash("Access denied. Only super administrators can access this page.", "danger")
+            return redirect(url_for('new_auth.index'))
+        
+        # Check if user is super admin
+        from .col import login_collection
+        user_doc = login_collection.find_one({"email": current_user.email})
+        if not user_doc or not user_doc.get('is_super_admin', False):
+            app.logger.warning(f"Non-super-admin user {current_user.email} tried to access super admin route: {request.path}")
+            flash("Access denied. Only super administrators can access this page.", "danger")
+            return redirect(url_for('new_auth.index'))
+        
+        app.logger.info(f"Super admin access granted to {current_user.email} for route: {request.path}")
+        return None  # Continue processing the request
 
 # update_data() is now in api_helpers_bp
 @app.context_processor
@@ -158,12 +215,18 @@ def health_check():
 @app.route("/dashboard")
 def dashboard():
     """Main dashboard route with enhanced error handling and logging"""
-    from .utils import handle_route_error, require_auth
+    from .utils import handle_route_error
+    from flask_security import login_required, current_user
     
-    @require_auth('admin')
+    @login_required
     @handle_route_error
     def _dashboard():
-        username = session.get("username", "unknown")
+        # Check if user has admin role
+        # if not current_user.has_role('admin'):
+        #     flash("You don't have permission to access this page.", "danger")
+        #     return redirect(url_for('new_auth.index'))
+        
+        username = current_user.username if hasattr(current_user, 'username') else current_user.email
         app.logger.info(f"Dashboard accessed by admin: {username}")
         
         try:
@@ -208,7 +271,7 @@ def not_found_error(error):
     if request.is_json:
         return jsonify({'error': 'Resource not found'}), 404
     flash("The requested page could not be found.", "warning")
-    return redirect(url_for('auth.index'))
+    return redirect(url_for('new_auth.index'))
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -221,7 +284,7 @@ def internal_error(error):
             'error_id': error_id
         }), 500
     flash("An internal error occurred. Please try again later.", "danger")
-    return redirect(url_for('auth.index'))
+    return redirect(url_for('new_auth.index'))
 
 @app.errorhandler(403)
 def forbidden_error(error):
@@ -230,12 +293,12 @@ def forbidden_error(error):
     if request.is_json:
         return jsonify({'error': 'Access forbidden'}), 403
     flash("You don't have permission to access this resource.", "danger")
-    return redirect(url_for('auth.admin_login'))
+    return redirect(url_for('new_auth.index'))
 
 # --- End Dashboard Route ---
 
 # Register Blueprints
-app.register_blueprint(auth_bp)
+app.register_blueprint(new_auth_bp)
 app.register_blueprint(user_management_bp)
 app.register_blueprint(customer_actions_bp)
 app.register_blueprint(staff_actions_bp)
@@ -243,6 +306,7 @@ app.register_blueprint(data_reports_bp)
 app.register_blueprint(forms_bp)
 app.register_blueprint(global_settings_bp)
 app.register_blueprint(api_helpers_bp)
+app.register_blueprint(admin_bp)
 # Add other blueprints here as they are created
 
 # The dashboard route is the only one remaining directly in app.py
@@ -251,13 +315,13 @@ app.register_blueprint(api_helpers_bp)
 # # customer_form() route is now in customer_actions_bp
 # # get_case_details() is now in staff_actions_bp
 # # staff_form() is now in staff_actions_bp
-# # index() route is now in auth_bp
+# # index() route is now in new_auth_bp
 # # case_success() route is now in customer_actions_bp
-# # register() route is now in auth_bp
-# # register_admin() route is now in auth_bp
+# # register() route is now in new_auth_bp
+# # register_admin() route is now in new_auth_bp
 # # delete_user() is now in user_management_bp
 # # delete_admin() is now in user_management_bp
-# # admin_login() route is now in auth_bp
+# # admin_login() route is now in new_auth_bp
 # # reports() route is now in data_reports_bp
 # # pack_list() route is now in data_reports_bp
 # # eo_list() route is now in data_reports_bp

@@ -15,14 +15,16 @@ user_management_bp = Blueprint(
 
 # Helper to check admin session
 def is_admin_logged_in():
-    return 'username' in session
+    from flask_security import current_user
+    return current_user.is_authenticated and current_user.has_role('admin')
 
 @user_management_bp.before_request
 def require_admin_login():
     # Protect all routes in this blueprint
-    if not is_admin_logged_in():
+    from flask_security import current_user
+    if not current_user.is_authenticated or not current_user.has_role('admin'):
         flash("You must be logged in as an admin to access this page.", "warning")
-        return redirect(url_for('auth.admin_login')) # Redirect to auth blueprint's admin_login
+        return redirect(url_for('new_auth.index'))
 
 @user_management_bp.route('/view-clients')
 def view_users(): # Was original view_users, now for client users
@@ -66,6 +68,9 @@ def view_users(): # Was original view_users, now for client users
 
 @user_management_bp.route('/delete-client', methods=['POST'])
 def delete_user(): # Was original delete_user, now for client users
+    from flask_security import current_user
+    admin_username = current_user.username if current_user.is_authenticated else 'unknown'
+    
     user_id = request.form['user_id']
     user_obj = login_cust_collection.find_one({'_id': ObjectId(user_id)}) # Renamed variable
     email = user_obj.get('email', 'Unknown') if user_obj else 'Unknown'
@@ -73,7 +78,7 @@ def delete_user(): # Was original delete_user, now for client users
     if user_obj:
         login_cust_collection.delete_one({'_id': ObjectId(user_id)})
         flash("Client user deleted successfully!", "success")
-        log_activity(session["username"], f"deleted client user with email: {email}", logs_collection)
+        log_activity(admin_username, f"deleted client user with email: {email}", logs_collection)
     else:
         flash("User not found.", "danger")
     return redirect(url_for('.view_users'))
@@ -108,19 +113,23 @@ def view_admins():
 
 @user_management_bp.route('/delete-admin', methods=['POST'])
 def delete_admin():
+    from flask_security import current_user
+    admin_username = current_user.username if current_user.is_authenticated else 'unknown'
+    
     user_id_to_delete = request.form['user_id'] # Renamed variable
 
     # Prevent admin from deleting themselves
-    if 'user_id' in session and session['user_id'] == user_id_to_delete:
+    # Note: We should check against the current user's ID, not session
+    user_to_delete = login_collection.find_one({'_id': ObjectId(user_id_to_delete)})
+    if user_to_delete and hasattr(current_user, 'id') and str(current_user.id) == user_id_to_delete:
         flash("You cannot delete your own admin account.", "danger")
         return redirect(url_for('.view_admins'))
 
-    user_to_delete = login_collection.find_one({'_id': ObjectId(user_id_to_delete)})
     if user_to_delete:
         username_deleted = user_to_delete.get('username', 'Unknown')
         login_collection.delete_one({'_id': ObjectId(user_id_to_delete)})
         flash(f"Admin user '{username_deleted}' deleted successfully!", "success")
-        log_activity(session["username"], f"deleted admin user: {username_deleted}", logs_collection)
+        log_activity(admin_username, f"deleted admin user: {username_deleted}", logs_collection)
     else:
         flash("Admin user not found.", "danger")
     return redirect(url_for('.view_admins'))

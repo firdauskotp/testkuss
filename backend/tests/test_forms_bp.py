@@ -7,13 +7,13 @@ from datetime import datetime
 # Helper function to log in an admin user (can be imported or defined)
 def login_admin(client, mocker, app, admin_username="testformadmin", admin_id="testformadminid"): # Added app
     mock_user_data = { "_id": admin_id, "username": admin_username, "password": "hashed_password" }
-    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_user_data)
-    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
-    mocker.patch('backend.blueprints.auth_bp.log_activity')
+    mocker.patch('backend.blueprints.new_auth_bp.login_collection.find_one', return_value=mock_user_data)
+    mocker.patch('backend.blueprints.new_auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.new_auth_bp.log_activity')
 
     admin_login_url = None
     with app.app_context(): # Context for url_for
-        admin_login_url = url_for('auth.admin_login')
+        admin_login_url = url_for('new_auth.index')
     client.post(admin_login_url, data={'username': admin_username, 'password': 'password'})
 
 # --- Tests for new_customer form ---
@@ -21,7 +21,7 @@ def test_new_customer_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('forms.new_customer'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_new_customer_get_authenticated(client, app, mocker):
     login_admin(client, mocker, app)
@@ -122,7 +122,7 @@ def test_change_form_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('forms.change_form'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_change_form_get_authenticated(client, app, mocker):
     login_admin(client, mocker, app)
@@ -212,7 +212,7 @@ def test_pre_service_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('forms.pre_service'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_pre_service_get_authenticated(client, app, mocker):
     login_admin(client, mocker, app)
@@ -255,7 +255,7 @@ def test_service_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('forms.service'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_service_get_authenticated(client, app, mocker):
     login_admin(client, mocker, app)
@@ -355,7 +355,7 @@ def test_service2_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('forms.service2'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_service2_get_authenticated(client, app, mocker):
     login_admin(client, mocker, app)
@@ -373,7 +373,7 @@ def test_post_service_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('forms.post_service'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_post_service_get_authenticated(client, app, mocker):
     login_admin(client, mocker, app)
@@ -413,7 +413,7 @@ def test_remark_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('forms.remark'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_remark_get_authenticated(client, app, mocker):
     login_admin(client, mocker, app)

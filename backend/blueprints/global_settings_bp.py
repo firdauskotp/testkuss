@@ -15,9 +15,10 @@ global_settings_bp = Blueprint(
 
 @global_settings_bp.before_request
 def require_admin_login():
-    if 'username' not in session:
+    from flask_security import current_user
+    if not current_user.is_authenticated or not current_user.has_role('admin'):
         flash("You must be logged in as an admin to access this page.", "warning")
-        return redirect(url_for('auth.admin_login'))
+        return redirect(url_for('new_auth.index'))
 
 @global_settings_bp.route('/eo-global')
 def eo_global_view():

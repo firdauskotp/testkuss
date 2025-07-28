@@ -13,7 +13,7 @@
 {% block content %}
     <!-- Welcome and Date/Time -->
     <div class="text-center py-6 px-4">
-        <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Welcome, {{ username }}!</h2>
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Welcome, {{ current_user.username if current_user.has_role('admin') else current_user.email }}!</h2>
         <p class="text-md text-gray-600 dark:text-gray-400 mt-1">Current Date & Time: <span id="datetime"></span></p>
     </div>
 

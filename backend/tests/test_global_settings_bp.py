@@ -6,18 +6,18 @@ from bson import ObjectId # For comparing ObjectIds if necessary, though IDs oft
 # Helper function to log in an admin user
 def login_admin(client, mocker, app, admin_username="testglobaladmin", admin_id="testglobaladminid"):
     mock_user_data = { "_id": admin_id, "username": admin_username, "password": "hashed_password" }
-    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_user_data)
-    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
-    mocker.patch('backend.blueprints.auth_bp.log_activity')
+    mocker.patch('backend.blueprints.new_auth_bp.login_collection.find_one', return_value=mock_user_data)
+    mocker.patch('backend.blueprints.new_auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.new_auth_bp.log_activity')
     with app.app_context():
-        client.post(url_for('auth.admin_login'), data={'username': admin_username, 'password': 'password'})
+        client.post(url_for('new_auth.index'), data={'login_input': admin_username, 'password': 'password'})
 
 # --- Tests for EO Global Settings ---
 def test_eo_global_view_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('global_settings.eo_global_view'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_eo_global_view_authenticated_empty(client, app, mocker):
     login_admin(client, mocker, app)
@@ -118,7 +118,7 @@ def test_device_global_view_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('global_settings.device_global_view'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 # TODO: test_device_global_view_authenticated_empty
 # TODO: test_device_global_view_with_data

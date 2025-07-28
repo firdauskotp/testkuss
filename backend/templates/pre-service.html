@@ -35,6 +35,7 @@
 
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
             <form id="preServiceForm" method="POST" action="{{ url_for('forms.pre_service') }}" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="confirm_duplicate" id="confirm_duplicate_input" value="">
                 <div>
                     <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date (Please click to select date)</label>
@@ -320,6 +321,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 eoDropdown.innerHTML = '<option value="" selected disabled>Error loading EO</option>';
             });
     });
+
+    // Add CSRF token to axios default headers
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('input[name="csrf_token"]').value;
 
     // Form submission handler
     document.getElementById('preServiceForm').addEventListener('submit', function(event) {

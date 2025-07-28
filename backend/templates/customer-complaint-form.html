@@ -11,7 +11,7 @@
 <nav>
     <ul class="flex flex-col sm:flex-row items-center justify-between bg-gray-800 text-white p-4">
         <li class="mb-2 sm:mb-0">
-            <a href="{{ url_for('auth.logout') }}" class="mobile-nav-link bg-red-500 hover:bg-red-600 text-white">Logout</a>
+            <a href="{{ url_for('new_auth.logout') }}" class="mobile-nav-link bg-red-500 hover:bg-red-600 text-white">Logout</a>
         </li>
     </ul>
 </nav>
@@ -35,6 +35,7 @@
 
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
             <form id="caseForm" method="POST" action="{{ url_for('customer.customer_form') }}" enctype="multipart/form-data" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div>
                     <label for="premise_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Name</label>
                     <input type="text" id="premise_name" name="premise_name" required

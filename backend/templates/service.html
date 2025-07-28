@@ -41,6 +41,7 @@
               data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
               data-get-pic-url-template="{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}"
               data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
             <!-- Technician, Date, Service Time -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
@@ -247,6 +248,9 @@
     // Common Tailwind input class for JS
     const tailwindInputClass = "appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50";
 
+    // Add CSRF token to AJAX requests
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('input[name="csrf_token"]').value;
+
     // SignaturePad logic
     const canvas = document.getElementById("signature-pad");
     const signaturePad = new SignaturePad(canvas, {
@@ -422,7 +426,7 @@
         }
     });
 
-
-});
+    // Add CSRF token to AJAX requests
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('input[name="csrf_token"]').value;
 </script>
 {% endblock %}

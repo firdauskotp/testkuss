@@ -26,133 +26,134 @@ data_reports_bp = Blueprint(
 
 # Helper to check admin session
 def is_admin_logged_in():
-    return 'username' in session
+    from flask_security import current_user
+    return current_user.is_authenticated and current_user.has_role('admin')
 
 @data_reports_bp.before_request
 def require_admin_login():
-    if not is_admin_logged_in():
+    from flask_security import current_user
+    if not current_user.is_authenticated or not current_user.has_role('admin'):
         flash("You must be logged in as an admin to access this page.", "warning")
-        return redirect(url_for('auth.admin_login'))
+        return redirect(url_for('new_auth.index'))
 
 @data_reports_bp.route('/all') # Original was /all-list in app.py
 def reports():
-    if 'username' in session:
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 20))
+    from flask_security import current_user
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
 
-        month_filter = request.args.get('month','').strip() # Renamed to avoid conflict
-        year_filter = request.args.get('year','').strip()   # Renamed to avoid conflict
-        EO_filter = request.args.get("EO")
-        Company_filter = request.args.get("Company")
-        Model_filter = request.args.get("Model") # This was assigned twice, using Model_filter
-        Volume_filter = request.args.get("Volume")
-        SN_filter = request.args.get("SN")
-        Balance_filter = request.args.get("Balance")
-        Consumption_filter = request.args.get("Consumption")
-        Refilled_filter = request.args.get("Refilled")
-        E1_Work_filter = request.args.get("E1_Work")
-        E1_Pause_filter = request.args.get("E1_Pause")
-        E1_Days_filter = request.args.get("E1_Days")
-        E1_Start_filter = request.args.get("E1_Start")
-        E1_End_filter = request.args.get("E1_End")
-        E2_Work_filter = request.args.get("E2_Work")
-        E2_Pause_filter = request.args.get("E2_Pause")
-        E2_Days_filter = request.args.get("E2_Days")
-        E2_Start_filter = request.args.get("E2_Start")
-        E2_End_filter = request.args.get("E2_End")
-        E3_Work_filter = request.args.get("E3_Work")
-        E3_Pause_filter = request.args.get("E3_Pause")
-        E3_Days_filter = request.args.get("E3_Days")
-        E3_Start_filter = request.args.get("E3_Start")
-        E3_End_filter = request.args.get("E3_End")
-        E4_Work_filter = request.args.get("E4_Work")
-        E4_Pause_filter = request.args.get("E4_Pause")
-        E4_Days_filter = request.args.get("E4_Days")
-        E4_Start_filter = request.args.get("E4_Start")
-        E4_End_filter = request.args.get("E4_End")
-        # Model_filter is already defined
-        Colour_filter = request.args.get("Colour")
-        Current_EO_filter = request.args.get("Current_EO")
-        New_EO_filter = request.args.get("New_EO")
-        Scent_Effectiveness_filter = request.args.get("Scent_Effectiveness")
-        Common_Encounters_filter = request.args.get("Common_Encounters")
-        Other_Remarks_filter = request.args.get("Other_Remarks")
-        industry_filter = request.args.get('industry', '').strip()
-        premise_filter = request.args.get('premise', '').strip()
-        pic_filter = request.args.get('pic', '').strip()
+    month_filter = request.args.get('month','').strip() # Renamed to avoid conflict
+    year_filter = request.args.get('year','').strip()   # Renamed to avoid conflict
+    EO_filter = request.args.get("EO")
+    Company_filter = request.args.get("Company")
+    Model_filter = request.args.get("Model") # This was assigned twice, using Model_filter
+    Volume_filter = request.args.get("Volume")
+    SN_filter = request.args.get("SN")
+    Balance_filter = request.args.get("Balance")
+    Consumption_filter = request.args.get("Consumption")
+    Refilled_filter = request.args.get("Refilled")
+    E1_Work_filter = request.args.get("E1_Work")
+    E1_Pause_filter = request.args.get("E1_Pause")
+    E1_Days_filter = request.args.get("E1_Days")
+    E1_Start_filter = request.args.get("E1_Start")
+    E1_End_filter = request.args.get("E1_End")
+    E2_Work_filter = request.args.get("E2_Work")
+    E2_Pause_filter = request.args.get("E2_Pause")
+    E2_Days_filter = request.args.get("E2_Days")
+    E2_Start_filter = request.args.get("E2_Start")
+    E2_End_filter = request.args.get("E2_End")
+    E3_Work_filter = request.args.get("E3_Work")
+    E3_Pause_filter = request.args.get("E3_Pause")
+    E3_Days_filter = request.args.get("E3_Days")
+    E3_Start_filter = request.args.get("E3_Start")
+    E3_End_filter = request.args.get("E3_End")
+    E4_Work_filter = request.args.get("E4_Work")
+    E4_Pause_filter = request.args.get("E4_Pause")
+    E4_Days_filter = request.args.get("E4_Days")
+    E4_Start_filter = request.args.get("E4_Start")
+    E4_End_filter = request.args.get("E4_End")
+    # Model_filter is already defined
+    Colour_filter = request.args.get("Colour")
+    Current_EO_filter = request.args.get("Current_EO")
+    New_EO_filter = request.args.get("New_EO")
+    Scent_Effectiveness_filter = request.args.get("Scent_Effectiveness")
+    Common_Encounters_filter = request.args.get("Common_Encounters")
+    Other_Remarks_filter = request.args.get("Other_Remarks")
+    industry_filter = request.args.get('industry', '').strip()
+    premise_filter = request.args.get('premise', '').strip()
+    pic_filter = request.args.get('pic', '').strip()
 
-        query = {}
-        if month_filter and year_filter:
-            month_list = [int(m.strip()) for m in month_filter.split(',') if m.strip().isdigit()]
-            query['$expr'] = {
-                '$and': [
-                    {'$in': [{'$month': '$month_year'}, month_list]},
-                    {'$eq': [{'$year': '$month_year'}, int(year_filter)]}
-                ]
-            }
-        if industry_filter: query["industry"] = {'$regex': industry_filter, '$options': 'i'}
-        if premise_filter: query["premise_name"] = {'$regex': premise_filter, '$options': 'i'}
-        if pic_filter: query["name"] = {'$regex': pic_filter, '$options': 'i'}
-        if EO_filter: query['Current EO'] = {'$regex': EO_filter, '$options': 'i'}
-        if Model_filter: query['Model'] = {'$regex': Model_filter, '$options': 'i'} # Ensure this is the correct Model_filter
-        if Company_filter: query['company'] = {'$regex': Company_filter, '$options': 'i'}
-        if Volume_filter: query['Volume'] = int(Volume_filter)
-        if SN_filter: query['S/N'] = int(SN_filter)
-        if Balance_filter: query['Balance'] = int(Balance_filter)
-        if Consumption_filter: query['Consumption'] = int(Consumption_filter)
-        if Refilled_filter: query['Refilled'] = int(Refilled_filter)
-        if E1_Work_filter: query['E1 - WORK'] = int(E1_Work_filter)
-        if E1_Pause_filter: query['E1 - PAUSE'] = int(E1_Pause_filter)
-        if E1_Days_filter: query['E1 - DAYS'] = {'$regex': E1_Days_filter, '$options': 'i'}
-        if E1_Start_filter: query['E1 - START'] = {'$regex': E1_Start_filter, '$options': 'i'}
-        if E1_End_filter: query['E1 - END'] = {'$regex': E1_End_filter, '$options': 'i'}
-        if E2_Work_filter: query['E2 - WORK'] = int(E2_Work_filter)
-        if E2_Pause_filter: query['E2 - PAUSE'] = int(E2_Pause_filter)
-        if E2_Days_filter: query['E2 - DAYS'] = {'$regex': E2_Days_filter, '$options': 'i'}
-        if E2_Start_filter: query['E2 - START'] = {'$regex': E2_Start_filter, '$options': 'i'}
-        if E2_End_filter: query['E2 - END'] = {'$regex': E2_End_filter, '$options': 'i'}
-        if E3_Work_filter: query['E3 - WORK'] = int(E3_Work_filter)
-        if E3_Pause_filter: query['E3 - PAUSE'] = int(E3_Pause_filter)
-        if E3_Days_filter: query['E3 - DAYS'] = {'$regex': E3_Days_filter, '$options': 'i'}
-        if E3_Start_filter: query['E3 - START'] = {'$regex': E3_Start_filter, '$options': 'i'}
-        if E3_End_filter: query['E3 - END'] = {'$regex': E3_End_filter, '$options': 'i'}
-        if E4_Work_filter: query['E4 - WORK'] = int(E4_Work_filter)
-        if E4_Pause_filter: query['E4 - PAUSE'] = int(E4_Pause_filter)
-        if E4_Days_filter: query['E4 - DAYS'] = {'$regex': E4_Days_filter, '$options': 'i'}
-        if E4_Start_filter: query['E4 - START'] = {'$regex': E4_Start_filter, '$options': 'i'}
-        if E4_End_filter: query['E4 - END'] = {'$regex': E4_End_filter, '$options': 'i'}
-        if Colour_filter: query['Color'] = {'$regex': Colour_filter, '$options': 'i'}
-        if Current_EO_filter: query['Current EO'] = {'$regex': Current_EO_filter, '$options': 'i'}
-        if New_EO_filter: query['New EO'] = {'$regex': New_EO_filter, '$options': 'i'}
-        if Scent_Effectiveness_filter: query['#1 Scent Effectiveness'] = {'$regex': Scent_Effectiveness_filter, '$options': 'i'}
-        if Common_Encounters_filter: query['#1 Common encounters'] = {'$regex': Common_Encounters_filter, '$options': 'i'}
-        if Other_Remarks_filter: query['#1 Other remarks'] = {'$regex': Other_Remarks_filter, '$options': 'i'}
+    query = {}
+    if month_filter and year_filter:
+        month_list = [int(m.strip()) for m in month_filter.split(',') if m.strip().isdigit()]
+        query['$expr'] = {
+            '$and': [
+                {'$in': [{'$month': '$month_year'}, month_list]},
+                {'$eq': [{'$year': '$month_year'}, int(year_filter)]}
+            ]
+        }
+    if industry_filter: query["industry"] = {'$regex': industry_filter, '$options': 'i'}
+    if premise_filter: query["premise_name"] = {'$regex': premise_filter, '$options': 'i'}
+    if pic_filter: query["name"] = {'$regex': pic_filter, '$options': 'i'}
+    if EO_filter: query['Current EO'] = {'$regex': EO_filter, '$options': 'i'}
+    if Model_filter: query['Model'] = {'$regex': Model_filter, '$options': 'i'} # Ensure this is the correct Model_filter
+    if Company_filter: query['company'] = {'$regex': Company_filter, '$options': 'i'}
+    if Volume_filter: query['Volume'] = int(Volume_filter)
+    if SN_filter: query['S/N'] = int(SN_filter)
+    if Balance_filter: query['Balance'] = int(Balance_filter)
+    if Consumption_filter: query['Consumption'] = int(Consumption_filter)
+    if Refilled_filter: query['Refilled'] = int(Refilled_filter)
+    if E1_Work_filter: query['E1 - WORK'] = int(E1_Work_filter)
+    if E1_Pause_filter: query['E1 - PAUSE'] = int(E1_Pause_filter)
+    if E1_Days_filter: query['E1 - DAYS'] = {'$regex': E1_Days_filter, '$options': 'i'}
+    if E1_Start_filter: query['E1 - START'] = {'$regex': E1_Start_filter, '$options': 'i'}
+    if E1_End_filter: query['E1 - END'] = {'$regex': E1_End_filter, '$options': 'i'}
+    if E2_Work_filter: query['E2 - WORK'] = int(E2_Work_filter)
+    if E2_Pause_filter: query['E2 - PAUSE'] = int(E2_Pause_filter)
+    if E2_Days_filter: query['E2 - DAYS'] = {'$regex': E2_Days_filter, '$options': 'i'}
+    if E2_Start_filter: query['E2 - START'] = {'$regex': E2_Start_filter, '$options': 'i'}
+    if E2_End_filter: query['E2 - END'] = {'$regex': E2_End_filter, '$options': 'i'}
+    if E3_Work_filter: query['E3 - WORK'] = int(E3_Work_filter)
+    if E3_Pause_filter: query['E3 - PAUSE'] = int(E3_Pause_filter)
+    if E3_Days_filter: query['E3 - DAYS'] = {'$regex': E3_Days_filter, '$options': 'i'}
+    if E3_Start_filter: query['E3 - START'] = {'$regex': E3_Start_filter, '$options': 'i'}
+    if E3_End_filter: query['E3 - END'] = {'$regex': E3_End_filter, '$options': 'i'}
+    if E4_Work_filter: query['E4 - WORK'] = int(E4_Work_filter)
+    if E4_Pause_filter: query['E4 - PAUSE'] = int(E4_Pause_filter)
+    if E4_Days_filter: query['E4 - DAYS'] = {'$regex': E4_Days_filter, '$options': 'i'}
+    if E4_Start_filter: query['E4 - START'] = {'$regex': E4_Start_filter, '$options': 'i'}
+    if E4_End_filter: query['E4 - END'] = {'$regex': E4_End_filter, '$options': 'i'}
+    if Colour_filter: query['Color'] = {'$regex': Colour_filter, '$options': 'i'}
+    if Current_EO_filter: query['Current EO'] = {'$regex': Current_EO_filter, '$options': 'i'}
+    if New_EO_filter: query['New EO'] = {'$regex': New_EO_filter, '$options': 'i'}
+    if Scent_Effectiveness_filter: query['#1 Scent Effectiveness'] = {'$regex': Scent_Effectiveness_filter, '$options': 'i'}
+    if Common_Encounters_filter: query['#1 Common encounters'] = {'$regex': Common_Encounters_filter, '$options': 'i'}
+    if Other_Remarks_filter: query['#1 Other remarks'] = {'$regex': Other_Remarks_filter, '$options': 'i'}
 
-        query_params_for_template = request.args.to_dict() # Pass all current args for pagination links
+    query_params_for_template = request.args.to_dict() # Pass all current args for pagination links
 
-        total_entries = services_collection.count_documents(query)
-        services_collection_list = services_collection.find(query, {'_id': 0}).skip((page - 1) * limit).limit(limit)
+    total_entries = services_collection.count_documents(query)
+    services_collection_list = services_collection.find(query, {'_id': 0}).skip((page - 1) * limit).limit(limit)
 
-        processed_data = []
-        for entry in services_collection_list:
-            month_year_date = entry.get('month_year')
-            if isinstance(month_year_date, datetime):
-                entry['month'] = month_year_date.month
-                entry['year'] = month_year_date.year
-            try:
-                entry["S/N"] = int(entry["S/N"])
-            except (ValueError, TypeError): # Handle potential missing or non-integer S/N
-                entry["S/N"] = 0 # Or some other placeholder like 'N/A'
-            processed_data.append(entry)
+    processed_data = []
+    for entry in services_collection_list:
+        month_year_date = entry.get('month_year')
+        if isinstance(month_year_date, datetime):
+            entry['month'] = month_year_date.month
+            entry['year'] = month_year_date.year
+        try:
+            entry["S/N"] = int(entry["S/N"])
+        except (ValueError, TypeError): # Handle potential missing or non-integer S/N
+            entry["S/N"] = 0 # Or some other placeholder like 'N/A'
+        processed_data.append(entry)
 
-        total_pages = (total_entries + limit - 1) // limit
+    total_pages = (total_entries + limit - 1) // limit
 
-        return render_template("reports.html",
-                               username=session["username"], data=processed_data, page=page,
-                               total_pages=total_pages, limit=limit,
-                               pagination_base_url=url_for('.reports'), # Use relative endpoint
-                               query_params=query_params_for_template)
-    return redirect(url_for('auth.admin_login')) # Should be handled by before_request
+    return render_template("reports.html",
+                           username=current_user.email, data=processed_data, page=page,
+                           total_pages=total_pages, limit=limit,
+                           pagination_base_url=url_for('.reports'), # Use relative endpoint
+                           query_params=query_params_for_template)
 
 @data_reports_bp.route('/pack-list')
 def pack_list():
@@ -218,8 +219,9 @@ def pack_list():
     query_params_straw = {k:v for k,v in request.args.to_dict().items() if not k.startswith(('page', 'device_', 'bottle_'))}
 
 
+    from flask_security import current_user
     return render_template("pack-list.html",
-                           username=session["username"],
+                           username=current_user.email,
                            data=data_eo_pack_list, device_data=data_device_pack_list,
                            bottle_data=data_bottle_pack_list, straw_data=data_other_pack_list,
                            page=page, total_pages=total_pages_eo, limit=limit,
@@ -274,8 +276,9 @@ def eo_list_func(): # Renamed from eo_list to avoid conflict with collection nam
     query_params_model = {k:v for k,v in request.args.to_dict().items() if not k == 'page' or not k == 'limit'}
 
 
+    from flask_security import current_user
     return render_template("eo-list.html",
-                           username=session["username"], data=data_eo_list, model_data=data_model_list,
+                           username=current_user.email, data=data_eo_list, model_data=data_model_list,
                            page=page, total_pages=total_pages_eo, limit=limit,
                            model_page=model_page, total_model_pages=total_pages_model, model_limit=model_limit,
                            pagination_base_url=url_for('.eo_list_func'), query_params=query_params_eo,
@@ -283,9 +286,7 @@ def eo_list_func(): # Renamed from eo_list to avoid conflict with collection nam
 
 @data_reports_bp.route('/profile-master') # Original was /profile
 def profile_master_list(): # Renamed from profile
-    # Temporarily skip authentication for testing
-    # if 'username' not in session: 
-    #     return redirect(url_for('auth.admin_login'))
+    # Authentication is handled by the before_request decorator
     
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
@@ -436,7 +437,8 @@ def activity_logs_view(): # Renamed from get_logs
         processed_data_logs_list.append(log_entry)
     total_pages = (total_list + limit - 1) // limit
 
-    return render_template('activity-log.html', username=session["username"],
+    from flask_security import current_user
+    return render_template('activity-log.html', username=current_user.email,
                            data=processed_data_logs_list, page=page, total_pages=total_pages, limit=limit,
                            pagination_base_url=url_for('.activity_logs_view'),
                            query_params=request.args.to_dict())
@@ -461,7 +463,9 @@ def view_remarks_by_type(remark_type):
 # It was my own instructional text mistakenly included in the generated file.
 @data_reports_bp.route('/delete_route', methods=['POST'])
 def delete_route():
-    if 'username' not in session: return redirect(url_for('login'))
+    from flask_security import current_user
+    if not current_user.is_authenticated or not current_user.has_role('admin'):
+        return redirect(url_for('new_auth.index'))
     record_id = request.form['record_id']
     try: obj_id = ObjectId(record_id)
     except: flash("Invalid record ID format.", "danger"); return redirect(url_for('route_table'))
@@ -470,7 +474,7 @@ def delete_route():
     if record:
         company = record.get('company', 'Unknown'); premise_val = record.get('premise', 'Unknown'); date_val = record.get('date', 'Unknown') # Renamed premise to premise_val
         route_list_collection.delete_one({'_id': obj_id})
-        log_activity(session["username"], f"deleted route for Company: {company} Premise: {premise_val} Date: {date_val}", logs_collection)
+        log_activity(current_user.email, f"deleted route for Company: {company} Premise: {premise_val} Date: {date_val}", logs_collection)
         flash("Record deleted successfully!", "success")
     else:
         flash("Record not found or failed to delete!", "error") # Clarified message

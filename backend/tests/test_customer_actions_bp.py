@@ -16,7 +16,7 @@ def test_customer_form_get_unauthenticated(client, app):
     with app.test_request_context(): # Context for url_for
         response = client.get(url_for('customer.customer_form'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.client_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_customer_form_get_authenticated(client, app):
     login_customer(client, app)

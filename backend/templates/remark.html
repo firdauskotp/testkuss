@@ -24,6 +24,7 @@
 
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
             <form method="POST" action="{{ url_for('forms.remark') }}" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div>
                     <label for="remark_text" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Remark</label>
                     <textarea name="remark" id="remark_text" rows="4"
@@ -52,8 +53,8 @@
             </form>
         </div>
         {# Displaying username if available from context, not as a form field #}
-        {% if username %}
-        <p class="text-center text-sm text-gray-600 dark:text-gray-400">Submitting as: {{ username }}</p>
+        {% if current_user.is_authenticated %}
+        <p class="text-center text-sm text-gray-600 dark:text-gray-400">Submitting as: {{ current_user.username if current_user.has_role('admin') else current_user.email }}</p>
         {% endif %}
     </div>
 </div>

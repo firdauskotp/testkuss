@@ -14,3 +14,9 @@ pytest
 pytest-mock
 pytest-flask
 fpdf
+requests
+Flask-Security-Too
+flask-login
+flask-principal
+flask-wtf
+flask-admin

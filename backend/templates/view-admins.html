@@ -108,6 +108,7 @@
             </div>
             <div class="p-6"><p class="text-base leading-relaxed text-gray-600 dark:text-gray-400">Are you sure you want to delete this admin user?</p></div>
             <form id="deleteAdminForm" method="POST" action="{{ url_for('user_mgnt.delete_admin') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="user_id" id="deleteAdminIdInput">
                 <div class="flex items-center justify-end p-6 space-x-2 border-t border-gray-300 dark:border-gray-700 rounded-b">
                     <button data-modal-hide="deleteAdminModal" type="button" class="tailwind-button-gray">Cancel</button>

@@ -20,21 +20,23 @@ staff_actions_bp = Blueprint(
 
 # Helper to check admin session
 def is_admin_logged_in():
-    return 'username' in session
+    from flask_security import current_user
+    return current_user.is_authenticated and current_user.has_role('admin')
 
 @staff_actions_bp.before_request
 def require_admin_login():
     # Protect all routes in this blueprint
-    if not is_admin_logged_in():
+    from flask_security import current_user
+    if not current_user.is_authenticated or not current_user.has_role('admin'):
         flash("You must be logged in as an admin to access this page.", "warning")
-        return redirect(url_for('auth.admin_login')) # Redirect to auth blueprint's admin_login
+        return redirect(url_for('new_auth.index'))
 
 @staff_actions_bp.route("/api/case/<int:case_no>", methods=["GET"])
-@require_auth('admin')
 @handle_route_error
 def get_case_details(case_no):
     """Enhanced API endpoint to get case details with validation and logging"""
-    admin_username = session.get('username', 'unknown')
+    from flask_security import current_user
+    admin_username = current_user.username if current_user.is_authenticated else 'unknown'
     current_app.logger.info(f"Case API access for case #{case_no} by admin: {admin_username}")
     
     # Validate case number
@@ -52,11 +54,11 @@ def get_case_details(case_no):
     return jsonify(case_data)
 
 @staff_actions_bp.route("/help/<int:case_no>", methods=["GET", "POST"]) # was /staff-help/
-@require_auth('admin')
 @handle_route_error
 def staff_form(case_no):
     """Enhanced staff complaint form with comprehensive validation and error handling"""
-    admin_username = session.get('username', 'unknown')
+    from flask_security import current_user
+    admin_username = current_user.username if current_user.is_authenticated else 'unknown'
     current_app.logger.info(f"Staff form accessed for case #{case_no} by admin: {admin_username}")
     
     # Validate case number
@@ -169,11 +171,11 @@ def staff_form(case_no):
         return render_template("staff-complaint-form.html", case_no=case_no, case_data=case_data)
 
 @staff_actions_bp.route('/industry-global')
-@require_auth('admin')
 @handle_route_error
 def industry_global():
     """Enhanced industry global list management with comprehensive error handling"""
-    admin_username = session.get('username', 'unknown')
+    from flask_security import current_user
+    admin_username = current_user.username if current_user.is_authenticated else 'unknown'
     current_app.logger.info(f"Industry global list accessed by admin: {admin_username}")
     
     try:
@@ -198,11 +200,11 @@ def industry_global():
         return redirect(url_for('dashboard'))
 
 @staff_actions_bp.route('/save_all_industry_global_changes', methods=['POST'])
-@require_auth('admin')
 @handle_route_error
 def save_all_industry_global_changes():
     """Enhanced industry global list changes with comprehensive validation and error handling"""
-    admin_username = session.get('username', 'unknown')
+    from flask_security import current_user
+    admin_username = current_user.username if current_user.is_authenticated else 'unknown'
     current_app.logger.info(f"Industry global changes initiated by admin: {admin_username}")
     
     try:

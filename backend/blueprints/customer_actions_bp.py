@@ -20,31 +20,35 @@ customer_actions_bp = Blueprint(
 
 # Helper to check customer session
 def is_customer_logged_in():
-    return 'customer_email' in session
+    from flask_security import current_user
+    return current_user.is_authenticated and current_user.has_role('customer')
 
 @customer_actions_bp.before_request
 def require_customer_login():
     # Protect all routes in this blueprint that are not explicitly public
+    from flask_security import current_user
     if request.endpoint and request.endpoint.endswith('customer_form'): 
-        if not is_customer_logged_in():
+        if not current_user.is_authenticated or not current_user.has_role('customer'):
             flash("Please log in to access this page.", "warning")
-            return redirect(url_for('auth.client_login'))
+            return redirect(url_for('new_auth.index'))
 
 @customer_actions_bp.route("/help", methods=["GET", "POST"])
 @handle_route_error
 def customer_form():
     """Enhanced customer complaint form with comprehensive validation and error handling"""
-    current_app.logger.info(f"Customer form accessed by: {session.get('customer_email', 'unknown')}")
+    from flask_security import current_user
+    customer_email = current_user.email if current_user.is_authenticated else 'unknown'
+    current_app.logger.info(f"Customer form accessed by: {customer_email}")
     
     if not is_customer_logged_in(): 
         current_app.logger.warning("Unauthorized access attempt to customer form")
         flash("Please log in to submit a help request.", "warning")
-        return redirect(url_for('auth.client_login'))
+        return redirect(url_for('new_auth.index'))
 
     if request.method == "GET":
         return render_template("customer-complaint-form.html")
 
-    customer_email = session.get('customer_email', 'unknown')
+    # customer_email is already set above
     current_app.logger.info(f"Customer complaint submission by: {customer_email}")
 
     try:
@@ -175,13 +179,14 @@ def customer_form():
 @handle_route_error
 def case_success(case_no):
     """Enhanced case success page with validation and logging"""
-    customer_email = session.get('customer_email', 'unknown')
+    from flask_security import current_user
+    customer_email = current_user.email if current_user.is_authenticated else 'unknown'
     current_app.logger.info(f"Case success page accessed for case #{case_no} by: {customer_email}")
     
     if not is_customer_logged_in():
         current_app.logger.warning(f"Unauthorized access to case success page for case #{case_no}")
         flash("Please log in to view your case.", "warning")
-        return redirect(url_for('auth.client_login'))
+        return redirect(url_for('new_auth.index'))
     
     # Validate case number
     if case_no <= 0:

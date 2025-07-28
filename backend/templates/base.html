@@ -22,7 +22,7 @@
 </head>
 <body class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
 
-{% if session.get('username') %}
+{% if current_user.is_authenticated %}
     <header class="bg-gray-800 dark:bg-gray-900 text-white shadow-md print:hidden"> {# Hide header when printing #}
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="{{ url_for('dashboard') }}" class="text-xl font-bold hover:text-gray-300 dark:hover:text-gray-400">
@@ -61,8 +61,8 @@
                     <div class="relative group">
                         <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Users</button>
                         <div class="absolute left-0 mt-0 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
-                            <a href="{{ url_for('auth.register') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add User</a>
-                            <a href="{{ url_for('auth.register_admin') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add Admin</a>
+                            <a href="{{ url_for('new_auth.register') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add User</a>
+                            <a href="{{ url_for('new_auth.register') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add Admin</a>
                             <a href="{{ url_for('user_mgnt.view_users') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Client Users</a>
                             <a href="{{ url_for('user_mgnt.view_admins') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Admins</a>
                         </div>
@@ -99,7 +99,7 @@
                         </div>
                     </div>
 
-                    <a href="{{ url_for('auth.logout') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Logout</a>
+                    <a href="{{ url_for('new_auth.logout') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Logout</a>
                 </nav>
                 <button id="theme-toggle-btn" class="p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
                     Theme
@@ -127,8 +127,8 @@
             <a href="{{ url_for('data_reports.view_complaints_list') }}" class="mobile-nav-link">Help Requests</a>
             
             <h3 class="mobile-nav-heading">User Management</h3>
-            <a href="{{ url_for('auth.register') }}" class="mobile-nav-link">Add User</a>
-            <a href="{{ url_for('auth.register_admin') }}" class="mobile-nav-link">Add Admin</a>
+            <a href="{{ url_for('new_auth.register') }}" class="mobile-nav-link">Add User</a>
+            <a href="{{ url_for('new_auth.register') }}" class="mobile-nav-link">Add Admin</a>
             <a href="{{ url_for('user_mgnt.view_users') }}" class="mobile-nav-link">View Client Users</a>
             <a href="{{ url_for('user_mgnt.view_admins') }}" class="mobile-nav-link">View Admins</a>
 
@@ -149,7 +149,7 @@
             <a href="{{ url_for('data_reports.view_remarks_by_type', remark_type='urgent') }}" class="mobile-nav-link">View Urgent Remarks</a>
             
             <hr class="border-gray-700 my-2">
-            <a href="{{ url_for('auth.logout') }}" class="mobile-nav-link bg-red-500 hover:bg-red-600 text-white">Logout</a>
+            <a href="{{ url_for('new_auth.logout') }}" class="mobile-nav-link bg-red-500 hover:bg-red-600 text-white">Logout</a>
         </div>
     </header>
 {% endif %}

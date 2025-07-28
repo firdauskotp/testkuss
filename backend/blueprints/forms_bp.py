@@ -22,13 +22,15 @@ forms_bp = Blueprint(
 )
 
 def is_admin_logged_in():
-    return 'username' in session
+    from flask_security import current_user
+    return current_user.is_authenticated and current_user.has_role('admin')
 
 @forms_bp.before_request
 def require_admin_login():
-    if not is_admin_logged_in():
+    from flask_security import current_user
+    if not current_user.is_authenticated or not current_user.has_role('admin'):
         flash("You must be logged in as an admin to access this page.", "warning")
-        return redirect(url_for('auth.admin_login'))
+        return redirect(url_for('new_auth.index'))
 
 @forms_bp.route('/new-customer', methods=['GET', 'POST'])
 def new_customer():
@@ -222,17 +224,19 @@ def new_customer():
             else:
                 test_collection.insert_many(master_list)
 
-        log_activity(session["username"], f"added new customer: {companyName}", logs_collection)
+        from flask_security import current_user
+        log_activity(current_user.email, f"added new customer: {companyName}", logs_collection)
         flash(f"Company {companyName} added successfully!", "success")
         return redirect(url_for(".new_customer"))
 
-    return render_template('new-customer.html', models=models, essential_oils=essential_oils, industries=industries, username=session.get("username"))
+    from flask_security import current_user
+    return render_template('new-customer.html', models=models, essential_oils=essential_oils, industries=industries, username=current_user.email)
 
 @forms_bp.route('/change-form', methods=['GET', 'POST'])
 def change_form():
     if request.method == 'POST':
         data = {
-            "user": session.get("username"), "company": request.form.get("companyName"),
+            "user": current_user.email, "company": request.form.get("companyName"),
             "date": request.form.get("date"), "month": request.form.get("month"), "year": request.form.get("year"),
             "premises": request.form.getlist("premises"), "devices": request.form.getlist("devices"),
             "change_scent": request.form.get("changeScent") == "on", "change_scent_to": request.form.get("changeScentText"),
@@ -251,12 +255,13 @@ def change_form():
                 data["e_settings"][device][f"E{i} - END"] = request.form.get(f"{device}_E{i}_END")
                 data["e_settings"][device][f"E{i} - PAUSE"] = request.form.get(f"{device}_E{i}_PAUSE")
                 data["e_settings"][device][f"E{i} - WORK"] = request.form.get(f"{device}_E{i}_WORK")
+        from flask_security import current_user
         if data["collect_back"]:
             refund_collection.insert_one(data)
-            log_activity(session["username"],"collected back : " +str(data['premises']) + str(data['devices']),logs_collection)
+            log_activity(current_user.email,"collected back : " +str(data['premises']) + str(data['devices']),logs_collection)
         else:
             change_form_collection.insert_one(data)
-            log_activity(session["username"],"updated settings : " +str(data['premises']) + str(data['devices']),logs_collection)
+            log_activity(current_user.email,"updated settings : " +str(data['premises']) + str(data['devices']),logs_collection)
             customer = profile_list_collection.find_one({"company": data["company"]})
             if customer and customer.get("email"):
                 send_dynamic_email("change_form_confirmation", {**data, "customer_email": customer["email"]}, mail)
@@ -266,7 +271,8 @@ def change_form():
     premises_for_template = []
     if request.args.get("companyName"):
         premises_for_template = services_collection.distinct('Premise Name', {'company': request.args.get("companyName")})
-    return render_template('change-form.html', username=session.get('username'),
+    from flask_security import current_user
+    return render_template('change-form.html', username=current_user.email,
                            companies=companies, premises=premises_for_template,
                            current_date=datetime.now().strftime('%Y-%m-%d'))
 
@@ -283,15 +289,17 @@ def pre_service():
         if existing_route and not request.form.get('confirm_duplicate'):
             return jsonify({'status': 'duplicate'})
 
+        from flask_security import current_user
         route_list_collection.insert_one(entry)
         flash(f"Company: {request.form.get('company')}, Premise: {request.form.get('premise')} preservice added successfully!", "success")
-        log_activity(session["username"],"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
+        log_activity(current_user.email,"pre-service : " +str(request.form.get('company')) + " : " +str(request.form.get('premise')),logs_collection)
         return jsonify({'status': 'success'})
     return render_template('pre-service.html', companies=companies)
 
 @forms_bp.route('/service', methods=['GET', 'POST'])
 def service():
-    technician_name = session["username"]
+    from flask_security import current_user
+    technician_name = current_user.email
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     companies = services_collection.distinct('company')
 
@@ -381,7 +389,8 @@ def service2():
     # This route was not in the provided app.py.
     # Assuming it might be a variant of the 'service' route.
     # For now, providing a basic structure.
-    technician_name = session["username"]
+    from flask_security import current_user
+    technician_name = current_user.email
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     companies = services_collection.distinct('company')
     # If this form has POST logic, it would be here.
@@ -393,7 +402,7 @@ def service2():
 
 @forms_bp.route('/post-service', methods=['POST', 'GET'])
 def post_service():
-    username = session['username']
+    from flask_security import current_user
     if request.method == "POST":
         essential_oil = request.form.get("essential_oil")
         oil_balance = int(request.form.get("oil_balance"))
@@ -410,22 +419,22 @@ def post_service():
             "month_year": month_year
         }
         # Add username to the data being updated/inserted
-        update_data['username'] = username
+        update_data['username'] = current_user.email
         update = { "$set": update_data }
         eo_pack_collection.update_one(query, update, upsert=True)
-        log_activity(username, f"Updated/added post-service record for EO: {essential_oil}", logs_collection)
+        log_activity(current_user.email, f"Updated/added post-service record for EO: {essential_oil}", logs_collection)
         flash(f"Record for {essential_oil} updated successfully!", "success")
         return redirect(url_for("dashboard"))
-    return render_template('post-service.html', username=username)
+    return render_template('post-service.html', username=current_user.email)
 
 @forms_bp.route('/remark', methods=['GET', 'POST'])
 def remark():
-    username = session['username']
+    from flask_security import current_user
     if request.method == 'POST':
         remark_text = request.form['remark']
         is_urgent = 'urgent' in request.form
-        log_activity(username,"added remark: " +str(remark_text) + ", urgent: " + str(is_urgent), logs_collection) # Corrected log
-        remark_collection.insert_one({'username': username, 'remark': remark_text, 'urgent': is_urgent, 'timestamp': datetime.now()})
+        log_activity(current_user.email,"added remark: " +str(remark_text) + ", urgent: " + str(is_urgent), logs_collection) # Corrected log
+        remark_collection.insert_one({'username': current_user.email, 'remark': remark_text, 'urgent': is_urgent, 'timestamp': datetime.now()})
         flash("Remark submitted successfully!", "success")
         return redirect(url_for('dashboard'))
-    return render_template('remark.html', username=username)
+    return render_template('remark.html', username=current_user.email)

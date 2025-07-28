@@ -7,13 +7,13 @@ from bson import ObjectId # For mocking database _id fields
 # Helper function to log in an admin user
 def login_admin(client, mocker, app, admin_username="teststaff", admin_id="605c72ef9c82f2001f0000aa"): # Valid hex
     mock_user_data = { "_id": admin_id, "username": admin_username, "password": "hashed_password" }
-    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_user_data)
-    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
-    mocker.patch('backend.blueprints.auth_bp.log_activity')
+    mocker.patch('backend.blueprints.new_auth_bp.login_collection.find_one', return_value=mock_user_data)
+    mocker.patch('backend.blueprints.new_auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.new_auth_bp.log_activity')
 
     admin_login_url = None
     with app.app_context():
-        admin_login_url = url_for('auth.admin_login')
+        admin_login_url = url_for('new_auth.index')
     client.post(admin_login_url, data={'username': admin_username, 'password': 'password'})
 
 # --- Tests for get_case_details API endpoint ---
@@ -21,7 +21,7 @@ def test_get_case_details_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('staff.get_case_details', case_no=1), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_get_case_details_found(client, app, mocker):
     login_admin(client, mocker, app)
@@ -50,7 +50,7 @@ def test_staff_form_get_unauthenticated(client, app):
     with app.test_request_context():
         response = client.get(url_for('staff.staff_form', case_no=1), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_staff_form_get_case_not_found(client, app, mocker):
     login_admin(client, mocker, app)

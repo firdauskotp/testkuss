@@ -1,69 +1,68 @@
 {% extends "base.html" %}
 
-{% block title %}Client Login{% endblock %}
+{% block title %}Login{% endblock %}
 
-{% block page_title %}Client Login{% endblock %}
+{% block page_title %}Login{% endblock %}
 
 {% block head_extra %}
-    {# Any client-login-page specific head content, if necessary, would go here #}
+    {# Any login-page specific head content, if necessary, would go here #}
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-12rem)]"> {# Adjusted min-height if header/footer are taller #}
-    <div class="w-full max-w-md space-y-8">
-        <div class="text-center">
-            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Kuss Essentials Logo" class="mx-auto h-20 w-auto rounded-md mb-4">
-            {# The page_title block in base.html already handles the "Client Login" title #}
-        </div>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="space-y-3">
-                {% for category, message in messages %}
-                <div class="p-4 text-sm rounded-md border
-                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
-                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
-                            {% if category == 'warning' %} bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-500/50 {% endif %}
-                            " role="alert">
-                    {{ message }}
-                </div>
-                {% endfor %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md mx-auto space-y-8">
+        
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Login to Your Account</h3>
+            
+            <div class="text-center mb-6">
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Kuss Essentials Logo" class="mx-auto h-16 w-auto rounded-md">
             </div>
-            {% endif %}
-        {% endwith %}
 
-        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
-            <form method="POST" action="{{ url_for('auth.client_login') }}" class="space-y-6">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="space-y-3 mb-6">
+                    {% for category, message in messages %}
+                    <div class="p-4 text-sm rounded-md border
+                                {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                                {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                                {% if category == 'warning' %} bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-500/50 {% endif %}
+                                " role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('new_auth.index') }}" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email address</label>
-                    <input type="email" name="email" id="email"
-                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
-                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
-                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
-                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
-                           placeholder="you@example.com" required>
+                    <label for="login_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email or Username</label>
+                    <input type="text" name="login_input" id="login_input"
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
+                           placeholder="Email or Username" required>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Enter your email or username to login</p>
                 </div>
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                     <input type="password" name="password" id="password"
-                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
-                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
-                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
-                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
                            placeholder="••••••••" required>
                 </div>
 
                 <div>
                     <button type="submit"
-                            class="w-full flex justify-center py-2.5 px-4 border border-transparent
-                                   rounded-md shadow-sm text-sm font-medium text-white
-                                   bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
-                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+                            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
                         Sign in
                     </button>
                 </div>
             </form>
+        </div>
+        
+        <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+            <p>Don't have an account? <a href="{{ url_for('new_auth.register') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Register here</a></p>
         </div>
     </div>
 </div>

@@ -38,7 +38,32 @@
                 <p class="mt-2 text-sm text-red-600 dark:text-red-400">Please remember the password. It will be hashed for security and cannot be retrieved.</p>
             </div>
 
-            <form id="registerForm" method="POST" action="{{ url_for('auth.register') }}" class="space-y-6">
+            <form id="registerForm" method="POST" action="{{ url_for('new_auth.register') }}" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Register as</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="registration_type" value="customer" class="text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400" checked>
+                            <span class="ml-2 text-gray-700 dark:text-gray-300">Customer</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="registration_type" value="admin" class="text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                            <span class="ml-2 text-gray-700 dark:text-gray-300">Admin</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="username-field" class="hidden">
+                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                    <input type="text" name="username" id="username"
+                           class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600
+                                  rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500
+                                  sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50"
+                           placeholder="admin.user">
+                </div>
+
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                     <input type="email" name="email" id="email"
@@ -112,6 +137,28 @@
 
 {% block scripts %}
 <script>
+    // Show/hide username field based on registration type
+    document.addEventListener('DOMContentLoaded', function() {
+        const adminRadio = document.querySelector('input[name="registration_type"][value="admin"]');
+        const customerRadio = document.querySelector('input[name="registration_type"][value="customer"]');
+        const usernameField = document.getElementById('username-field');
+
+        function toggleUsernameField() {
+            if (adminRadio.checked) {
+                usernameField.classList.remove('hidden');
+            } else {
+                usernameField.classList.add('hidden');
+            }
+        }
+
+        // Set initial state
+        toggleUsernameField();
+
+        // Add event listeners
+        adminRadio.addEventListener('change', toggleUsernameField);
+        customerRadio.addEventListener('change', toggleUsernameField);
+    });
+
     // Basic password toggle (if you add toggle buttons later)
     function togglePassword(fieldId) {
         const field = document.getElementById(fieldId);

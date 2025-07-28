@@ -82,7 +82,7 @@ def handle_route_error(func):
                     "error_id": error_id
                 }), 500
             else:
-                return redirect(url_for('auth.index'))
+                return redirect(url_for('new_auth.index'))
                 
         except ValueError as e:
             # Input validation errors
@@ -98,7 +98,7 @@ def handle_route_error(func):
                     "error_id": error_id
                 }), 400
             else:
-                return redirect(request.referrer or url_for('auth.index'))
+                return redirect(request.referrer or url_for('new_auth.index'))
                 
         except PermissionError as e:
             # Authorization errors
@@ -114,7 +114,7 @@ def handle_route_error(func):
                     "error_id": error_id
                 }), 403
             else:
-                return redirect(url_for('auth.admin_login'))
+                return redirect(url_for('new_auth.index'))
                 
         except Exception as e:
             # Generic server errors
@@ -131,7 +131,7 @@ def handle_route_error(func):
                     "error_id": error_id
                 }), 500
             else:
-                return redirect(url_for('auth.index'))
+                return redirect(url_for('new_auth.index'))
                 
     return wrapper
 
@@ -141,25 +141,23 @@ def require_auth(user_type='admin'):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                if user_type == 'admin':
-                    if 'username' not in session:
-                        current_app.logger.warning(f"Unauthorized admin access attempt to {func.__name__}")
-                        flash("Please log in to access this page.", "warning")
-                        return redirect(url_for('auth.admin_login'))
-                elif user_type == 'customer':
-                    if 'customer_email' not in session:
-                        current_app.logger.warning(f"Unauthorized customer access attempt to {func.__name__}")
-                        flash("Please log in to access this page.", "warning")
-                        return redirect(url_for('auth.index'))
-                        
-                # Validate session
-                if not validate_session():
-                    current_app.logger.warning(f"Invalid session for {user_type} accessing {func.__name__}")
-                    flash("Your session has expired. Please log in again.", "warning")
-                    if user_type == 'admin':
-                        return redirect(url_for('auth.admin_login'))
-                    else:
-                        return redirect(url_for('auth.index'))
+                from flask_security import current_user
+                
+                # Check if user is authenticated
+                if not current_user.is_authenticated:
+                    current_app.logger.warning(f"Unauthorized access attempt to {func.__name__}")
+                    flash("Please log in to access this page.", "warning")
+                    return redirect(url_for('new_auth.index'))
+                
+                # Check user role
+                if user_type == 'admin' and not current_user.has_role('admin'):
+                    current_app.logger.warning(f"Unauthorized admin access attempt to {func.__name__}")
+                    flash("You don't have permission to access this page.", "danger")
+                    return redirect(url_for('new_auth.index'))
+                elif user_type == 'customer' and not current_user.has_role('customer'):
+                    current_app.logger.warning(f"Unauthorized customer access attempt to {func.__name__}")
+                    flash("You don't have permission to access this page.", "danger")
+                    return redirect(url_for('new_auth.index'))
                         
                 return func(*args, **kwargs)
             except Exception as e:
@@ -171,16 +169,8 @@ def require_auth(user_type='admin'):
 
 def validate_session():
     """Validate session integrity and expiration"""
-    if 'login_time' in session:
-        try:
-            login_time = datetime.fromisoformat(session['login_time'])
-            # Session expires after 2 hours
-            if datetime.now() - login_time > timedelta(hours=2):
-                session.clear()
-                return False
-        except (ValueError, TypeError):
-            session.clear()
-            return False
+    # This function is kept for backward compatibility but is not used in the new auth system
+    # Flask-Security handles session validation automatically
     return True
 
 def sanitize_input(input_string, max_length=100):
@@ -396,34 +386,43 @@ def send_dynamic_email(template_key, variables, mail):
 
 def send_email(to_email, from_email, subject, body_html, mail, attachments=None):
     """
-    Generic wrapper on Flask-Mail’s Message.
+    Generic wrapper on Flask-Mail's Message.
     Accepts:
      - body_html (string, assumed safe HTML)
      - attachments: list of (filename, mimetype, bytes) or file-paths
     """
-    msg = Message(subject, sender=from_email, recipients=[to_email])
-    msg.html = body_html
-
-    # attach any files
-    for att in attachments or []:
-        if isinstance(att, str) and os.path.exists(att):
-            with open(att, 'rb') as f:
-                data = f.read()
-            msg.attach(os.path.basename(att), 
-                       'application/octet-stream', 
-                       data)
-        else:
-            # tuple (filename, mime, bytes)
-            name, mime, data = att
-            msg.attach(name, mime, data)
-
-    # logs
-    current_app.logger.info(f"Sending email to: {to_email}")
-    current_app.logger.info(f"Subject: {subject}")
     try:
+        msg = Message(subject, sender=from_email, recipients=[to_email])
+        msg.html = body_html
+
+        # attach any files
+        for att in attachments or []:
+            if isinstance(att, str) and os.path.exists(att):
+                with open(att, 'rb') as f:
+                    data = f.read()
+                msg.attach(os.path.basename(att), 
+                           'application/octet-stream', 
+                           data)
+            else:
+                # tuple (filename, mime, bytes)
+                name, mime, data = att
+                msg.attach(name, mime, data)
+
+        # logs
+        current_app.logger.info(f"Sending email to: {to_email}")
+        current_app.logger.info(f"Subject: {subject}")
+        
+        # Validate email configuration
+        if not current_app.config.get('MAIL_SERVER') or not current_app.config.get('MAIL_USERNAME'):
+            current_app.logger.error("Email configuration is incomplete. MAIL_SERVER or MAIL_USERNAME is missing.")
+            raise ValueError("Email configuration is incomplete.")
+        
         mail.send(msg)
+        current_app.logger.info(f"Email successfully sent to: {to_email}")
+        
     except Exception as e:
-        current_app.logger.error(f"Failed to send email: {e}")
+        current_app.logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        current_app.logger.error(f"Email details - Subject: {subject}, From: {from_email}")
         raise
 
 

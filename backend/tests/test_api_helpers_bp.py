@@ -7,11 +7,11 @@ from bson import ObjectId # For mocking ObjectIds
 # Helper function to log in an admin (assuming some API routes might be protected)
 def login_admin(client, mocker, app, admin_username="testapiadmin", admin_id="testapiadminid"):
     mock_user_data = { "_id": admin_id, "username": admin_username, "password": "hashed_password" }
-    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_user_data)
-    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
-    mocker.patch('backend.blueprints.auth_bp.log_activity')
+    mocker.patch('backend.blueprints.new_auth_bp.login_collection.find_one', return_value=mock_user_data)
+    mocker.patch('backend.blueprints.new_auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.new_auth_bp.log_activity')
     with app.app_context():
-        client.post(url_for('auth.admin_login'), data={'username': admin_username, 'password': 'password'})
+        client.post(url_for('new_auth.index'), data={'login_input': admin_username, 'password': 'password'})
 
 # --- Test for an image fetching route (e.g., get_image) ---
 def test_get_image_success(client, app, mocker):

@@ -27,20 +27,21 @@ api_helpers_bp = Blueprint(
 
 # Helper to check admin session
 def is_admin_logged_in():
-    return 'username' in session
+    from flask_security import current_user
+    return current_user.is_authenticated and current_user.has_role('admin')
 
 @api_helpers_bp.before_request
 def require_admin_login():
     # Protect all routes in this blueprint by default
     # Specific public routes would need to be handled differently if any exist
     # (e.g. by checking request.endpoint against a list of public endpoints)
-    if not is_admin_logged_in():
+    from flask_security import current_user
+    if not current_user.is_authenticated or not current_user.has_role('admin'):
         # For API routes, returning a JSON error is often preferred over redirecting to HTML login page
         # However, if these are typically called by frontend JS that expects a redirect on auth failure,
         # then a redirect might be what the existing frontend JS expects.
-        # The other admin blueprints redirect to 'auth.admin_login'. Let's be consistent.
         flash("Admin access required for this API.", "warning")
-        return redirect(url_for('auth.admin_login')) # Or return jsonify(error="Unauthorized"), 401/403
+        return redirect(url_for('new_auth.index'))
 
 @api_helpers_bp.route('/update-data', methods=['POST'])
 def update_data():

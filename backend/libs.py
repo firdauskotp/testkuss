@@ -1,7 +1,7 @@
 import gridfs, io, os, json, smtplib, base64
 from urllib.parse import urlencode
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify, Response
-from flask_pymongo import MongoClient
+from pymongo import MongoClient
 from werkzeug.security import check_password_hash
 from flask_mail import Mail, Message
 from datetime import datetime

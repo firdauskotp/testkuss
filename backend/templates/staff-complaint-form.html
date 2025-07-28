@@ -46,6 +46,7 @@
         </div>
 
         <form method="POST" action="{{ url_for('staff.staff_form', case_no=case_no) }}" enctype="multipart/form-data" class="space-y-8">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
             <!-- Case Details Section -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
@@ -168,7 +169,7 @@
 
                     <div>
                         <label for="staffName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Staff Name</label>
-                        <input type="text" id="staffName" name="staff_name" value="{{ case_data.get('staff_name', session.get('username', '')) }}" required class="tailwind-input-class" readonly>
+                        <input type="text" id="staffName" name="staff_name" value="{{ case_data.get('staff_name', current_user.username if current_user.is_authenticated else '') }}" required class="tailwind-input-class" readonly>
                     </div>
 
                     <div>

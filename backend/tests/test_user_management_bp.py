@@ -11,16 +11,16 @@ def login_admin(client, mocker, app, admin_username="testadmin", admin_id="605c7
         "username": admin_username,
         "password": "hashed_password_for_testadmin"
     }
-    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_user_data)
-    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
-    mocker.patch('backend.blueprints.auth_bp.log_activity') # Mock log_activity during login
+    mocker.patch('backend.blueprints.new_auth_bp.login_collection.find_one', return_value=mock_user_data)
+    mocker.patch('backend.blueprints.new_auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.new_auth_bp.log_activity') # Mock log_activity during login
 
     # Perform login
     # url_for needs an app context if called outside a request,
     # but client.post() will create one. For consistency if login_admin is called elsewhere:
     login_url = None
     with app.app_context():
-        login_url = url_for('auth.admin_login')
+        login_url = url_for('new_auth.index')
 
     client.post(login_url, data={
         'username': admin_username,
@@ -35,7 +35,7 @@ def test_view_users_unauthenticated(client, app):
         # The client.get will establish its own request context for the actual request
         response = client.get(url_for('user_mgnt.view_users'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_view_users_authenticated_empty(client, app, mocker):
     login_admin(client, mocker, app) # Log in as admin
@@ -105,7 +105,7 @@ def test_view_admins_unauthenticated(client, app):
     with app.test_request_context(): # Context for url_for
         response = client.get(url_for('user_mgnt.view_admins'), follow_redirects=False)
     assert response.status_code == 302
-    assert response.location == url_for('auth.admin_login')
+    assert response.location == url_for('new_auth.index')
 
 def test_view_admins_authenticated_empty(client, app, mocker):
     login_admin(client, mocker, app)
