@@ -1,12 +1,13 @@
+# Use the official Python 3.8 slim image as the base image
 FROM python:3.11-slim
 
-# Labels for maintainers and app
+# Add Dokploy-specific labels
 LABEL maintainer="dokploy"
 LABEL application="kuss"
 
-# Install system dependencies and Node.js
+# Install Node.js and npm first
 RUN apt-get update && \
-    apt-get install -y curl build-essential && \
+    apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && \
@@ -15,22 +16,21 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /app
 
-# Copy npm package files and install dependencies
+# Copy package files and install npm dependencies
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install
 
-# Copy all application files
+# Copy application files
 COPY . .
 
-# Build CSS assets and install Python dependencies
+# Build CSS and install Python dependencies
 RUN npm run build:css && \
-    cd backend && \
-    pip install --upgrade pip && \
+    pip3 install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Set environment variable for port
+# Use PORT environment variable for Heroku compatibility
 ENV PORT=5000
-EXPOSE 5000
+EXPOSE $PORT
 
-# Start the application using gunicorn
-CMD ["sh", "-c", "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 4"]
+# Update CMD to match Procfile format
+CMD gunicorn backend:app --bind 0.0.0.0:$PORT --workers 4 --timeout 120 --log-level debug --access-log  --pid gunicorn.pid --access-logfile logs/gunicorn.log --error-logfile logs/gunicorn_error.log
