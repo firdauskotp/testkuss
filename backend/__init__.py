@@ -1,3 +1,4 @@
+from backend.utils import handle_route_error, require_auth
 from .libs import *
 from .col import *
 import logging
@@ -41,7 +42,10 @@ if missing_vars:
 # Session security configuration
 from datetime import timedelta
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
-app.config['SESSION_COOKIE_SECURE'] = not app.debug  # HTTPS only in production
+if os.getenv('MODE', '').lower() == 'development' or app.debug:
+    app.config['SESSION_COOKIE_SECURE'] = False
+else:
+    app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 
@@ -156,49 +160,44 @@ def health_check():
 
 # --- Dashboard Route ---
 @app.route("/dashboard")
+@require_auth('admin')
+@handle_route_error
 def dashboard():
     """Main dashboard route with enhanced error handling and logging"""
-    from .utils import handle_route_error, require_auth
+    username = session.get("username", "unknown")
+    app.logger.info(f"Dashboard accessed by admin: {username}")
     
-    @require_auth('admin')
-    @handle_route_error
-    def _dashboard():
-        username = session.get("username", "unknown")
-        app.logger.info(f"Dashboard accessed by admin: {username}")
+    try:
+        # Fetch counts for dashboard cards with error handling
+        help_request_count = collection.count_documents({})
+        change_count = change_collection.count_documents({})
+        refund_count = refund_collection.count_documents({})
+        remarks_count = remark_collection.count_documents({'urgent': False})
+        urgent_remarks_count = remark_collection.count_documents({'urgent': True})
         
-        try:
-            # Fetch counts for dashboard cards with error handling
-            help_request_count = collection.count_documents({})
-            change_count = change_collection.count_documents({})
-            refund_count = refund_collection.count_documents({})
-            remarks_count = remark_collection.count_documents({'urgent': False})
-            urgent_remarks_count = remark_collection.count_documents({'urgent': True})
-            
-            dashboard_data = {
-                "username": username,
-                "help_request_count": help_request_count,
-                "change_count": change_count,
-                "refund_count": refund_count,
-                "remarks_count": remarks_count,
-                "urgent_remarks_count": urgent_remarks_count
-            }
-            
-            app.logger.info(f"Dashboard data loaded for {username}: {dashboard_data}")
-            
-            return render_template("dashboard.html", **dashboard_data)
-            
-        except Exception as e:
-            app.logger.error(f"Dashboard data loading failed for {username}: {e}")
-            # Return dashboard with default values if data loading fails
-            return render_template("dashboard.html", 
-                                username=username,
-                                help_request_count=0,
-                                change_count=0,
-                                refund_count=0,
-                                remarks_count=0,
-                                urgent_remarks_count=0)
-    
-    return _dashboard()
+        dashboard_data = {
+            "username": username,
+            "help_request_count": help_request_count,
+            "change_count": change_count,
+            "refund_count": refund_count,
+            "remarks_count": remarks_count,
+            "urgent_remarks_count": urgent_remarks_count
+        }
+        
+        app.logger.info(f"Dashboard data loaded for {username}: {dashboard_data}")
+        
+        return render_template("dashboard.html", **dashboard_data)
+        
+    except Exception as e:
+        app.logger.error(f"Dashboard data loading failed for {username}: {e}")
+        # Return dashboard with default values if data loading fails
+        return render_template("dashboard.html", 
+                            username=username,
+                            help_request_count=0,
+                            change_count=0,
+                            refund_count=0,
+                            remarks_count=0,
+                            urgent_remarks_count=0)
 
 # --- Global Error Handlers ---
 @app.errorhandler(404)

@@ -66,7 +66,7 @@ def admin_login():
                 session["username"] = user["username"]
                 session["login_time"] = datetime.now().isoformat()
                 session["user_type"] = "admin"
-                
+                current_app.logger.info(f"Session after login: {dict(session)}")
                 flash("Login successful!", "success")
                 log_activity(session["username"], "admin_login_success", logs_collection)
                 current_app.logger.info(f"Admin login successful: {username}")
