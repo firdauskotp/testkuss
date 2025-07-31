@@ -92,7 +92,7 @@ def get_device_image(image_id):
     try:
         image_object_id = ObjectId(image_id)
         image_file = fs.get(image_object_id)
-        return Response(image_file.read(), mimetype=image_file.content_type)
+        return send_file(io.BytesIO(image_file.read()), mimetype=image_file.content_type)
     except Exception as e:
         # Log error e
         return jsonify({"error": "Device image not found"}), 404
