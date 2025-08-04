@@ -61,43 +61,56 @@
                         <label for="premise_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise Name</label>
                         <input type="text" id="premise_name" value="{{ case_data.premise_name | default('') }}" readonly class="tailwind-input-class-disabled">
                     </div>
-                    <div>
-                        <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location</label>
-                        <input type="text" id="location" value="{{ case_data.location | default('') }}" readonly class="tailwind-input-class-disabled">
-                    </div>
-                    <div>
-                        <label for="model" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-                        <input type="text" id="model" value="{{ case_data.model | default('') }}" readonly class="tailwind-input-class-disabled">
-                    </div>
+                </div>
 
-                    {% if case_data.get('image_id') %}
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Uploaded Device Image</label>
-                        <img src="{{ url_for('api_helpers.get_device_image', image_id=case_data.image_id) }}"
-                             alt="Device Image" class="mt-1 rounded-md border border-gray-300 dark:border-gray-600" style="max-width: 200px; max-height: 200px;"
-                             data-modal-target="imageModal" data-modal-toggle="imageModal" id="modalImageTrigger">
-                    </div>
-                    {% endif %}
+                <!-- Devices Loop -->
+                {% if case_data.devices %}
+                {% for device in case_data.devices %}
+                <div class="mt-6 pt-6 border-t border-gray-300 dark:border-gray-700">
+                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Device {{ loop.index }}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device Location</label>
+                            <input type="text" value="{{ device.location | default('') }}" readonly class="tailwind-input-class-disabled">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                            <input type="text" value="{{ device.model | default('') }}" readonly class="tailwind-input-class-disabled">
+                        </div>
 
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reported Issues</label>
-                        <div class="mt-1 space-y-1 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/30">
-                            {% set issue_list = ["Weak Scent", "No Oil", "No Mist", "Weak Batteries", "Faulty Power Adapter"] %}
-                            {% for issue in issue_list %}
-                            <div class="flex items-center">
-                                <input id="{{ issue|replace(' ', '_')|lower }}_display" type="checkbox"
-                                       class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 cursor-not-allowed"
-                                       {% if issue in case_data.issues %}checked{% endif %} disabled>
-                                <label for="{{ issue|replace(' ', '_')|lower }}_display" class="ml-2 block text-sm text-gray-500 dark:text-gray-400">{{ issue }}</label>
+                        {% if device.get('image_id') %}
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Uploaded Device Image</label>
+                            <img src="{{ url_for('api_helpers.get_device_image', image_id=device.image_id) }}"
+                                 alt="Device Image" class="modal-image-trigger mt-1 rounded-md border border-gray-300 dark:border-gray-600" style="max-width: 200px; max-height: 200px; cursor: pointer;"
+                                 data-modal-target="imageModal" data-modal-toggle="imageModal">
+                        </div>
+                        {% endif %}
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reported Issues</label>
+                            <div class="mt-1 space-y-1 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/30">
+                                {% set issue_list = ["Weak Scent", "No Oil", "No Mist", "Weak Batteries", "Faulty Power Adapter"] %}
+                                {% set outer_loop_index = loop.index %}
+                                {% for issue in issue_list %}
+                                <div class="flex items-center">
+                                    <input id="device_{{ outer_loop_index }}_{{ issue|replace(' ', '_')|lower }}_display" type="checkbox"
+                                           class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 cursor-not-allowed"
+                                           {% if issue in device.issues %}checked{% endif %} disabled>
+                                    <label for="device_{{ outer_loop_index }}_{{ issue|replace(' ', '_')|lower }}_display" class="ml-2 block text-sm text-gray-500 dark:text-gray-400">{{ issue }}</label>
+                                </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Remarks</label>
+                            <textarea rows="3" readonly class="tailwind-input-class-disabled">{{ device.remarks | default('') }}</textarea>
                         </div>
                     </div>
-                    <div class="md:col-span-2">
-                        <label for="remarks-issues" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Remarks</label>
-                        <textarea id="remarks-issues" rows="3" readonly class="tailwind-input-class-disabled">{{ case_data.remarks | default('') }}</textarea>
-                    </div>
                 </div>
+                {% endfor %}
+                {% endif %}
+                <!-- End Devices Loop -->
             </div>
 
             <!-- Actions Done Section -->
@@ -273,15 +286,16 @@
             });
         }
 
-        const modalImageTrigger = document.getElementById("modalImageTrigger");
         const imageModal = document.getElementById("imageModal");
         const modalImage = document.getElementById("modalImage");
 
-        if (modalImageTrigger && imageModal && modalImage) {
-            modalImageTrigger.addEventListener("click", function() {
-                modalImage.src = this.src;
-                imageModal.classList.remove('hidden');
-                imageModal.classList.add('flex'); // For centering
+        if (imageModal && modalImage) {
+            document.querySelectorAll('.modal-image-trigger').forEach(trigger => {
+                trigger.addEventListener("click", function() {
+                    modalImage.src = this.src;
+                    imageModal.classList.remove('hidden');
+                    imageModal.classList.add('flex'); // For centering
+                });
             });
         }
 
