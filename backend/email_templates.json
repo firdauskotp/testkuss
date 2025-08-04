@@ -28,22 +28,20 @@
       "email_content": "Dear team,<br><br>{{ premise_name }} has requested to reschedule their service date, originally set for <strong>{{ service_date }}</strong>.<br><br>Please coordinate internally to propose the next available date and update the client accordingly."
     },
   
-    "team_help_request_new_case_received": {
-      "subject": "New Case Received {{ case_id }}",
-      "sender_email": "medoroyalrma@gmail.com",
-      "receiver_email": "{{ team_email }}",
-      "email_content": "Dear team,<br><br>A new help request <strong>{{ case_id }}</strong> has been received from <strong>{{ premise_name }}</strong>.<br><br><ul><li>Location: {{ device_location }}</li><li>Issues: {{ issues }}</li><li>Remarks: {{ remarks }}</li></ul><br>An image of the device is attached in this email. Please assign someone to attend the case and contact the client.",
-      "attachment_template": "case_photo_{{ case_id }}.jpg"
-    },
-  
-    "help_request_new_case_created": {
-      "subject": "New Case Created {{ case_id }}",
-      "sender_email": "medoroyalrma@gmail.com",
-      "receiver_email": "medoroyalrma@gmail.com",
-      "email_content": "Hello from Kuss Essentials!<br><br>Your help request has been successfully created.<br><br><strong>Case ID:</strong> {{ case_id }}<br><br>Our team will contact you shortly to confirm the appointment.<br><br>Sincerely,<br>Kuss Essentials"
-    },
-  
-    "help_request_new_case_assign_technician_reminder": {
+  "team_help_request_new_case_received": {
+    "subject": "New Case Received {{ case_id }}",
+    "sender_email": "medoroyalrma@gmail.com",
+    "receiver_email": "{{ team_email }}",
+    "email_content": "Dear team,<br><br>A new help request <strong>{{ case_id }}</strong> has been received from <strong>{{ premise_name }}</strong>.<br><br>{{ devices_summary }}<br>{{ images_note }}<br>Please assign someone to attend the case and contact the client.",
+    "attachment_template": "case_photo_{{ case_id }}.jpg"
+  },
+
+  "help_request_new_case_created": {
+    "subject": "New Case Created {{ case_id }}",
+    "sender_email": "medoroyalrma@gmail.com",
+    "receiver_email": "{{ customer_email }}",
+    "email_content": "Hello from Kuss Essentials!<br><br>Your help request has been successfully created.<br><br><strong>Case ID:</strong> {{ case_id }}<br><strong>Premise:</strong> {{ premise_name }}<br><br>{{ devices_summary }}<br><br>Our team will contact you shortly to confirm the appointment.<br><br>Sincerely,<br>Kuss Essentials"
+  },    "help_request_new_case_assign_technician_reminder": {
       "subject": "Pending Case Assignment: {{ case_id }}",
       "sender_email": "medoroyalrma@gmail.com",
       "receiver_email": "{{ team_email }}",

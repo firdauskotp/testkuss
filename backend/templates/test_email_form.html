@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Test - KUSS System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: none;
+            border-radius: 15px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .alert {
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h3 class="card-title mb-0">
+                            <i class="bi bi-envelope-check"></i> Email Test Tool
+                        </h3>
+                        <small class="text-light">Development Mode Only</small>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Flash messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'warning' }} alert-dismissible fade show" role="alert">
+                                        <i class="bi bi-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="recipient" class="form-label">
+                                    <i class="bi bi-person-fill"></i> Recipient Email *
+                                </label>
+                                <input type="email" class="form-control" id="recipient" name="recipient" required 
+                                       placeholder="Enter email address to test" value="{{ request.form.get('recipient', '') }}">
+                                <div class="form-text">Enter the email address where you want to send the test email.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">
+                                    <i class="bi bi-chat-text"></i> Subject
+                                </label>
+                                <input type="text" class="form-control" id="subject" name="subject" 
+                                       value="{{ request.form.get('subject', 'Test Email from KUSS System') }}" 
+                                       placeholder="Email subject">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="message" class="form-label">
+                                    <i class="bi bi-chat-dots"></i> Test Message
+                                </label>
+                                <textarea class="form-control" id="message" name="message" rows="4" 
+                                          placeholder="Enter your test message here...">{{ request.form.get('message', 'This is a test email to verify that the KUSS system can send emails successfully. If you receive this message, the email configuration is working correctly!') }}</textarea>
+                                <div class="form-text">This message will be included in the test email along with system information.</div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-send"></i> Send Test Email
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="card-footer bg-light">
+                        <small class="text-muted">
+                            <strong><i class="bi bi-gear"></i> Current Mail Config:</strong><br>
+                            <i class="bi bi-server"></i> Server: {{ config.MAIL_SERVER }}<br>
+                            <i class="bi bi-envelope"></i> From: {{ config.MAIL_DEFAULT_SENDER or config.MAIL_SENDER_ADDRESS }}
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Quick Test Links -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-lightning"></i> Quick Actions
+                        </h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('api_helpers.test_email') }}" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-rocket"></i> Quick Test (Flask-Mail)
+                            </a>
+                            <a href="{{ url_for('api_helpers.test_email_direct') }}" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-lightning-charge"></i> Direct SMTP Test
+                            </a>
+                            <a href="{{ url_for('api_helpers.email_config_test') }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                <i class="bi bi-gear"></i> Diagnose Email Config
+                            </a>
+                            <a href="/clear-limiter" class="btn btn-outline-warning btn-sm">
+                                <i class="bi bi-arrow-clockwise"></i> Clear Rate Limiter
+                            </a>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-house"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Configuration Status -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-info-circle"></i> Email Configuration Status
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <strong>SMTP Server:</strong><br>
+                                    {% if config.MAIL_SERVER %}
+                                        <span class="text-success"><i class="bi bi-check-circle"></i> {{ config.MAIL_SERVER }}</span>
+                                    {% else %}
+                                        <span class="text-danger"><i class="bi bi-x-circle"></i> Not configured</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <strong>Mail Port:</strong><br>
+                                    {% if config.MAIL_PORT %}
+                                        <span class="text-success"><i class="bi bi-check-circle"></i> {{ config.MAIL_PORT }}</span>
+                                    {% else %}
+                                        <span class="text-danger"><i class="bi bi-x-circle"></i> Not configured</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <strong>Username:</strong><br>
+                                    {% if config.MAIL_USERNAME %}
+                                        <span class="text-success"><i class="bi bi-check-circle"></i> Configured</span>
+                                    {% else %}
+                                        <span class="text-danger"><i class="bi bi-x-circle"></i> Not configured</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <strong>Password:</strong><br>
+                                    {% if config.MAIL_PASSWORD %}
+                                        <span class="text-success"><i class="bi bi-check-circle"></i> Configured</span>
+                                    {% else %}
+                                        <span class="text-danger"><i class="bi bi-x-circle"></i> Not configured</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
