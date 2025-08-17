@@ -300,6 +300,20 @@ def get_change_notes_for_premise(premise_name):
 
     return jsonify({"notes": notes})
 
+
+@api_helpers_bp.route('/get-devices-for-premise/<premise_name>')
+def get_devices_for_premise(premise_name):
+    """Get devices for a specific premise as JSON."""
+    devices_cursor = device_list_collection.find({"tied_to_premise": premise_name})
+    devices = []
+    for device in devices_cursor:
+        device['_id'] = str(device['_id']) # Convert ObjectId to string
+        if 'image_id' in device and isinstance(device['image_id'], ObjectId):
+             device['image_id'] = str(device['image_id'])
+        devices.append(device)
+    return jsonify({'devices': devices})
+
+
 # API endpoints for pre-service form cascading dropdowns
 @api_helpers_bp.route('/get-premises-for-company/<company>')
 def get_premises_for_company(company):
