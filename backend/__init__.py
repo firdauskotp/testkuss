@@ -6,15 +6,16 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-# Validate environment variables before anything else
-validate_environment()
-
 # Blueprint imports are moved after app, fs, and mail are defined to avoid circular imports.
 app = Flask(__name__)
 
 # Load configuration based on environment
 config_class = get_config()
 app.config.from_object(config_class)
+
+# Validate environment variables, but not in testing mode
+if config_class.__name__ != 'TestingConfig':
+    validate_environment()
 
 CORS(app)
 

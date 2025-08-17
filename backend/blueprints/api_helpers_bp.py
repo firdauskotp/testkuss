@@ -180,7 +180,7 @@ def get_device_details(premise_name):
 def get_premises(company):
     # This was used in change-form.html to render a partial template with checkboxes
     premises_names = services_collection.distinct('Premise Name', {'company': company})
-    return render_template('partials/premise_checkboxes.html', premises=premises_names)
+    return jsonify({'premises': premises_names})
 
 @api_helpers_bp.route('/get-devices/<premise>') # Path from original app.py
 def get_devices(premise): # Used in change-form.html

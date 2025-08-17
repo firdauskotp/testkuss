@@ -19,13 +19,9 @@ class Config:
     
     # Core Flask Settings
     SECRET_KEY = os.getenv('SECRET_KEY')
-    if not SECRET_KEY:
-        raise ValueError("SECRET_KEY environment variable is required")
     
     # Database Configuration
     MONGO_URL = os.getenv('MONGO_URL')
-    if not MONGO_URL:
-        raise ValueError("MONGO_URL environment variable is required")
     
     # Session Configuration
     PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
@@ -113,6 +109,8 @@ class TestingConfig(Config):
     
     DEBUG = False
     TESTING = True
+    SECRET_KEY = 'test-secret-key'
+    MONGO_URL = os.getenv('MONGO_TEST_URL', 'mongodb://localhost:27017/pytest_db')
     
     # Session Security
     SESSION_COOKIE_SECURE = False
@@ -125,7 +123,6 @@ class TestingConfig(Config):
     RATELIMIT_DEFAULT = ["10000 per day", "5000 per hour", "500 per minute"]
     
     # Database (Could use test database)
-    MONGO_URL = os.getenv('MONGO_TEST_URL', Config.MONGO_URL)
     
     # Security Headers (Minimal for testing)
     SECURITY_HEADERS = {
@@ -142,7 +139,7 @@ class ProductionConfig(Config):
     
     DEBUG = False
     TESTING = False
-    
+
     # Session Security (Strict for production)
     SESSION_COOKIE_SECURE = True  # HTTPS only
     
