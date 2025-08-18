@@ -8,7 +8,7 @@ from functools import wraps
 
 # Assuming col.py and utils.py are in the parent directory (backend/)
 from ..col import login_collection, login_cust_collection, logs_collection
-from ..utils import log_activity, handle_route_error, require_auth, sanitize_input, is_valid_email
+from ..utils import log_activity, handle_route_error, require_auth, sanitize_input, is_valid_email, send_dynamic_email
 
 auth_bp = Blueprint('auth', __name__, template_folder='../templates', static_folder='../static')
 
@@ -251,7 +251,20 @@ def register(): # Client user registration
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
         login_cust_collection.insert_one({'email': email, 'password': hashed_password})
 
-        flash("Client user registered successfully!", "success")
+        # Send email to the new user
+        try:
+            mail = current_app.extensions.get('mail')
+            send_dynamic_email(
+                template_key='new_user_credentials',
+                variables={'email': email, 'password': password},
+                mail=mail,
+                recipient_override=email
+            )
+            flash("Client user registered successfully! An email with credentials has been sent.", "success")
+        except Exception as e:
+            current_app.logger.error(f"Failed to send registration email to {email}: {e}")
+            flash("Client user registered, but failed to send credentials email.", "warning")
+
         log_activity(admin_username, f"added client user: {email}", logs_collection)
         current_app.logger.info(f"Client user registered by {admin_username}: {email}")
         return redirect(url_for('.register'))
@@ -321,7 +334,20 @@ def register_admin(): # Admin registration
             'password': hashed_password
         })
 
-        flash("Admin registered successfully!", "success")
+        # Send email to the new admin
+        try:
+            mail = current_app.extensions.get('mail')
+            send_dynamic_email(
+                template_key='new_admin_credentials',
+                variables={'username': username, 'email': email, 'password': password},
+                mail=mail,
+                recipient_override=email
+            )
+            flash("Admin registered successfully! An email with credentials has been sent.", "success")
+        except Exception as e:
+            current_app.logger.error(f"Failed to send registration email to admin {email}: {e}")
+            flash("Admin registered, but failed to send credentials email.", "warning")
+
         log_activity(admin_username, f"added admin user: {username} ({email})", logs_collection)
         current_app.logger.info(f"Admin user registered by {admin_username}: {username} ({email})")
         return redirect(url_for('.register_admin'))

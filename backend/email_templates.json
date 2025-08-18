@@ -82,6 +82,18 @@
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from Kuss Essentials!<br><br>This email is to confirm that we have received your change request for <strong>{{ company }}</strong>.<br><br>To view the details of the changes, please open the attached PDF file in this email.<br><br>Thank you very much,<br>Kuss Essentials",
       "attachment_template": "change_request_{{ company | replace(' ', '_') }}_{{ date }}.pdf"
+    },
+    "new_user_credentials": {
+      "subject": "Your New Account Credentials",
+      "sender_email": "no-reply@kussessentials.com",
+      "receiver_email": "{{ email }}",
+      "email_content": "Hello,<br><br>A new account has been created for you.<br><br><strong>Username:</strong> {{ email }}<br><strong>Password:</strong> {{ password }}<br><br>Please change your password after your first login.<br><br>Thank you,<br>Kuss Essentials"
+    },
+    "new_admin_credentials": {
+      "subject": "Your New Admin Account Credentials",
+      "sender_email": "no-reply@kussessentials.com",
+      "receiver_email": "{{ email }}",
+      "email_content": "Hello,<br><br>A new admin account has been created for you.<br><br><strong>Username:</strong> {{ username }}<br><strong>Password:</strong> {{ password }}<br><br>Please change your password after your first login.<br><br>Thank you,<br>Kuss Essentials"
     }
   }
   
