@@ -1,9 +1,12 @@
 from .libs import *
+from .config import get_config
 
 load_dotenv()
 
+config = get_config()
+
 # MongoDB Configuration
-MONGO_URI = os.getenv('MONGO_URL')
+MONGO_URI = config.MONGO_URL
 mongo = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
 db = mongo['customer']
 collection = db['case_issue']

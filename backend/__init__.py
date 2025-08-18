@@ -1,53 +1,45 @@
-from backend.utils import handle_route_error, require_auth
+from backend.utils import handle_route_error, replicate_monthly_routes, require_auth
 from .libs import *
 from .col import *
+from .config import get_config, validate_environment
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 
 # Blueprint imports are moved after app, fs, and mail are defined to avoid circular imports.
-
 app = Flask(__name__)
+
+# Load configuration based on environment
+config_class = get_config()
+app.config.from_object(config_class)
+
+# Validate environment variables, but not in testing mode
+if config_class.__name__ != 'TestingConfig':
+    validate_environment()
 
 CORS(app)
 
-load_dotenv()
+# Configure logging based on environment
+log_dir = 'backend/logs'
+os.makedirs(log_dir, exist_ok=True)
 
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+# Set up file handler with rotation
+log_file = getattr(config_class, 'LOG_FILE', 'backend/logs/app.log')
+max_bytes = getattr(config_class, 'LOG_MAX_BYTES', 10240000)
+backup_count = getattr(config_class, 'LOG_BACKUP_COUNT', 10)
 
-# Configure logging for production
-if not app.debug:
-    # Create logs directory if it doesn't exist
-    if not os.path.exists('backend/logs'):
-        os.makedirs('backend/logs')
-    
-    # Set up file handler with rotation
-    file_handler = RotatingFileHandler('backend/logs/app.log', maxBytes=10240000, backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    ))
-    file_handler.setLevel(logging.INFO)
-    app.logger.addHandler(file_handler)
-    
-    app.logger.setLevel(logging.INFO)
-    app.logger.info('Application startup')
+file_handler = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
 
-# Validate critical environment variables
-required_env_vars = ['SECRET_KEY', 'MONGO_URL']
-missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-if missing_vars:
-    app.logger.error(f"Missing required environment variables: {missing_vars}")
-    raise ValueError(f"Missing required environment variables: {missing_vars}")
+# Set logging level based on configuration
+log_level = getattr(config_class, 'LOG_LEVEL', 'INFO')
+file_handler.setLevel(getattr(logging, log_level))
+app.logger.addHandler(file_handler)
+app.logger.setLevel(getattr(logging, log_level))
 
-# Session security configuration
-from datetime import timedelta
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
-if os.getenv('MODE', '').lower() == 'development' or app.debug:
-    app.config['SESSION_COOKIE_SECURE'] = False
-else:
-    app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only in production
-app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+app.logger.info(f'Application startup - Mode: {config_class.__name__}')
 
 # Initialize Flask-Limiter for rate limiting
 from flask_limiter import Limiter
@@ -56,19 +48,24 @@ from flask_limiter.util import get_remote_address
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
+    default_limits=app.config['RATELIMIT_DEFAULT'],
+    storage_uri=app.config['RATELIMIT_STORAGE_URL']
 )
 
-UPLOAD_FOLDER = "static/uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Create upload folder
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 scheduler = APScheduler()
 
 # Key initializations before blueprint imports
 fs = gridfs.GridFS(db)
-mail = Mail(app) # mail needs app, so app must be defined before mail
+mail = Mail(app)  # Configuration is already loaded from config class
+
+# Check email configuration and log warnings if needed
+missing_email_vars = config_class.get_missing_email_vars()
+if missing_email_vars:
+    app.logger.warning(f"Missing email configuration variables: {missing_email_vars}")
+    app.logger.warning("Email functionality may not work properly")
 
 # Now import blueprints
 from .blueprints.auth_bp import auth_bp
@@ -80,22 +77,6 @@ from .blueprints.forms_bp import forms_bp
 from .blueprints.global_settings_bp import global_settings_bp
 from .blueprints.api_helpers_bp import api_helpers_bp
 
-app.config['MAIL_SERVER'] = os.getenv('SMTP_GOOGLE_SERVER')
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = os.getenv('SMTP_TEST_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('SMTP_TEST_APP_PASSWORD')
-app.config['MODE'] = os.getenv('MODE')
-app.config['MAIL_SENDER_ADDRESS'] = os.getenv('MAIL_SENDER_ADDRESS')
-
-# Validate email configuration
-email_vars = ['SMTP_GOOGLE_SERVER', 'SMTP_TEST_USERNAME', 'SMTP_TEST_APP_PASSWORD', 'MAIL_SENDER_ADDRESS']
-missing_email_vars = [var for var in email_vars if not os.getenv(var)]
-if missing_email_vars:
-    app.logger.warning(f"Missing email configuration variables: {missing_email_vars}")
-    app.logger.warning("Email functionality may not work properly")
-
 # mail instance is already created above, just ensure all configs are set before it's potentially used by scheduler or other parts.
 
 @scheduler.task('cron', day=1, hour=0, minute=0)  # Runs every 1st of the month at midnight
@@ -105,15 +86,12 @@ def scheduled_route_update():
 scheduler.init_app(app)
 scheduler.start()
 
-# Security headers for production
+# Security headers based on configuration
 @app.after_request
 def add_security_headers(response):
-    """Add security headers to all responses."""
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"
+    """Add security headers to all responses based on environment configuration."""
+    for header, value in app.config['SECURITY_HEADERS'].items():
+        response.headers[header] = value
     return response
 
 # update_data() is now in api_helpers_bp
@@ -157,6 +135,28 @@ def health_check():
         return jsonify(health_status), 200
     
     return _health_check()
+
+# --- Development/Testing Route to Clear Rate Limiter ---
+@app.route("/clear-limiter")
+def clear_rate_limiter():
+    """Clear rate limiter memory - DEVELOPMENT/TESTING ONLY"""
+    if not app.config.get('DEBUG', False) and not app.config.get('TESTING', False):
+        app.logger.warning("Attempt to clear rate limiter in production mode - blocked")
+        return jsonify({'error': 'Not allowed in production'}), 403
+    
+    try:
+        # Clear all rate limit storage
+        limiter.storage.reset()
+        app.logger.info("Rate limiter memory cleared successfully")
+        return jsonify({
+            'status': 'success', 
+            'message': 'Rate limiter memory cleared',
+            'mode': app.config.get('MODE', 'unknown'),
+            'timestamp': datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        app.logger.error(f"Failed to clear rate limiter: {e}")
+        return jsonify({'error': 'Failed to clear rate limiter'}), 500
 
 # --- Dashboard Route ---
 @app.route("/dashboard")

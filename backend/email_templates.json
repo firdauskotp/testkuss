@@ -1,14 +1,14 @@
 {
     "monthly_servicing_upcoming_servicing_date": {
       "subject": "Upcoming Service Date for {{ premise_name }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from Kuss Essentials!<br><br>This email is sent to let you know that our technician will be coming over to <strong>{{ premise_name }}</strong> on <strong>{{ service_date }}</strong> to carry out monthly servicing for the devices.<br><br>Should you wish to reschedule, please feel free to let us know in advance.<br><br>Thank you very much,<br>Kuss Essentials"
     },
   
     "monthly_service_completed": {
       "subject": "Monthly Servicing Completed for {{ premise_name }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from Kuss Essentials!<br><br>The monthly servicing session for <strong>{{ premise_name }}</strong> has been successfully completed and acknowledged by your staff.<br><br>To view the record, please open the attached PDF file in this email.<br><br>Thank you very much and have a great day ahead,<br>Kuss Essentials",
       "attachment_template": "monthly_service_{{ premise_name | replace(' ', '_') }}_{{ service_date }}.pdf"
@@ -16,74 +16,84 @@
   
     "monthly_service_rescheduled": {
       "subject": "Monthly Servicing Rescheduled for {{ premise_name }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from Kuss Essentials!<br><br>Due to unforeseen circumstances, we’re sorry to inform you that we need to reschedule our monthly servicing session for <strong>{{ premise_name }}</strong>, originally scheduled for <strong>{{ service_date }}</strong>.<br><br>Rest assured, our team is working on the next possible date. We’ll get in touch once it’s finalised.<br><br>We apologise for the inconvenience and thank you for your understanding.<br><br>Sincerely,<br>Kuss Essentials"
     },
   
     "team_monthly_service_rescheduled": {
       "subject": "Service Date Rescheduled for {{ premise_name }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ team_email }}",
       "email_content": "Dear team,<br><br>{{ premise_name }} has requested to reschedule their service date, originally set for <strong>{{ service_date }}</strong>.<br><br>Please coordinate internally to propose the next available date and update the client accordingly."
     },
   
-    "team_help_request_new_case_received": {
-      "subject": "New Case Received {{ case_id }}",
-      "sender_email": "medoroyalrma@gmail.com",
-      "receiver_email": "{{ team_email }}",
-      "email_content": "Dear team,<br><br>A new help request <strong>{{ case_id }}</strong> has been received from <strong>{{ premise_name }}</strong>.<br><br><ul><li>Location: {{ device_location }}</li><li>Issues: {{ issues }}</li><li>Remarks: {{ remarks }}</li></ul><br>An image of the device is attached in this email. Please assign someone to attend the case and contact the client.",
-      "attachment_template": "case_photo_{{ case_id }}.jpg"
-    },
-  
-    "help_request_new_case_created": {
-      "subject": "New Case Created {{ case_id }}",
-      "sender_email": "medoroyalrma@gmail.com",
-      "receiver_email": "medoroyalrma@gmail.com",
-      "email_content": "Hello from Kuss Essentials!<br><br>Your help request has been successfully created.<br><br><strong>Case ID:</strong> {{ case_id }}<br><br>Our team will contact you shortly to confirm the appointment.<br><br>Sincerely,<br>Kuss Essentials"
-    },
-  
-    "help_request_new_case_assign_technician_reminder": {
+  "team_help_request_new_case_received": {
+    "subject": "New Case Received {{ case_id }}",
+    "sender_email": "no-reply@kussessentials.com",
+    "receiver_email": "{{ team_email }}",
+    "email_content": "Dear team,<br><br>A new help request <strong>{{ case_id }}</strong> has been received from <strong>{{ premise_name }}</strong>.<br><br>{{ devices_summary }}<br>{{ images_note }}<br>Please assign someone to attend the case and contact the client.",
+    "attachment_template": "case_photo_{{ case_id }}.jpg"
+  },
+
+  "help_request_new_case_created": {
+    "subject": "New Case Created {{ case_id }}",
+    "sender_email": "no-reply@kussessentials.com",
+    "receiver_email": "{{ customer_email }}",
+    "email_content": "Hello from Kuss Essentials!<br><br>Your help request has been successfully created.<br><br><strong>Case ID:</strong> {{ case_id }}<br><strong>Premise:</strong> {{ premise_name }}<br><br>{{ devices_summary }}<br><br>Our team will contact you shortly to confirm the appointment.<br><br>Sincerely,<br>Kuss Essentials"
+  },    "help_request_new_case_assign_technician_reminder": {
       "subject": "Pending Case Assignment: {{ case_id }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ team_email }}",
       "email_content": "Dear team,<br><br>Please assign a technician to the following case:<br><br><strong>Case ID:</strong> {{ case_id }}<br><strong>Premise:</strong> {{ premise_name }}<br><br>Be sure to contact the customer with the scheduled appointment date."
     },
   
     "help_request_case_assigned": {
       "subject": "Case Assigned: {{ case_id }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ staff_email }}",
       "email_content": "Dear {{ staff_name }},<br><br>The case <strong>{{ case_id }}</strong> at <strong>{{ premise_name }}</strong> has been assigned to you.<br><br>Please attend as soon as possible and inform the client about the appointment."
     },
   
     "help_request_case_reminder_client": {
       "subject": "Upcoming Appointment for {{ case_id }} on {{ appointment_date }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from Kuss Essentials!<br><br>Our technician will visit <strong>{{ premise_name }}</strong> on <strong>{{ appointment_date }}</strong> to attend to help request <strong>{{ case_id }}</strong>.<br><br>If you'd like to reschedule, please let us know.<br><br>Sincerely,<br>Kuss Essentials"
     },
   
     "reschedule_appointment_notification": {
       "subject": "Appointment Reschedule Notification for {{ premise_name }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello there!<br><br>Due to unforeseen circumstances, we’re sorry to inform you that we need to reschedule the appointment for case <strong>{{ case_id }}</strong> at <strong>{{ premise_name }}</strong> that was originally scheduled for <strong>{{ appt_date }}</strong>.<br><br>Our team is working to set a new date and will update you shortly.<br><br>Sorry for the inconvenience caused.<br><br>Kuss System"
     },
   
     "case_completed_notification": {
       "subject": "Case {{ case_id }} Completed for {{ premise_name }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from KUSS!<br><br>The case <strong>{{ case_id }}</strong> for <strong>{{ premise_name }}</strong> has been completed and acknowledged by your staff.<br><br>To view the record, please open the attached PDF file.<br><br>Thank you very much and have a great day.<br>Kuss System",
       "attachment_template": "case_completed_{{ case_id }}.pdf"
     },
     "change_form_confirmation": {
       "subject": "Change Request Confirmation for {{ company }}",
-      "sender_email": "medoroyalrma@gmail.com",
+      "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from Kuss Essentials!<br><br>This email is to confirm that we have received your change request for <strong>{{ company }}</strong>.<br><br>To view the details of the changes, please open the attached PDF file in this email.<br><br>Thank you very much,<br>Kuss Essentials",
       "attachment_template": "change_request_{{ company | replace(' ', '_') }}_{{ date }}.pdf"
+    },
+    "new_user_credentials": {
+      "subject": "Your New Account Credentials",
+      "sender_email": "no-reply@kussessentials.com",
+      "receiver_email": "{{ email }}",
+      "email_content": "Hello,<br><br>A new account has been created for you.<br><br><strong>Username:</strong> {{ email }}<br><strong>Password:</strong> {{ password }}<br><br>Please change your password after your first login.<br><br>Thank you,<br>Kuss Essentials"
+    },
+    "new_admin_credentials": {
+      "subject": "Your New Admin Account Credentials",
+      "sender_email": "no-reply@kussessentials.com",
+      "receiver_email": "{{ email }}",
+      "email_content": "Hello,<br><br>A new admin account has been created for you.<br><br><strong>Username:</strong> {{ username }}<br><strong>Password:</strong> {{ password }}<br><br>Please change your password after your first login.<br><br>Thank you,<br>Kuss Essentials"
     }
   }
   

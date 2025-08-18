@@ -4,12 +4,35 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import re
 from datetime import datetime
+from functools import wraps
 
 # Assuming col.py and utils.py are in the parent directory (backend/)
 from ..col import login_collection, login_cust_collection, logs_collection
-from ..utils import log_activity, handle_route_error, require_auth, sanitize_input, is_valid_email
+from ..utils import log_activity, handle_route_error, require_auth, sanitize_input, is_valid_email, send_dynamic_email
 
 auth_bp = Blueprint('auth', __name__, template_folder='../templates', static_folder='../static')
+
+def redirect_if_authenticated(f):
+    """Decorator to redirect authenticated users away from auth pages"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "username" in session:
+            user_type = session.get("user_type", "")
+            username = session.get("username", "unknown")
+            
+            if user_type == "admin":
+                current_app.logger.info(f"Authenticated admin {username} redirected from auth page to dashboard")
+                return redirect(url_for("dashboard"))
+            elif user_type == "customer":
+                current_app.logger.info(f"Authenticated customer {username} redirected from auth page to customer form")
+                return redirect(url_for("customer.customer_form"))
+        elif "customer_email" in session:
+            customer_email = session.get("customer_email", "unknown")
+            current_app.logger.info(f"Authenticated customer {customer_email} redirected from auth page to customer form")
+            return redirect(url_for("customer.customer_form"))
+
+        return f(*args, **kwargs)
+    return decorated_function
 
 def validate_input(value, max_length=100):
     """Basic input validation to prevent injection attacks"""
@@ -18,6 +41,7 @@ def validate_input(value, max_length=100):
     return True
 
 @auth_bp.route("/")
+@redirect_if_authenticated
 @handle_route_error
 def index():
     """Main index page - client login form"""
@@ -25,6 +49,7 @@ def index():
     return render_template("index.html")
 
 @auth_bp.route("/admin-login", methods=["GET", "POST"])
+@redirect_if_authenticated
 @handle_route_error
 def admin_login():
     """Admin login with enhanced error handling and logging"""
@@ -86,6 +111,7 @@ def admin_login():
     return _admin_login_post()
 
 @auth_bp.route("/client-login", methods=["GET", "POST"])
+@redirect_if_authenticated
 @handle_route_error
 def client_login():
     """Client login with enhanced error handling and logging"""
@@ -225,7 +251,20 @@ def register(): # Client user registration
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
         login_cust_collection.insert_one({'email': email, 'password': hashed_password})
 
-        flash("Client user registered successfully!", "success")
+        # Send email to the new user
+        try:
+            mail = current_app.extensions.get('mail')
+            send_dynamic_email(
+                template_key='new_user_credentials',
+                variables={'email': email, 'password': password},
+                mail=mail,
+                recipient_override=email
+            )
+            flash("Client user registered successfully! An email with credentials has been sent.", "success")
+        except Exception as e:
+            current_app.logger.error(f"Failed to send registration email to {email}: {e}")
+            flash("Client user registered, but failed to send credentials email.", "warning")
+
         log_activity(admin_username, f"added client user: {email}", logs_collection)
         current_app.logger.info(f"Client user registered by {admin_username}: {email}")
         return redirect(url_for('.register'))
@@ -295,7 +334,20 @@ def register_admin(): # Admin registration
             'password': hashed_password
         })
 
-        flash("Admin registered successfully!", "success")
+        # Send email to the new admin
+        try:
+            mail = current_app.extensions.get('mail')
+            send_dynamic_email(
+                template_key='new_admin_credentials',
+                variables={'username': username, 'email': email, 'password': password},
+                mail=mail,
+                recipient_override=email
+            )
+            flash("Admin registered successfully! An email with credentials has been sent.", "success")
+        except Exception as e:
+            current_app.logger.error(f"Failed to send registration email to admin {email}: {e}")
+            flash("Admin registered, but failed to send credentials email.", "warning")
+
         log_activity(admin_username, f"added admin user: {username} ({email})", logs_collection)
         current_app.logger.info(f"Admin user registered by {admin_username}: {username} ({email})")
         return redirect(url_for('.register_admin'))

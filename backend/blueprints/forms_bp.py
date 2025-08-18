@@ -295,6 +295,14 @@ def service():
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     companies = services_collection.distinct('company')
 
+    # Fetch models and essential oils for dropdowns
+    raw_models = list(model_list_collection.find().sort("order", 1))
+    models = [{k: v for k, v in model.items() if k != '_id'} for model in raw_models]
+
+    eo_raw = list(eo_pack_collection.find().sort("order", 1))
+    essential_oils = [{k: v for k, v in eo.items() if k != '_id'} for eo in eo_raw]
+
+
     device_entries = []
     if request.method == 'POST':
         premise_name = request.form.get("premiseName")
@@ -309,41 +317,38 @@ def service():
             flash("Invalid premise selected!", "danger")
             return redirect(url_for("field_service"))
 
-        # Fetch devices linked to the premise
-        devices = list(device_list_collection.find({"tied_to_premise": premise_name}))
+        # Process submitted device data
+        i = 0
+        while True:
+            device_id = request.form.get(f'device_id_{i}')
+            if not device_id:
+                break
 
-        # Fetch PICs linked to the premise
-        pic_records = list(profile_list_collection.find({"tied_to_premise": premise_name}))
+            model = request.form.get(f'model_{i}')
+            color = request.form.get(f'color_{i}')
+            eo = request.form.get(f'eo_{i}')
+            location = request.form.get(f'location_{i}')
+            scent_change = request.form.get(f'scent_change_{i}')
+            relocate = request.form.get(f'relocate_{i}')
+            inactive = request.form.get(f'inactive_{i}')
 
-        # Process devices
-        for i, device in enumerate(devices, start=1):
-            balance = int(request.form.get(f'balance{i}', 0))
-            volume_required = int(device.get("Volume", 0))
-            consumption = volume_required - balance
-
-            device_entry = {
-                "location": device.get("location"),
-                "serial_number": device.get("S/N"),
-                "model": device.get("Model"),
-                "scent": device.get("Current EO"),
-                "volume_required": volume_required,
-                "balance": balance,
-                "consumption": consumption,
-                "events": []
+            update_data = {
+                'Model': model,
+                'Color': color,
+                'Current EO': eo,
+                'location': location,
+                'inactive': bool(inactive)
             }
 
-            # Process events (E1 to E4)
-            for e in range(1, 5):
-                event_data = {
-                    "days": device.get(f"E{e} - DAYS"),
-                    "start_time": device.get(f"E{e} - START"),
-                    "end_time": device.get(f"E{e} - END"),
-                    "work": device.get(f"E{e} - WORK"),
-                    "pause": device.get(f"E{e} - PAUSE"),
-                }
-                device_entry["events"].append(event_data)
+            if scent_change:
+                update_data['Current EO'] = scent_change
 
-            device_entries.append(device_entry)
+            if relocate:
+                update_data['location'] = relocate
+
+            device_list_collection.update_one({'_id': ObjectId(device_id)}, {'$set': update_data})
+
+            i += 1
 
         # Create a record for MongoDB
         field_service_record = {
@@ -373,7 +378,9 @@ def service():
         devices=device_entries,  # Always a list
         companies=companies,
         technician_name=technician_name,
-        current_time=current_time
+        current_time=current_time,
+        models=models,
+        essential_oils=essential_oils
     )
 
 @forms_bp.route('/service2', methods=['GET', 'POST'])

@@ -10,6 +10,9 @@ from pymongo.errors import PyMongoError
 from .col import collection
 import json
 
+# get current directory path 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
 def log_activity(name, action, database):
     """Log user activity with enhanced information"""
     try:
@@ -183,6 +186,62 @@ def validate_session():
             return False
     return True
 
+def format_devices_for_email(devices_data):
+    """
+    Format multiple devices data for email templates.
+    
+    Args:
+        devices_data (list): List of device dictionaries
+        
+    Returns:
+        tuple: (devices_summary, images_note) - Both as Markup objects for safe HTML rendering
+    """
+    from markupsafe import Markup
+    
+    if not devices_data:
+        return Markup("No devices listed."), Markup("No images attached.")
+    
+    devices_summary = "<strong>Device Details:</strong><br>"
+    has_images = False
+    
+    for i, device in enumerate(devices_data, 1):
+        devices_summary += f"<br><strong>Device {i}:</strong><br>"
+        devices_summary += f"<ul>"
+        devices_summary += f"<li><strong>Location:</strong> {device.get('location', 'Not specified')}</li>"
+        devices_summary += f"<li><strong>Model:</strong> {device.get('model', 'Not specified')}</li>"
+        
+        # Format issues
+        issues = device.get('issues', [])
+        if issues:
+            issues_str = ', '.join(issues)
+            devices_summary += f"<li><strong>Issues:</strong> {issues_str}</li>"
+        else:
+            devices_summary += f"<li><strong>Issues:</strong> None specified</li>"
+        
+        # Add remarks if present
+        remarks = device.get('remarks', '').strip()
+        if remarks:
+            devices_summary += f"<li><strong>Remarks:</strong> {remarks}</li>"
+        
+        devices_summary += f"</ul>"
+        
+        # Check if device has image
+        if device.get('image_id'):
+            has_images = True
+    
+    # Generate images note
+    if has_images:
+        if len(devices_data) == 1:
+            images_note = "Device image is attached to this email."
+        else:
+            images_note = "Device images are attached to this email where available."
+    else:
+        images_note = "No device images were provided."
+    
+    # Return as Markup objects so they render as HTML instead of escaped text
+    return Markup(devices_summary), Markup(images_note)
+
+
 def sanitize_input(input_string, max_length=100):
     """Basic input sanitization"""
     if not input_string:
@@ -212,49 +271,132 @@ def safe_int(value):
         return value
     
 def send_email_to_customer(case_no, user_email, from_email, mail):
-    """Send a confirmation email to the customer."""
-    subject = f"Case #{case_no} Created Successfully"
-    body = f"Thank you for submitting your case. Your case number is #{case_no}. Our staff will get in touch with you shortly."
-    send_email(user_email, from_email, subject, body, mail)
+    """Send a confirmation email to the customer with HTML formatting."""
+    subject = f"Case #{case_no} Created Successfully - KUSS Support"
+    
+    # Create a professional HTML email
+    body_html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
+                📧 Case Confirmation - KUSS Support
+            </h2>
+            
+            <p>Dear Valued Customer,</p>
+            
+            <p>Thank you for submitting your support request. Your case has been successfully created and logged in our system.</p>
+            
+            <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #007bff;">Case Details:</h3>
+                <p><strong>Case Number:</strong> #{case_no}</p>
+                <p><strong>Created:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p><strong>Status:</strong> Under Review</p>
+            </div>
+            
+            <p><strong>What's Next?</strong></p>
+            <ul>
+                <li>Our technical staff will review your case within 24 hours</li>
+                <li>You will receive updates via email as progress is made</li>
+                <li>Our team may contact you for additional information if needed</li>
+            </ul>
+            
+            <p>Please keep your case number <strong>#{case_no}</strong> for future reference.</p>
+            
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            
+            <p style="font-size: 12px; color: #666;">
+                Best regards,<br>
+                KUSS Technical Support Team<br>
+                <em>This is an automated message. Please do not reply directly to this email.</em>
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    try:
+        send_email(
+            to_email=user_email,
+            from_email=from_email,
+            subject=subject,
+            body_html=body_html,
+            mail=mail
+        )
+        current_app.logger.info(f"Customer notification email sent successfully for case #{case_no}")
+    except Exception as e:
+        current_app.logger.error(f"Failed to send customer notification for case #{case_no}: {e}")
+        raise
 
 
 def send_email_to_admin(case_no, user_email, from_email, mail):
-    """Notify admin about a new case creation."""
-    subject = f"New Case #{case_no} Created"
-    body = f"A new case with case number #{case_no} has been created. Please check the system for details."
-    send_email(os.getenv('ADMIN_EMAIL_ADDRESS'), from_email, subject, body, mail)
+    """Notify admin about a new case creation with detailed HTML formatting."""
+    admin_email = os.getenv('ADMIN_EMAIL_ADDRESS')
+    
+    if not admin_email:
+        current_app.logger.warning("ADMIN_EMAIL_ADDRESS not configured - skipping admin notification")
+        return
+    
+    subject = f"🚨 New Support Case #{case_no} - Action Required"
+    
+    # Create a detailed HTML email for admin
+    body_html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 10px;">
+                🚨 New Support Case - Action Required
+            </h2>
+            
+            <div style="background-color: #fff3cd; padding: 15px; border: 1px solid #ffeaa7; border-radius: 5px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #856404;">Case Summary:</h3>
+                <p><strong>Case Number:</strong> #{case_no}</p>
+                <p><strong>Customer Email:</strong> {user_email}</p>
+                <p><strong>Created:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p><strong>Status:</strong> Pending Review</p>
+            </div>
+            
+            <div style="background-color: #d1ecf1; padding: 15px; border: 1px solid #bee5eb; border-radius: 5px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #0c5460;">Required Actions:</h3>
+                <ul>
+                    <li>Review the case details in the admin dashboard</li>
+                    <li>Assign to appropriate technical staff</li>
+                    <li>Contact customer if additional information is needed</li>
+                    <li>Update case status as work progresses</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://localhost:5000/dashboard" 
+                   style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    📋 View Case in Dashboard
+                </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            
+            <p style="font-size: 12px; color: #666;">
+                KUSS Admin Notification System<br>
+                <em>This is an automated notification. Please log into the admin dashboard for full case details.</em>
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    try:
+        send_email(
+            to_email=admin_email,
+            from_email=from_email,
+            subject=subject,
+            body_html=body_html,
+            mail=mail
+        )
+        current_app.logger.info(f"Admin notification email sent successfully for case #{case_no}")
+    except Exception as e:
+        current_app.logger.error(f"Failed to send admin notification for case #{case_no}: {e}")
+        raise
 
-
-# def send_email(to_email, subject, body):
-#     """Generic function to send an email."""
-#     try:
-#         msg = MIMEMultipart()
-#         msg["From"] = app.config['MAIL_USERNAME']
-#         msg["To"] = to_email
-#         msg["Subject"] = subject
-
-#         msg.attach(MIMEText(body, "plain"))
-
-#         with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
-#             server.starttls()
-#             server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-#             server.send_message(msg)
-#     except Exception as e:
-#         print(f"Failed to send email: {e}")
-
-# def send_email(to_email, from_email, subject, body, mail):
-#     """Generic function to send an email using Flask-Mail."""
-#     try:
-#         msg = Message(subject, sender= from_email, recipients=[to_email])
-#         msg.body = body
-#         # Log email details for debugging (without exposing sensitive content)
-#         from flask import current_app
-#         current_app.logger.info(f"Sending email to: {to_email[:3]}...@{to_email.split('@')[1] if '@' in to_email else 'unknown'}")
-#         current_app.logger.info(f"Email subject: {subject}")
-#         mail.send(msg)
-#     except Exception as e:
-#         from flask import current_app
-#         current_app.logger.error(f"Failed to send email: {e}")
 
 from fpdf import FPDF
 import io
@@ -355,43 +497,169 @@ def generate_file_for(template_key, variables):
     else:
         return b""
     
-def send_dynamic_email(template_key, variables, mail):
+def send_dynamic_email(template_key, variables, mail, recipient_override=None, recipient_type=None):
     """
+    Enhanced dynamic email sender with flexible recipient handling.
+    
+    Args:
+        template_key (str): Key to look up in email_templates.json
+        variables (dict): Variables to render in the template
+        mail (Mail): Flask-Mail instance
+        recipient_override (str, optional): Override the template's default recipient
+        recipient_type (str, optional): 'customer', 'team', 'staff' - helps select appropriate template variant
+    
     1) loads email_templates.json  
     2) renders subject & HTML body (Jinja in JSON)  
-    3) attaches any attachment_template (filename rendered by Jinja, file bytes from your generator)  
-    4) calls send_email()  
+    3) handles flexible recipient selection
+    4) attaches any attachment_template (filename rendered by Jinja, file bytes from your generator)  
+    5) calls send_email()
     """
-    # 1) load + look up
-    with open('email_templates.json') as f:
-        templates = json.load(f)
-    tpl = templates.get(template_key)
-    if not tpl:
-        raise KeyError(f"No such template: {template_key}")
+    try:
+        # 1) Load templates
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(current_dir, 'email_templates.json')) as f:
+            templates = json.load(f)
+        
+        # 2) Smart template selection with recipient type
+        if recipient_type and template_key not in templates:
+            # Try to find a variant with recipient type prefix
+            variant_key = f"{recipient_type}_{template_key}"
+            if variant_key in templates:
+                template_key = variant_key
+                current_app.logger.info(f"Using template variant: {template_key}")
+        
+        tpl = templates.get(template_key)
+        if not tpl:
+            available_templates = list(templates.keys())
+            error_msg = f"Template '{template_key}' not found. Available templates: {available_templates}"
+            current_app.logger.error(error_msg)
+            raise KeyError(error_msg)
 
-    # 2) render subject & body
-    subject = render_template_string(tpl['subject'], **variables)
-    body_html = render_template_string(tpl['email_content'], **variables)
+        # 3) Enhanced recipient handling
+        recipient_email = None
+        
+        if recipient_override:
+            # Explicit override takes precedence
+            recipient_email = recipient_override
+            current_app.logger.info(f"Using recipient override: {recipient_email}")
+        else:
+            # Use template's default recipient with variable rendering
+            template_recipient = tpl.get('receiver_email', '')
+            
+            # Handle different recipient types intelligently
+            if recipient_type == 'team' or recipient_type == 'admin':
+                # For team/admin emails, prefer team_email variable or fallback to admin config
+                if 'team_email' in variables:
+                    recipient_email = variables['team_email']
+                    current_app.logger.info(f"Using team_email from variables: {recipient_email}")
+                elif 'admin_email' in variables:
+                    recipient_email = variables['admin_email']
+                    current_app.logger.info(f"Using admin_email from variables: {recipient_email}")
+                else:
+                    # Fallback to application config
+                    recipient_email = current_app.config.get('ADMIN_EMAIL_ADDRESS')
+                    current_app.logger.info(f"Using ADMIN_EMAIL_ADDRESS from config: {recipient_email}")
+                    if recipient_email:
+                        variables['team_email'] = recipient_email  # Add to variables for template rendering
+                        variables['admin_email'] = recipient_email
+            elif recipient_type == 'customer':
+                # For customer emails, prefer customer_email variable
+                if 'customer_email' in variables:
+                    recipient_email = variables['customer_email']
+                    current_app.logger.info(f"Using customer_email from variables: {recipient_email}")
+                elif 'user_email' in variables:
+                    recipient_email = variables['user_email']
+                    current_app.logger.info(f"Using user_email from variables: {recipient_email}")
+            
+            # If still no recipient, render the template's receiver_email
+            if not recipient_email and template_recipient:
+                try:
+                    recipient_email = render_template_string(template_recipient, **variables)
+                    current_app.logger.info(f"Rendered recipient from template '{template_recipient}': {recipient_email}")
+                except Exception as render_error:
+                    current_app.logger.error(f"Failed to render recipient email template '{template_recipient}': {render_error}")
+                    # Fallback logic
+                    if recipient_type == 'team':
+                        recipient_email = current_app.config.get('ADMIN_EMAIL_ADDRESS')
+                        current_app.logger.info(f"Fallback to ADMIN_EMAIL_ADDRESS: {recipient_email}")
+                    elif recipient_type == 'customer' and 'customer_email' in variables:
+                        recipient_email = variables['customer_email']
+                        current_app.logger.info(f"Fallback to customer_email: {recipient_email}")
+        
+        # Validate recipient
+        if not recipient_email:
+            error_msg = f"No recipient email found for template '{template_key}' with recipient_type '{recipient_type}'"
+            current_app.logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        current_app.logger.info(f"Final recipient email: {recipient_email}")
+        current_app.logger.info(f"Email sender: {current_app.config.get('MAIL_SENDER_ADDRESS')}")
+        
+        # Check if sender and recipient are the same
+        sender_email = current_app.config.get('MAIL_SENDER_ADDRESS')
+        if sender_email == recipient_email:
+            current_app.logger.warning(f"Sender and recipient are the same ({sender_email}). This might cause delivery issues.")
+        
+        # Validate email format
+        if not is_valid_email(recipient_email):
+            error_msg = f"Invalid recipient email format: {recipient_email}"
+            current_app.logger.error(error_msg)
+            raise ValueError(error_msg)
 
-    # 3) prepare attachments list
-    attachments = []
-    if tpl.get('attachment_template'):
-        # render the filename
-        filename = render_template_string(tpl['attachment_template'], **variables)
-        # generate or load the file bytes (you supply this)
-        file_bytes = generate_file_for(template_key, variables)
-        # e.g. PDF
-        attachments.append((filename, 'application/pdf', file_bytes))
+        # 4) Render subject & body
+        subject = render_template_string(tpl['subject'], **variables)
+        body_html = render_template_string(tpl['email_content'], **variables)
 
-    # 4) finally send
-    send_email(
-        to_email   = render_template_string(tpl['receiver_email'], **variables),
-        from_email = tpl['sender_email'],
-        subject    = subject,
-        body_html  = body_html,
-        mail       = mail,
-        attachments=attachments
-    )
+        # 5) Prepare attachments list
+        attachments = []
+        if tpl.get('attachment_template'):
+            try:
+                # Render the filename
+                filename = render_template_string(tpl['attachment_template'], **variables)
+                # Generate or load the file bytes
+                file_bytes = generate_file_for(template_key, variables)
+                if file_bytes:
+                    attachments.append((filename, 'application/pdf', file_bytes))
+                    current_app.logger.info(f"Attachment prepared: {filename}")
+            except Exception as att_error:
+                current_app.logger.warning(f"Failed to prepare attachment for template '{template_key}': {att_error}")
+                # Continue without attachment rather than failing
+
+        # 6) Send email
+        sender_email = tpl.get('sender_email', current_app.config.get('MAIL_DEFAULT_SENDER'))
+        
+        current_app.logger.info(f"Sending dynamic email - Template: {template_key}, Recipient: {recipient_email[:3]}...@{recipient_email.split('@')[1] if '@' in recipient_email else 'unknown'}")
+        
+        send_email(
+            to_email=recipient_email,
+            from_email=sender_email,
+            subject=subject,
+            body_html=body_html,
+            mail=mail,
+            attachments=attachments
+        )
+        
+        current_app.logger.info(f"Dynamic email sent successfully - Template: {template_key}")
+        return True
+        
+    except Exception as e:
+        error_msg = f"Failed to send dynamic email with template '{template_key}': {str(e)}"
+        current_app.logger.error(error_msg)
+        raise Exception(error_msg) from e
+
+
+def send_customer_email(template_key, variables, mail, customer_email=None):
+    """Convenience function for sending emails to customers."""
+    if customer_email:
+        variables['customer_email'] = customer_email
+    return send_dynamic_email(template_key, variables, mail, recipient_type='customer')
+
+
+def send_team_email(template_key, variables, mail, team_email=None):
+    """Convenience function for sending emails to team/admin."""
+    if team_email:
+        variables['team_email'] = team_email
+    return send_dynamic_email(template_key, variables, mail, recipient_type='team')
 
 
 def send_email(to_email, from_email, subject, body_html, mail, attachments=None):

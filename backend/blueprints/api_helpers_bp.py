@@ -4,6 +4,7 @@ import io # For send_file with BytesIO for GridFS
 from bson import ObjectId # For GridFS file IDs
 from werkzeug.utils import secure_filename # Though not used in these specific routes, good for general API file handling
 from datetime import datetime # Though not used in these specific routes
+import os
 
 from backend import fs # GridFS instance from main app, changed from `from .. import fs`
 from ..col import (
@@ -179,7 +180,7 @@ def get_device_details(premise_name):
 def get_premises(company):
     # This was used in change-form.html to render a partial template with checkboxes
     premises_names = services_collection.distinct('Premise Name', {'company': company})
-    return render_template('partials/premise_checkboxes.html', premises=premises_names)
+    return jsonify({'premises': premises_names})
 
 @api_helpers_bp.route('/get-devices/<premise>') # Path from original app.py
 def get_devices(premise): # Used in change-form.html
@@ -299,6 +300,20 @@ def get_change_notes_for_premise(premise_name):
 
     return jsonify({"notes": notes})
 
+
+@api_helpers_bp.route('/get-devices-for-premise/<premise_name>')
+def get_devices_for_premise(premise_name):
+    """Get devices for a specific premise as JSON."""
+    devices_cursor = device_list_collection.find({"tied_to_premise": premise_name})
+    devices = []
+    for device in devices_cursor:
+        device['_id'] = str(device['_id']) # Convert ObjectId to string
+        if 'image_id' in device and isinstance(device['image_id'], ObjectId):
+             device['image_id'] = str(device['image_id'])
+        devices.append(device)
+    return jsonify({'devices': devices})
+
+
 # API endpoints for pre-service form cascading dropdowns
 @api_helpers_bp.route('/get-premises-for-company/<company>')
 def get_premises_for_company(company):
@@ -364,3 +379,303 @@ def get_eo_for_model_premise_color(model, premise, color):
     except Exception as e:
         current_app.logger.error(f"Error fetching EO for model {model}, premise {premise}, and color {color}: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
+
+# === EMAIL TESTING ROUTES ===
+
+@api_helpers_bp.route('/test-email')
+def test_email():
+    """Test email functionality - only works in development mode"""
+    if os.getenv('MODE', '').lower() != 'development':
+        return jsonify({"error": "Test email only available in development mode"}), 403
+    
+    try:
+        from ..utils import send_email
+        from .. import mail
+        
+        test_email_addr = os.getenv('ADMIN_EMAIL_ADDRESS')
+        if not test_email_addr:
+            return jsonify({"error": "ADMIN_EMAIL_ADDRESS not configured"}), 400
+        
+        subject = "Test Email from KUSS System"
+        body = f"""
+        <html>
+        <body>
+            <h2>✅ Email Test Successful</h2>
+            <p>This is a test email to verify that Flask-Mail is working correctly.</p>
+            <p><strong>Timestamp:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p><strong>Mail Server:</strong> {os.getenv('SMTP_GOOGLE_SERVER')}</p>
+            <p><strong>From:</strong> {os.getenv('MAIL_SENDER_ADDRESS')}</p>
+            <p>If you received this email, your mail configuration is working properly! 🎉</p>
+            <hr>
+            <small>This test email was sent from the KUSS system in development mode.</small>
+        </body>
+        </html>
+        """
+        
+        send_email(
+            to_email=test_email_addr,
+            from_email=os.getenv('MAIL_SENDER_ADDRESS'),
+            subject=subject,
+            body_html=body,
+            mail=mail
+        )
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Test email sent to {test_email_addr}",
+            "mail_server": os.getenv('SMTP_GOOGLE_SERVER'),
+            "from_email": os.getenv('MAIL_SENDER_ADDRESS'),
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Email test failed: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+@api_helpers_bp.route('/test-email-form', methods=['GET', 'POST'])
+def test_email_form():
+    """Test email with custom recipient - only works in development mode"""
+    if os.getenv('MODE', '').lower() != 'development':
+        flash("Email testing only available in development mode", "warning")
+        return redirect(url_for('auth.index'))
+    
+    if request.method == 'POST':
+        try:
+            from ..utils import send_email, is_valid_email
+            from .. import mail
+            
+            recipient = request.form.get('recipient')
+            custom_subject = request.form.get('subject', 'Test Email from KUSS')
+            custom_message = request.form.get('message', 'This is a test email.')
+            
+            if not recipient or not is_valid_email(recipient):
+                flash("Please provide a valid email address", "error")
+                return render_template('test_email_form.html')
+            
+            body_html = f"""
+            <html>
+            <body>
+                <h2>📧 Test Email from KUSS System</h2>
+                <p><strong>Custom Message:</strong></p>
+                <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 10px 0;">
+                    {custom_message}
+                </div>
+                <hr>
+                <p><strong>Test Details:</strong></p>
+                <ul>
+                    <li>Sent at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</li>
+                    <li>Mail Server: {os.getenv('SMTP_GOOGLE_SERVER')}</li>
+                    <li>From: {os.getenv('MAIL_SENDER_ADDRESS')}</li>
+                    <li>Mode: Development</li>
+                </ul>
+                <hr>
+                <small>This is a test email sent from the KUSS system development environment.</small>
+            </body>
+            </html>
+            """
+            
+            send_email(
+                to_email=recipient,
+                from_email=os.getenv('MAIL_SENDER_ADDRESS'),
+                subject=custom_subject,
+                body_html=body_html,
+                mail=mail
+            )
+            
+            flash(f"Test email sent successfully to {recipient}!", "success")
+            current_app.logger.info(f"Test email sent to {recipient} from test form")
+            
+        except Exception as e:
+            flash(f"Failed to send email: {str(e)}", "error")
+            current_app.logger.error(f"Test email form error: {e}")
+            
+    return render_template('test_email_form.html')
+
+@api_helpers_bp.route('/email-config-test')
+def email_config_test():
+    """Diagnose email configuration issues - development only"""
+    if os.getenv('MODE', '').lower() != 'development':
+        return jsonify({"error": "Config test only available in development mode"}), 403
+    
+    try:
+        import smtplib
+        import ssl
+        
+        # Get configuration - use exact same settings as Flask
+        smtp_server = os.getenv('SMTP_GOOGLE_SERVER')
+        smtp_port = 465  # SSL port for Gmail
+        username = os.getenv('SMTP_TEST_USERNAME')
+        password = os.getenv('SMTP_TEST_APP_PASSWORD')
+        
+        config_status = {
+            "smtp_server": smtp_server,
+            "smtp_port": smtp_port,
+            "username": username,
+            "password_set": bool(password),
+            "flask_config": {
+                "MAIL_SERVER": current_app.config.get('MAIL_SERVER'),
+                "MAIL_PORT": current_app.config.get('MAIL_PORT'),
+                "MAIL_USE_TLS": current_app.config.get('MAIL_USE_TLS'),
+                "MAIL_USE_SSL": current_app.config.get('MAIL_USE_SSL'),
+                "MAIL_USERNAME": current_app.config.get('MAIL_USERNAME'),
+                "MAIL_PASSWORD_SET": bool(current_app.config.get('MAIL_PASSWORD'))
+            },
+            "tests": {}
+        }
+        
+        # Test 1: DNS Resolution
+        try:
+            import socket
+            socket.gethostbyname(smtp_server)
+            config_status["tests"]["dns_resolution"] = "✅ SUCCESS"
+        except Exception as e:
+            config_status["tests"]["dns_resolution"] = f"❌ FAILED: {str(e)}"
+        
+        # Test 2: Port Connection
+        try:
+            import socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            result = sock.connect_ex((smtp_server, smtp_port))
+            sock.close()
+            
+            if result == 0:
+                config_status["tests"]["port_connection"] = "✅ SUCCESS"
+            else:
+                config_status["tests"]["port_connection"] = f"❌ FAILED: Port {smtp_port} not accessible"
+        except Exception as e:
+            config_status["tests"]["port_connection"] = f"❌ FAILED: {str(e)}"
+        
+        # Test 3: SMTP SSL Connection (matching Flask config)
+        try:
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+            config_status["tests"]["smtp_ssl"] = "✅ SUCCESS"
+            server.quit()
+        except Exception as e:
+            config_status["tests"]["smtp_ssl"] = f"❌ FAILED: {str(e)}"
+        
+        # Test 4: Authentication (matching Flask config)
+        try:
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+            server.login(username, password)
+            config_status["tests"]["authentication"] = "✅ SUCCESS"
+            server.quit()
+        except Exception as e:
+            config_status["tests"]["authentication"] = f"❌ FAILED: {str(e)}"
+            
+        # Test 5: Flask-Mail compatibility test
+        try:
+            from flask_mail import Message
+            from .. import mail
+            
+            # Create a test message without sending
+            msg = Message(
+                subject="Test Message",
+                sender=current_app.config.get('MAIL_DEFAULT_SENDER'),
+                recipients=[username]
+            )
+            msg.body = "Test message body"
+            
+            # Try to connect using Flask-Mail's method
+            with mail.connect() as conn:
+                config_status["tests"]["flask_mail_connection"] = "✅ SUCCESS"
+                
+        except Exception as e:
+            config_status["tests"]["flask_mail_connection"] = f"❌ FAILED: {str(e)}"
+            
+        # Recommendations
+        recommendations = []
+        if "❌" in str(config_status["tests"]):
+            if "❌" in config_status["tests"].get("dns_resolution", ""):
+                recommendations.append("Check your internet connection")
+            
+            if "❌" in config_status["tests"].get("port_connection", ""):
+                recommendations.append("Port 465 might be blocked by firewall")
+            
+            if "❌" in config_status["tests"].get("authentication", ""):
+                recommendations.append("Check Gmail App Password - generate a new one")
+                recommendations.append("Ensure 2-factor authentication is enabled on Gmail")
+                
+            if "❌" in config_status["tests"].get("flask_mail_connection", ""):
+                recommendations.append("Flask-Mail configuration issue - check mail instance")
+        else:
+            recommendations.append("All tests passed! Email should be working.")
+        
+        config_status["recommendations"] = recommendations
+        
+        return jsonify(config_status)
+        
+    except Exception as e:
+        current_app.logger.error(f"Email config test failed: {e}")
+        return jsonify({
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+@api_helpers_bp.route('/test-email-direct')
+def test_email_direct():
+    """Test email without Flask-Mail - direct SMTP - development only"""
+    if os.getenv('MODE', '').lower() != 'development':
+        return jsonify({"error": "Direct email test only available in development mode"}), 403
+    
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        
+        # Get configuration
+        smtp_server = os.getenv('SMTP_GOOGLE_SERVER')
+        smtp_port = 465
+        username = os.getenv('SMTP_TEST_USERNAME')
+        password = os.getenv('SMTP_TEST_APP_PASSWORD')
+        recipient = os.getenv('ADMIN_EMAIL_ADDRESS')
+        
+        if not all([smtp_server, username, password, recipient]):
+            return jsonify({"error": "Missing email configuration"}), 400
+        
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = username
+        msg['To'] = recipient
+        msg['Subject'] = "Direct SMTP Test from KUSS System"
+        
+        body = f"""
+        <html>
+        <body>
+            <h2>🚀 Direct SMTP Test Successful!</h2>
+            <p>This email was sent directly via SMTP without Flask-Mail.</p>
+            <p><strong>Timestamp:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p><strong>Server:</strong> {smtp_server}:{smtp_port}</p>
+            <p><strong>Method:</strong> SMTP_SSL (direct)</p>
+            <p>If you receive this, your SMTP configuration is working!</p>
+        </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(body, 'html'))
+        
+        # Send email
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        server.login(username, password)
+        server.send_message(msg)
+        server.quit()
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Direct SMTP email sent to {recipient}",
+            "method": "SMTP_SSL (bypassed Flask-Mail)",
+            "server": f"{smtp_server}:{smtp_port}",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Direct email test failed: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500

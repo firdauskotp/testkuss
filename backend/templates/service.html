@@ -40,7 +40,8 @@
         <form method="POST" action="{{ url_for('forms.service') }}" class="space-y-8" {# Assuming 'service' is the correct endpoint name #}
               data-get-premises-url-template="{{ url_for('api_helpers.get_premises', company='__COMPANY_ID__') }}"
               data-get-pic-url-template="{{ url_for('api_helpers.get_pic_details_for_premise', premise_name='__PREMISE_ID__') }}"
-              data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}">
+              data-get-change-notes-url-template="{{ url_for('api_helpers.get_change_notes_for_premise', premise_name='__PREMISE_ID__') }}"
+              data-get-devices-url-template="{{ url_for('api_helpers.get_devices_for_premise', premise_name='__PREMISE_NAME__') }}">
 
             <!-- Technician, Date, Service Time -->
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
@@ -103,85 +104,7 @@
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Device Details</h3>
                 <div id="device-section" class="space-y-6">
-                    <div class="device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4">
-                        <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device 1</h5> {# Assuming static or will be looped #}
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                            <div>
-                                <label for="model_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
-                                <select name="model_1" id="model_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                                    <option selected disabled value="">Select a model</option>
-                                    {# Populate with actual model options if available from context, else leave as is #}
-                                    {% for model_item in models_context_variable_if_it_exists %} <option value="{{ model_item }}">{{ model_item }}</option> {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label for="color_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
-                                <select name="color_1" id="color_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                                     <option selected disabled value="">Select a color</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="eo_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
-                                <select name="eo_1" id="eo_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                                    <option selected disabled value="">Select an EO</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="location_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
-                                <input type="text" name="location_1" id="location_1" required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50" placeholder="Device Location">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="scent_change_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
-                                <select name="scent_change_1" id="scent_change_1" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                                    <option value="">No Change</option>
-                                    {# Populate with EO options if available #}
-                                </select>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="relocate_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
-                                <select name="relocate_1" id="relocate_1" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
-                                    <option value="">Do not relocate</option>
-                                    {# Populate with premise options if available #}
-                                </select>
-                            </div>
-                            <div class="md:col-span-2 flex items-center mt-2">
-                                <input id="inactive_1" name="inactive_1" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
-                                <label for="inactive_1" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive</label>
-                            </div>
-                        </div>
-                        <!-- Events for Device 1 -->
-                         {% for device in devices%}
-                        {% for e_num in range(1, 5) %}
-                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <h6 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Event {{ e_num }} Settings</h6>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-3"> {# Adjusted grid for 5 items #}
-                                <div class="lg:col-span-1"> {# Days can take more space if needed, or keep all equal #}
-                                    <label for="event_1_days_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Current Days: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - DAYS'] | default('N/A') }}</span></label>
-                                    <input type="text" name="event_1_days_{{ e_num }}" id="event_1_days_{{ e_num }}" placeholder="New Days" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
-                                </div>
-                                <div>
-                                    <label for="event_1_start_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Start: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - START'] | default('N/A') }}</span></label>
-                                    <input type="time" name="event_1_start_{{ e_num }}" id="event_1_start_{{ e_num }}" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
-                                </div>
-                                <div>
-                                    <label for="event_1_end_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">End: <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - END'] | default('N/A') }}</span></label>
-                                    <input type="time" name="event_1_end_{{ e_num }}" id="event_1_end_{{ e_num }}" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
-                                </div>
-                                <div>
-                                    <label for="event_1_work_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Work (s): <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - WORK'] | default('N/A') }}</span></label>
-                                    <input type="number" name="event_1_work_{{ e_num }}" id="event_1_work_{{ e_num }}" placeholder="Work" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
-                                </div>
-                                <div>
-                                    <label for="event_1_pause_{{ e_num }}" class="block text-xs font-medium text-gray-600 dark:text-gray-400">Pause (s): <span class="font-normal text-gray-900 dark:text-gray-100">{{ device['E' ~ e_num ~ ' - PAUSE'] | default('N/A') }}</span></label>
-                                    <input type="number" name="event_1_pause_{{ e_num }}" id="event_1_pause_{{ e_num }}" placeholder="Pause" class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50 text-xs mt-1">
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                        {% endfor %}
-                    </div>
-                    {# Add button for more devices if this section is meant to be dynamic via JS later #}
-                    {# <button type="button" id="addAnotherDeviceBtn" class="tailwind-button-dashed-fullwidth mt-4">+ Add Another Device</button> #}
+                    <!-- Devices will be loaded here dynamically -->
                 </div>
             </div>
 
@@ -290,11 +213,15 @@
     }
 
 
+    const models = {{ models|tojson }};
+    const essentialOils = {{ essential_oils|tojson }};
+
     // JS for dependent dropdowns and device inactive state (from original file, needs class/ID checks)
     const serviceForm = document.querySelector('form[action="{{ url_for("forms.service") }}"]');
     const getPremisesUrlTemplate = serviceForm.dataset.getPremisesUrlTemplate;
     const getPicUrlTemplate = serviceForm.dataset.getPicUrlTemplate;
     const getChangeNotesUrlTemplate = serviceForm.dataset.getChangeNotesUrlTemplate;
+    const getDevicesUrlTemplate = serviceForm.dataset.getDevicesUrlTemplate;
 
     document.querySelectorAll('.device-inactive').forEach((checkbox) => {
         checkbox.addEventListener('change', function () {
@@ -358,14 +285,18 @@
 
     if (premiseDropdown) {
         premiseDropdown.addEventListener('change', function () {
-            const premiseId = this.value;
-            if (!premiseId) return;
+            const premiseName = this.value;
+            if (!premiseName) {
+                // Clear device section if no premise is selected
+                const deviceSection = document.getElementById('device-section');
+                deviceSection.innerHTML = '';
+                return;
+            }
 
             // Fetch PIC Contact
             if (picContactInput) {
-                axios.get(getPicUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId))) // Assuming this endpoint exists
+                axios.get(getPicUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseName)))
                     .then(response => {
-                        // Assuming response.data is an object like { name: "PIC Name", contact: "PIC Contact" }
                         if (response.data && response.data.name && response.data.contact) {
                              picContactInput.value = `${response.data.name} (${response.data.contact})`;
                         } else {
@@ -380,9 +311,8 @@
 
             // Fetch Change Notes
             if (changeNotesTextarea) {
-                 axios.get(getChangeNotesUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseId))) // Assuming this endpoint exists
+                 axios.get(getChangeNotesUrlTemplate.replace('__PREMISE_ID__', encodeURIComponent(premiseName)))
                     .then(response => {
-                         // Assuming response.data is an object like { notes: "Some notes" }
                         if (response.data && response.data.notes) {
                             changeNotesTextarea.value = response.data.notes;
                         } else {
@@ -394,9 +324,72 @@
                         changeNotesTextarea.value = 'Error loading notes.';
                     });
             }
-            // Potentially load device details for this premise here if required by the form logic
-            // For now, the device card is a template. If devices are dynamically loaded,
-            // that JS logic would go here, similar to new-customer.html.
+
+            // Fetch and display devices
+            const deviceSection = document.getElementById('device-section');
+            const getDevicesUrl = getDevicesUrlTemplate.replace('__PREMISE_NAME__', encodeURIComponent(premiseName));
+
+            axios.get(getDevicesUrl)
+                .then(response => {
+                    deviceSection.innerHTML = ''; // Clear existing devices
+                    if (response.data && Array.isArray(response.data.devices)) {
+                        response.data.devices.forEach((device, index) => {
+                            const deviceId = device._id;
+                            const deviceCard = document.createElement('div');
+                            deviceCard.className = 'device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4';
+
+                            let modelOptions = '<option selected disabled value="">Select a model</option>';
+                            models.forEach(model => {
+                                modelOptions += `<option value="${model.model1}" ${device.Model === model.model1 ? 'selected' : ''}>${model.model1}</option>`;
+                            });
+
+                            let eoOptions = '<option value="">No Change</option>';
+                            essentialOils.forEach(eo => {
+                                eoOptions += `<option value="${eo.eo_name}" ${device['Current EO'] === eo.eo_name ? 'selected' : ''}>${eo.eo_name}</option>`;
+                            });
+
+                            deviceCard.innerHTML = `
+                                <input type="hidden" name="device_id_${index}" value="${deviceId}">
+                                <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device ${index + 1}</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div>
+                                        <label for="model_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                                        <select name="model_${index}" id="model_${index}" required class="tailwind-input-class">${modelOptions}</select>
+                                    </div>
+                                    <div>
+                                        <label for="color_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                                        <input type="text" name="color_${index}" id="color_${index}" value="${device.Color || ''}" required class="tailwind-input-class">
+                                    </div>
+                                    <div>
+                                        <label for="eo_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
+                                        <select name="eo_${index}" id="eo_${index}" required class="tailwind-input-class">${eoOptions}</select>
+                                    </div>
+                                    <div>
+                                        <label for="location_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                        <input type="text" name="location_${index}" id="location_${index}" value="${device.location || ''}" required class="tailwind-input-class">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label for="scent_change_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
+                                        <select name="scent_change_${index}" id="scent_change_${index}" class="tailwind-input-class">${eoOptions}</select>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label for="relocate_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
+                                        <input type="text" name="relocate_${index}" id="relocate_${index}" class="tailwind-input-class" placeholder="New Location">
+                                    </div>
+                                    <div class="md:col-span-2 flex items-center mt-2">
+                                        <input id="inactive_${index}" name="inactive_${index}" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
+                                        <label for="inactive_${index}" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive</label>
+                                    </div>
+                                </div>
+                            `;
+                            deviceSection.appendChild(deviceCard);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching devices:', error);
+                    deviceSection.innerHTML = '<p class="text-red-500">Error loading devices.</p>';
+                });
         });
     }
 
@@ -423,6 +416,5 @@
     });
 
 
-});
 </script>
 {% endblock %}

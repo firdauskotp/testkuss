@@ -5,7 +5,11 @@ from datetime import datetime
 
 # Assuming database collections, mail functions, fs are accessible
 from ..col import collection # 'collection' for customer cases
-from ..utils import send_email_to_customer, send_email_to_admin, handle_route_error, require_auth, sanitize_input, send_dynamic_email # Email utilities and error handling
+from ..utils import (
+    send_email_to_customer, send_email_to_admin, handle_route_error, 
+    require_auth, sanitize_input, send_dynamic_email, send_customer_email, 
+    send_team_email
+) # Email utilities and error handling
 # Changed to import directly from .app to avoid circular import with backend/__init__.py
 from backend import fs # GridFS instance from main app (__init__.py or app.py)
 from backend import mail as main_mail_instance # Mail instance from main app (__init__.py or app.py)
@@ -130,39 +134,59 @@ def customer_form():
         collection.insert_one(case_document)
         current_app.logger.info(f"Case #{case_no} created by: {customer_email}")
         
-        mail_sender_address = current_app.config.get('MAIL_SENDER_ADDRESS')
-        if not mail_sender_address: # Fallback or error if not configured
-            current_app.logger.error("Email configuration missing - MAIL_SENDER_ADDRESS not set")
-            flash("Email configuration error. Case submitted but notifications might fail.", "warning")
-            # Log this for admin attention
+        # mail_sender_address = current_app.config.get('MAIL_SENDER_ADDRESS')
+        # if not mail_sender_address: # Fallback or error if not configured
+        #     current_app.logger.error("Email configuration missing - MAIL_SENDER_ADDRESS not set")
+        #     flash("Email configuration error. Case submitted but notifications might fail.", "warning")
+        #     # Log this for admin attention
         
         try:
-            send_dynamic_email(
-    template_key="help_request_new_case_created",
-    variables={
-        "case_id": case_no,
-        "premise_name": premise_name,
-        "customer_email": user_email
-    },
-    mail=main_mail_instance
-)
-            send_dynamic_email(
-    template_key="team_help_request_new_case_received",
-    variables={
-        "case_id": case_no,
-        "premise_name": premise_name,
-        "device_location": devices_data[0]['location'] if devices_data else "",
-        "issues": ", ".join(devices_data[0]['issues']) if devices_data else "",
-        "remarks": devices_data[0]['remarks'] if devices_data else "",
-        "team_email": current_app.config['ADMIN_EMAIL_ADDRESS']
-    },
-    mail=main_mail_instance
-)
+            # Import the utility function for formatting devices
+            from backend.utils import format_devices_for_email
+            
+            # Format devices for email
+            devices_summary, images_note = format_devices_for_email(devices_data)
+            
+            # Send customer confirmation email
+            send_customer_email(
+                template_key="help_request_new_case_created",
+                variables={
+                    "case_id": case_no,
+                    "premise_name": premise_name,
+                    "customer_email": user_email,
+                    "devices_summary": devices_summary
+                },
+                mail=main_mail_instance,
+                customer_email=user_email
+            )
+            
+            # Send team notification email
+            admin_email = current_app.config.get('ADMIN_EMAIL_ADDRESS')
+            if admin_email:
+                send_team_email(
+                    template_key="team_help_request_new_case_received",
+                    variables={
+                        "case_id": case_no,
+                        "premise_name": premise_name,
+                        "customer_email": user_email,
+                        "devices_summary": devices_summary,
+                        "images_note": images_note,
+                        # Keep legacy fields for backward compatibility
+                        "device_location": devices_data[0]['location'] if devices_data else "",
+                        "issues": ", ".join(devices_data[0]['issues']) if devices_data else "",
+                        "remarks": devices_data[0]['remarks'] if devices_data else ""
+                    },
+                    mail=main_mail_instance,
+                    team_email=admin_email
+                )
+            else:
+                current_app.logger.warning("ADMIN_EMAIL_ADDRESS not configured - skipping team notification")
+            
             current_app.logger.info(f"Email notifications sent for case #{case_no}")
         except Exception as e:
             current_app.logger.error(f"Email notification failed for case #{case_no}: {str(e)}")
             flash(f"Case submitted, but email notifications failed: {e}", "warning")
-            # Log the exception e
+            # Continue execution - don't let email failure stop case creation
             
         return redirect(url_for(".case_success", case_no=case_no))
     
