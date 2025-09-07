@@ -174,8 +174,8 @@
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['#1 Other remarks'] }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row.remarks }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                            {% if item_row.signature %}
-                            <img src="{{ item_row.signature }}" alt="Signature" class="h-8 w-auto">
+                            {% if item_row['signature'] %}
+                            <img src="{{ item_row['signature'] }}" alt="Signature" class="h-8 w-auto">
                             {% endif %}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['month'] }}</td>

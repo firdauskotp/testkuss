@@ -106,7 +106,63 @@
             <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 border-b border-gray-300 dark:border-gray-700 pb-3">Device Details</h3>
                 <div id="device-section" class="space-y-6">
-                    <!-- Devices will be loaded here dynamically -->
+                    {% if devices %}
+                        {% for device in devices %}
+                        <div class="device-card border border-gray-300 dark:border-gray-700 rounded-lg p-4">
+                            <input type="hidden" name="device_id_{{ loop.index0 }}" value="{{ device._id }}">
+                            <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device {{ loop.index }} (S/N: {{ device['S/N'] or 'N/A' }})</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                <div>
+                                    <label for="model_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
+                                    <select name="model_{{ loop.index0 }}" id="model_{{ loop.index0 }}" required class="tailwind-input-class">
+                                        <option selected disabled value="">Select a model</option>
+                                        {% for model in models %}
+                                            <option value="{{ model.model1 }}" {% if device.Model == model.model1 %}selected{% endif %}>{{ model.model1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="color_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                                    <input type="text" name="color_{{ loop.index0 }}" id="color_{{ loop.index0 }}" value="{{ device.Color or '' }}" required class="tailwind-input-class">
+                                </div>
+                                <div>
+                                    <label for="location_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                                    <input type="text" name="location_{{ loop.index0 }}" id="location_{{ loop.index0 }}" value="{{ device.location or '' }}" required class="tailwind-input-class">
+                                </div>
+                                <div>
+                                    <label for="eo_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current EO</label>
+                                    <input type="text" name="eo_{{ loop.index0 }}" id="eo_{{ loop.index0 }}" value="{{ device['Current EO'] or '' }}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label for="volume_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volume (ml)</label>
+                                    <input type="number" name="volume_{{ loop.index0 }}" id="volume_{{ loop.index0 }}" value="{{ device.Volume or '0' }}" required class="tailwind-input-class">
+                                </div>
+                                <div>
+                                    <label for="consumption_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Oil Consumption (ml)</label>
+                                    <input type="number" name="consumption_{{ loop.index0 }}" id="consumption_{{ loop.index0 }}" value="0" required class="tailwind-input-class">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="scent_change_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
+                                    <select name="scent_change_{{ loop.index0 }}" id="scent_change_{{ loop.index0 }}" class="tailwind-input-class">
+                                        <option value="">No Change</option>
+                                        {% for eo in essential_oils %}
+                                            <option value="{{ eo.eo_name }}">{{ eo.eo_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="relocate_{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relocate Device To:</label>
+                                    <input type="text" name="relocate_{{ loop.index0 }}" id="relocate_{{ loop.index0 }}" class="tailwind-input-class" placeholder="New Location">
+                                </div>
+                                <div class="md:col-span-2 flex items-center mt-2">
+                                    <input id="inactive_{{ loop.index0 }}" name="inactive_{{ loop.index0 }}" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive" {% if device.inactive %}checked{% endif %}>
+                                    <label for="inactive_{{ loop.index0 }}" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive</label>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    <!-- Devices will be loaded here dynamically by JS if premise is changed -->
                 </div>
             </div>
 
@@ -425,40 +481,5 @@
         }
     });
 
-    // Pre-selection logic
-    document.addEventListener('DOMContentLoaded', function () {
-        const companyDropdown = document.getElementById('company');
-        const premiseDropdown = document.getElementById('premise');
-        const selectedCompany = "{{ selected_company or '' }}";
-        const selectedPremise = "{{ selected_premise or '' }}";
-
-        if (selectedCompany) {
-            companyDropdown.value = selectedCompany;
-            // Trigger the change event to populate the premise dropdown
-            companyDropdown.dispatchEvent(new Event('change'));
-
-            // We need to wait for the premise dropdown to be populated
-            const observer = new MutationObserver(function(mutations) {
-                for (let mutation of mutations) {
-                    if (mutation.type === 'childList' && premiseDropdown.options.length > 1) {
-                        if (selectedPremise) {
-                            premiseDropdown.value = selectedPremise;
-                            // Trigger change on premise dropdown to load devices
-                            premiseDropdown.dispatchEvent(new Event('change'));
-                        }
-                        observer.disconnect(); // We're done
-                        break;
-                    }
-                }
-            });
-
-            observer.observe(premiseDropdown, { childList: true });
-
-            // Stop observing after a timeout to prevent it from running forever
-            setTimeout(() => {
-                observer.disconnect();
-            }, 5000);
-        }
-    });
 </script>
 {% endblock %}

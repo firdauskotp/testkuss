@@ -416,11 +416,6 @@ def route_table_view():
             query['date'] = {'$gte': start_date, '$lt': end_date}
         except ValueError:
             flash("Invalid date format. Please use YYYY-MM-DD.", "warning")
-    else:
-        # Default to today's routes
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        tomorrow = today + timedelta(days=1)
-        query['date'] = {'$gte': today, '$lt': tomorrow}
 
 
     total_records = route_list_collection.count_documents(query)
