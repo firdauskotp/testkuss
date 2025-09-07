@@ -87,8 +87,11 @@
                     </div>
                     <div>
                         <label for="premise" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Premise</label>
-                        <select id="premise" name="premise" required disabled class="tailwind-input-class disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-500 cursor-not-allowed">
+                        <select id="premise" name="premiseName" required class="tailwind-input-class" {% if not selected_company %}disabled{% endif %}>
                             <option value="" selected disabled>Select a premise</option>
+                            {% for p in premises_for_dropdown %}
+                                <option value="{{ p }}" {% if p == selected_premise %}selected{% endif %}>{{ p }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="md:col-span-2">
@@ -182,8 +185,11 @@
                                 ('Replaced Faulty Machine', 'Replaced Faulty Machine')
                             ] %}
                             <div class="flex items-center">
-                                <input id="action_{{ loop.index }}" name="actions" value="{{ action_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                                <input id="action_{{ loop.index }}" name="actions" value="{{ action_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500" {% if action_val == 'Oil Refill' %} onchange="toggleRefillAmount(this)" {% endif %}>
                                 <label for="action_{{ loop.index }}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ action_text }}</label>
+                                {% if action_val == 'Oil Refill' %}
+                                    <input type="number" name="refill_amount" id="refill_amount_input" class="tailwind-input-class ml-4 hidden" placeholder="ml" style="width: 100px;">
+                                {% endif %}
                             </div>
                             {% endfor %}
                         </div>
@@ -481,5 +487,15 @@
         }
     });
 
+<script>
+function toggleRefillAmount(checkbox) {
+    const refillInput = document.getElementById('refill_amount_input');
+    if (checkbox.checked) {
+        refillInput.classList.remove('hidden');
+    } else {
+        refillInput.classList.add('hidden');
+        refillInput.value = ''; // Clear value when hidden
+    }
+}
 </script>
 {% endblock %}

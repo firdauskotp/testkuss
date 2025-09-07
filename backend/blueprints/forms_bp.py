@@ -310,6 +310,7 @@ def service():
         remarks = request.form.get("remarks")
         staff_name = request.form.get("staffName")
         signature = request.form.get("signature")
+        refill_amount = safe_int(request.form.get('refill_amount'))
 
         # Fetch selected premise details
         premise_details = profile_list_collection.find_one({"premise_name": premise_name})
@@ -410,6 +411,7 @@ def service():
                     "remarks": remarks,
                     "staff_name": staff_name,
                     "signature": signature,
+                    "refill_amount": refill_amount if "Oil Refill" in actions_taken else 0,
                 }
                 service_records.append(service_record)
 
@@ -425,16 +427,22 @@ def service():
         return redirect(url_for("data_reports.route_table_view"))
 
     # GET request logic
-    premises = list(profile_list_collection.find({"premise_name": {"$exists": True}}, {"premise_name": 1, "company": 1, "_id": 0}))
+    companies = services_collection.distinct('company')
 
     selected_premise = request.args.get('premise')
     selected_company = None
+    device_entries = []
+    premises_for_dropdown = []
 
     if selected_premise:
         premise_doc = profile_list_collection.find_one({"premise_name": selected_premise})
         if premise_doc:
             selected_company = premise_doc.get('company')
             device_entries = list(device_list_collection.find({"company": selected_company, "tied_to_premise": selected_premise}))
+            # Fetch all premises for the selected company
+            if selected_company:
+                company_premises = services_collection.distinct('Premise Name', {'company': selected_company})
+                premises_for_dropdown = company_premises
 
     return render_template(
         "service.html",
@@ -444,9 +452,9 @@ def service():
         current_time=current_time,
         models=models,
         essential_oils=essential_oils,
-        premises=premises,
+        premises_for_dropdown=premises_for_dropdown,
         selected_premise=selected_premise,
-        selected_company=selected_company # Pass the company to the template
+        selected_company=selected_company
     )
 
 @forms_bp.route('/service2', methods=['GET', 'POST'])

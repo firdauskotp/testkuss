@@ -515,6 +515,7 @@ def technician_work_report():
                         '_id': '$technician',
                         'total_services': {'$sum': 1},
                         'total_consumption': {'$sum': '$Consumption'},
+                        'total_refilled': {'$sum': '$refill_amount'},
                         'unique_premises': {'$addToSet': '$Premise Name'}
                     }
                 },
@@ -523,6 +524,7 @@ def technician_work_report():
                         'technician_name': '$_id',
                         'total_services': 1,
                         'total_consumption': 1,
+                        'total_refilled': 1,
                         'premise_count': {'$size': '$unique_premises'},
                         '_id': 0
                     }
