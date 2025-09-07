@@ -315,14 +315,33 @@ def service():
         premise_details = profile_list_collection.find_one({"premise_name": premise_name})
         if not premise_details:
             flash("Invalid premise selected!", "danger")
-            return redirect(url_for("field_service"))
+            return redirect(url_for(".service"))
+
+        company_name = premise_details.get("company")
+        industry = premise_details.get("industry")
+
+        # Fetch PICs for the premise
+        pic_records = list(profile_list_collection.find({"tied_to_premise": premise_name, "name": {"$exists": True, "$ne": ""}}))
+
+        service_records = []
 
         # Process submitted device data
         i = 0
         while True:
-            device_id = request.form.get(f'device_id_{i}')
-            if not device_id:
+            device_id_str = request.form.get(f'device_id_{i}')
+            if not device_id_str:
                 break
+
+            try:
+                device_id = ObjectId(device_id_str)
+            except Exception:
+                i += 1
+                continue
+
+            device_in_db = device_list_collection.find_one({'_id': device_id})
+            if not device_in_db:
+                i += 1
+                continue
 
             model = request.form.get(f'model_{i}')
             color = request.form.get(f'color_{i}')
@@ -331,13 +350,19 @@ def service():
             scent_change = request.form.get(f'scent_change_{i}')
             relocate = request.form.get(f'relocate_{i}')
             inactive = request.form.get(f'inactive_{i}')
+            consumption = safe_int(request.form.get(f'consumption_{i}'))
+            volume = safe_int(request.form.get(f'volume_{i}'))
+            balance = volume - consumption
 
             update_data = {
                 'Model': model,
                 'Color': color,
                 'Current EO': eo,
                 'location': location,
-                'inactive': bool(inactive)
+                'inactive': bool(inactive),
+                'Volume': volume,
+                'Consumption': consumption,
+                'Balance': balance
             }
 
             if scent_change:
@@ -346,41 +371,82 @@ def service():
             if relocate:
                 update_data['location'] = relocate
 
-            device_list_collection.update_one({'_id': ObjectId(device_id)}, {'$set': update_data})
+            device_list_collection.update_one({'_id': device_id}, {'$set': update_data})
+
+            # Create a service record for each PIC associated with the premise
+            if not pic_records: # If no PICs, create one service record without PIC info
+                pic_records.append({})
+
+            for pic in pic_records:
+                service_record = {
+                    "company": company_name,
+                    "industry": industry,
+                    "month_year": datetime.now(),
+                    "technician": technician_name,
+
+                    # Premise Info
+                    "Premise Name": premise_details.get("premise_name"),
+                    "Premise Area": premise_details.get("premise_area"),
+                    "Premise Address": premise_details.get("premise_address"),
+
+                    # PIC Info
+                    "PIC Name": pic.get("name"),
+                    "Designation": pic.get("designation"),
+                    "Contact": pic.get("contact"),
+                    "Email": pic.get("email"),
+
+                    # Device Info from form
+                    "S/N": device_in_db.get("S/N"),
+                    "Model": model,
+                    "Color": color,
+                    "Volume": volume,
+                    "Location": location,
+                    "Current EO": eo,
+                    "Consumption": consumption,
+                    "Balance": balance,
+
+                    # Service Info
+                    "actions_taken": actions_taken,
+                    "remarks": remarks,
+                    "staff_name": staff_name,
+                    "signature": signature,
+                }
+                service_records.append(service_record)
 
             i += 1
 
-        # Create a record for MongoDB
-        field_service_record = {
-            "technician_name": technician_name,
-            "timestamp": current_time,
-            "premise_name": premise_name,
-            "client_pics": pic_records,
-            "devices": device_entries,
-            "actions_taken": actions_taken,
-            "remarks": remarks,
-            "staff_name": staff_name,
-            "signature": signature,
-        }
+        if service_records:
+            services_collection.insert_many(service_records)
+            log_activity(session["username"], f"submitted service for premise: {premise_name}", logs_collection)
+            flash("Field service report submitted successfully!", "success")
+        else:
+            flash("No devices were serviced or found for the premise.", "warning")
 
-        change_form_collection.insert_one(field_service_record)
+        return redirect(url_for("data_reports.route_table_view"))
 
-        flash("Field service report submitted successfully!", "success")
-        return redirect(url_for("field_service", companies=companies))
+    # GET request logic
+    premises = list(profile_list_collection.find({"premise_name": {"$exists": True}}, {"premise_name": 1, "company": 1, "_id": 0}))
 
-    # Fetch all premises for dropdown
-    premises = list(profile_list_collection.find({}, {"premise_name": 1, "_id": 0}))
+    selected_premise = request.args.get('premise')
+    selected_company = None
 
-    # Fetch all devices for GET (optional: you may want to show all or none until a premise is selected)
-    # For now, just pass an empty list for devices
+    if selected_premise:
+        premise_doc = profile_list_collection.find_one({"premise_name": selected_premise})
+        if premise_doc:
+            selected_company = premise_doc.get('company')
+            device_entries = list(device_list_collection.find({"company": selected_company, "tied_to_premise": selected_premise}))
+
     return render_template(
         "service.html",
-        devices=device_entries,  # Always a list
+        devices=device_entries,
         companies=companies,
         technician_name=technician_name,
         current_time=current_time,
         models=models,
-        essential_oils=essential_oils
+        essential_oils=essential_oils,
+        premises=premises,
+        selected_premise=selected_premise,
+        selected_company=selected_company # Pass the company to the template
     )
 
 @forms_bp.route('/service2', methods=['GET', 'POST'])

@@ -79,8 +79,10 @@
                     <div>
                         <label for="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
                         <select id="company" name="company" required class="tailwind-input-class">
-                            <option value="" selected disabled>Select a company</option>
-                            {% for c in companies %} <option value="{{ c }}">{{ c }}</option> {% endfor %}
+                            <option value="" {% if not selected_company %}selected{% endif %} disabled>Select a company</option>
+                            {% for c in companies %}
+                            <option value="{{ c }}" {% if c == selected_company %}selected{% endif %}>{{ c }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div>
@@ -139,7 +141,7 @@
                         <input type="text" name="staffName" id="staffName" required class="tailwind-input-class">
                     </div>
                     <div>
-                        <label for="signature" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Signature:</label>
+                        <label for="signature" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Acknowledgement (Signature):</label>
                         <div class="signature-pad-container">
                             <canvas id="signature-pad" class="signature-pad"></canvas>
                         </div>
@@ -345,12 +347,12 @@
 
                             let eoOptions = '<option value="">No Change</option>';
                             essentialOils.forEach(eo => {
-                                eoOptions += `<option value="${eo.eo_name}" ${device['Current EO'] === eo.eo_name ? 'selected' : ''}>${eo.eo_name}</option>`;
+                                eoOptions += `<option value="${eo.eo_name}">${eo.eo_name}</option>`;
                             });
 
                             deviceCard.innerHTML = `
                                 <input type="hidden" name="device_id_${index}" value="${deviceId}">
-                                <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device ${index + 1}</h5>
+                                <h5 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Device ${index + 1} (S/N: ${device['S/N'] || 'N/A'})</h5>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                     <div>
                                         <label for="model_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model</label>
@@ -361,12 +363,20 @@
                                         <input type="text" name="color_${index}" id="color_${index}" value="${device.Color || ''}" required class="tailwind-input-class">
                                     </div>
                                     <div>
-                                        <label for="eo_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">EO</label>
-                                        <select name="eo_${index}" id="eo_${index}" required class="tailwind-input-class">${eoOptions}</select>
-                                    </div>
-                                    <div>
                                         <label for="location_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
                                         <input type="text" name="location_${index}" id="location_${index}" value="${device.location || ''}" required class="tailwind-input-class">
+                                    </div>
+                                    <div>
+                                        <label for="eo_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current EO</label>
+                                        <input type="text" name="eo_${index}" id="eo_${index}" value="${device['Current EO'] || ''}" readonly class="tailwind-input-class bg-gray-100 dark:bg-gray-700 cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <label for="volume_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Volume (ml)</label>
+                                        <input type="number" name="volume_${index}" id="volume_${index}" value="${device.Volume || '0'}" required class="tailwind-input-class">
+                                    </div>
+                                    <div>
+                                        <label for="consumption_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Oil Consumption (ml)</label>
+                                        <input type="number" name="consumption_${index}" id="consumption_${index}" value="0" required class="tailwind-input-class">
                                     </div>
                                     <div class="md:col-span-2">
                                         <label for="scent_change_${index}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Change Scent To:</label>
@@ -377,7 +387,7 @@
                                         <input type="text" name="relocate_${index}" id="relocate_${index}" class="tailwind-input-class" placeholder="New Location">
                                     </div>
                                     <div class="md:col-span-2 flex items-center mt-2">
-                                        <input id="inactive_${index}" name="inactive_${index}" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive">
+                                        <input id="inactive_${index}" name="inactive_${index}" type="checkbox" value="1" class="h-4 w-4 text-red-600 border-gray-300 dark:border-gray-600 rounded focus:ring-red-500 device-inactive" ${device.inactive ? 'checked' : ''}>
                                         <label for="inactive_${index}" class="ml-2 block text-sm text-red-600 dark:text-red-400">Mark Device as Inactive</label>
                                     </div>
                                 </div>
@@ -415,6 +425,40 @@
         }
     });
 
+    // Pre-selection logic
+    document.addEventListener('DOMContentLoaded', function () {
+        const companyDropdown = document.getElementById('company');
+        const premiseDropdown = document.getElementById('premise');
+        const selectedCompany = "{{ selected_company or '' }}";
+        const selectedPremise = "{{ selected_premise or '' }}";
 
+        if (selectedCompany) {
+            companyDropdown.value = selectedCompany;
+            // Trigger the change event to populate the premise dropdown
+            companyDropdown.dispatchEvent(new Event('change'));
+
+            // We need to wait for the premise dropdown to be populated
+            const observer = new MutationObserver(function(mutations) {
+                for (let mutation of mutations) {
+                    if (mutation.type === 'childList' && premiseDropdown.options.length > 1) {
+                        if (selectedPremise) {
+                            premiseDropdown.value = selectedPremise;
+                            // Trigger change on premise dropdown to load devices
+                            premiseDropdown.dispatchEvent(new Event('change'));
+                        }
+                        observer.disconnect(); // We're done
+                        break;
+                    }
+                }
+            });
+
+            observer.observe(premiseDropdown, { childList: true });
+
+            // Stop observing after a timeout to prevent it from running forever
+            setTimeout(() => {
+                observer.disconnect();
+            }, 5000);
+        }
+    });
 </script>
 {% endblock %}

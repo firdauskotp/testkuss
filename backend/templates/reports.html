@@ -92,7 +92,7 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        {% for header in ['Company', 'Industry', 'Premise Name', 'Premise Area', 'Premise Address', 'PICs', 'Model', 'Colour', 'S/N', 'Volume', 'Current EO', 'Balance', 'Consumption', 'New EO', 'Refilled', 'E1-Days', 'E1-Start', 'E1-End', 'E1-Work', 'E1-Pause', 'E2-Days', 'E2-Start', 'E2-End', 'E2-Work', 'E2-Pause', 'E3-Days', 'E3-Start', 'E3-End', 'E3-Work', 'E3-Pause', 'E4-Days', 'E4-Start', 'E4-End', 'E4-Work', 'E4-Pause', 'Scent Effectiveness', 'Common Encounters', 'Other Remarks', 'Month', 'Year'] %}
+                        {% for header in ['Company', 'Industry', 'Premise Name', 'Premise Area', 'Premise Address', 'PICs', 'Model', 'Colour', 'S/N', 'Volume', 'Current EO', 'Balance', 'Consumption', 'New EO', 'Refilled', 'E1-Days', 'E1-Start', 'E1-End', 'E1-Work', 'E1-Pause', 'E2-Days', 'E2-Start', 'E2-End', 'E2-Work', 'E2-Pause', 'E3-Days', 'E3-Start', 'E3-End', 'E3-Work', 'E3-Pause', 'E4-Days', 'E4-Start', 'E4-End', 'E4-Work', 'E4-Pause', 'Scent Effectiveness', 'Common Encounters', 'Other Remarks', 'Service Remarks', 'Client Acknowledgement', 'Month', 'Year'] %}
                         <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">{{ header }}</th>
                         {% endfor %}
                         {# <th scope="col" class="relative px-4 py-3"><span class="sr-only">Edit</span></th> #}
@@ -172,6 +172,12 @@
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['#1 Scent Effectiveness'] }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['#1 Common encounters'] }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['#1 Other remarks'] }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row.remarks }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                            {% if item_row.signature %}
+                            <img src="{{ item_row.signature }}" alt="Signature" class="h-8 w-auto">
+                            {% endif %}
+                        </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['month'] }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item_row['year'] }}</td>
                         {# <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
