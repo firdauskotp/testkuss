@@ -390,29 +390,48 @@ def device_master_list(): # Renamed from view_device
                            pagination_base_url=url_for('.device_master_list'),
                            query_params=request.args.to_dict(), data=paginated_data)
 
-@data_reports_bp.route('/route-table-view') # Original was /route_table
-def route_table_view(): # Renamed from route_table
-    # ... (Full original content of route_table function from app.py)
-    # ... (Ensure all url_for for pagination are relative)
+from datetime import datetime, timedelta
+
+@data_reports_bp.route('/route-table-view')
+def route_table_view():
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
-    # Filters (capture all)
-    # ...
-    query = {}
-    # Build query (must be copied from app.py)
-    # ...
-    records = list(route_list_collection.find(query).sort("date", -1 if request.args.get("sort_order", "desc") == "desc" else 1))
-    # Grouping logic (must be copied from app.py)
-    grouped_data = defaultdict(lambda: { "_id": "", "company": "", "premise_name": "", "premise_area": "", "premise_address": "", "model": "", "color": "", "eo": "", "pics": [], "day": "", "month": "", "year": ""})
-    # ... (full grouping logic) ...
-    structured_data = list(grouped_data.values())
-    total_records = len(structured_data)
-    total_pages = (total_records + limit - 1) // limit
-    paginated_data = structured_data[(page - 1) * limit: page * limit]
 
-    return render_template('route-table.html', page=page, total_pages=total_pages, limit=limit,
+    # Filters
+    company_filter = request.args.get('company', '').strip()
+    premise_filter = request.args.get('premise', '').strip()
+    date_filter_str = request.args.get('date', '').strip()
+
+    query = {}
+    if company_filter:
+        query['company'] = {'$regex': company_filter, '$options': 'i'}
+    if premise_filter:
+        query['premise'] = {'$regex': premise_filter, '$options': 'i'}
+
+    if date_filter_str:
+        try:
+            # Filter for a specific day
+            start_date = datetime.strptime(date_filter_str, '%Y-%m-%d')
+            end_date = start_date + timedelta(days=1)
+            query['date'] = {'$gte': start_date, '$lt': end_date}
+        except ValueError:
+            flash("Invalid date format. Please use YYYY-MM-DD.", "warning")
+
+
+    total_records = route_list_collection.count_documents(query)
+    records = list(route_list_collection.find(query)
+                   .sort("date", -1 if request.args.get("sort_order", "desc") == "desc" else 1)
+                   .skip((page - 1) * limit).limit(limit))
+
+    total_pages = (total_records + limit - 1) // limit
+
+    return render_template('route-table.html',
+                           data=records,
+                           page=page,
+                           total_pages=total_pages,
+                           limit=limit,
                            pagination_base_url=url_for('.route_table_view'),
-                           query_params=request.args.to_dict(), data=paginated_data)
+                           query_params=request.args.to_dict())
 
 @data_reports_bp.route('/activity-logs') # Original was /logs, function get_logs
 def activity_logs_view(): # Renamed from get_logs
@@ -475,3 +494,49 @@ def delete_route():
     else:
         flash("Record not found or failed to delete!", "error") # Clarified message
     return redirect(url_for('route_table'))
+
+@data_reports_bp.route('/technician-work-report', methods=['GET'])
+def technician_work_report():
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    report_data = []
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
+
+            match_stage = {'month_year': {'$gte': start_date, '$lt': end_date}}
+
+            pipeline = [
+                {'$match': match_stage},
+                {
+                    '$group': {
+                        '_id': '$technician',
+                        'total_services': {'$sum': 1},
+                        'total_consumption': {'$sum': '$Consumption'},
+                        'unique_premises': {'$addToSet': '$Premise Name'}
+                    }
+                },
+                {
+                    '$project': {
+                        'technician_name': '$_id',
+                        'total_services': 1,
+                        'total_consumption': 1,
+                        'premise_count': {'$size': '$unique_premises'},
+                        '_id': 0
+                    }
+                },
+                {'$sort': {'total_services': -1}}
+            ]
+            report_data = list(services_collection.aggregate(pipeline))
+
+        except ValueError:
+            flash("Invalid date format. Please use YYYY-MM-DD.", "warning")
+            return redirect(url_for('.technician_work_report'))
+
+    return render_template('technician-work-report.html',
+                           report_data=report_data,
+                           start_date=start_date_str,
+                           end_date=end_date_str,
+                           username=session.get('username'))
