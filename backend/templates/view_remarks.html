@@ -17,6 +17,21 @@
         </a>
     </div>
 
+    <!-- Filter Form Section -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8 mb-6">
+        <form method="get" action="{{ url_for('data_reports.view_remarks_by_type', remark_type=remark_type) }}" class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                <div>
+                    <label for="sort_order" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort by</label>
+                    <select id="sort_order" name="sort_order" onchange="this.form.submit()" class="tailwind-input-class">
+                        <option value="desc" {% if request.args.get('sort_order', 'desc') == 'desc' %}selected{% endif %}>Latest</option>
+                        <option value="asc" {% if request.args.get('sort_order') == 'asc' %}selected{% endif %}>Oldest</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <div class="space-y-3 mb-6">

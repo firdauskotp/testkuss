@@ -9,9 +9,17 @@ import traceback
 from pymongo.errors import PyMongoError
 from .col import collection
 import json
+import secrets
+import string
 
 # get current directory path 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+def generate_random_password(length=12):
+    """Generate a random password."""
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(secrets.choice(alphabet) for i in range(length))
+    return password
 
 def log_activity(name, action, database):
     """Log user activity with enhanced information"""

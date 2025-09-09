@@ -29,6 +29,13 @@
         <div id="filterFormContainer" class="hidden mt-6">
             <form method="get" action="{{ url_for('data_reports.device_master_list') }}" class="space-y-6"> {# Assuming 'view_device' is the filter endpoint #}
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-4">
+                    <div>
+                        <label for="sort_order" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort by</label>
+                        <select id="sort_order" name="sort_order" onchange="this.form.submit()" class="tailwind-input-class">
+                            <option value="desc" {% if request.args.get('sort_order', 'desc') == 'desc' %}selected{% endif %}>Latest</option>
+                            <option value="asc" {% if request.args.get('sort_order') == 'asc' %}selected{% endif %}>Oldest</option>
+                        </select>
+                    </div>
                     {% for name, label, placeholder, type in [
                         ('company', 'Company', 'Company A', 'text'),
                         ('tied_to_premise', 'Tied to Premise', 'Premise A', 'text'),
