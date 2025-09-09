@@ -131,7 +131,7 @@ def reports():
         query_params_for_template = request.args.to_dict() # Pass all current args for pagination links
 
         total_entries = services_collection.count_documents(query)
-        services_collection_list = services_collection.find(query, {'_id': 0}).skip((page - 1) * limit).limit(limit)
+        services_collection_list = services_collection.find(query, {'_id': 0}).sort('month_year', sort_direction).skip((page - 1) * limit).limit(limit)
 
         processed_data = []
         for entry in services_collection_list:
@@ -187,16 +187,19 @@ def pack_list():
     if eo_filter: query_eo['eo_name'] = {'$regex': eo_filter, '$options': 'i'}
     # ... (all other query constructions) ...
 
+    sort_order = request.args.get('sort_order', 'desc')
+    sort_direction = -1 if sort_order == 'desc' else 1
+
     # Fetch data and count for each section
     total_eo = eo_pack_collection.count_documents(query_eo)
-    data_eo_pack_list = list(eo_pack_collection.find(query_eo, {'_id':0}).skip((page-1)*limit).limit(limit))
+    data_eo_pack_list = list(eo_pack_collection.find(query_eo, {'_id':0}).sort('month_year', sort_direction).skip((page-1)*limit).limit(limit))
     # ... (similar for device, bottle, straw data) ...
     total_device = others_list_collection.count_documents(query_device)
-    data_device_pack_list = list(others_list_collection.find(query_device, {'_id':0}).skip((device_page-1)*device_limit).limit(device_limit))
+    data_device_pack_list = list(others_list_collection.find(query_device, {'_id':0}).sort('month_year', sort_direction).skip((device_page-1)*device_limit).limit(device_limit))
     total_bottle = empty_bottles_list_collection.count_documents(query_bottle)
-    data_bottle_pack_list = list(empty_bottles_list_collection.find(query_bottle, {'_id':0}).skip((bottle_page-1)*bottle_limit).limit(bottle_limit))
+    data_bottle_pack_list = list(empty_bottles_list_collection.find(query_bottle, {'_id':0}).sort('month_year', sort_direction).skip((bottle_page-1)*bottle_limit).limit(bottle_limit))
     total_straw = straw_list_collection.count_documents(query_straw)
-    data_other_pack_list = list(straw_list_collection.find(query_straw, {'_id':0}).skip((straw_page-1)*straw_limit).limit(straw_limit))
+    data_other_pack_list = list(straw_list_collection.find(query_straw, {'_id':0}).sort('month_year', sort_direction).skip((straw_page-1)*straw_limit).limit(straw_limit))
 
     # Process month/year for display (must be done for all 4 lists)
     for entry_list in [data_eo_pack_list, data_device_pack_list, data_bottle_pack_list, data_other_pack_list]:
@@ -255,10 +258,13 @@ def eo_list_func(): # Renamed from eo_list to avoid conflict with collection nam
     if eo_filter: query_eo['EO2'] = {'$regex': eo_filter, '$options': 'i'}
     # ... (all other query constructions) ...
 
+    sort_order = request.args.get('sort_order', 'desc')
+    sort_direction = -1 if sort_order == 'desc' else 1
+
     total_eo = eo_list_collection.count_documents(query_eo)
-    data_eo_list = list(eo_list_collection.find(query_eo, {'_id': 0}).skip((page - 1) * limit).limit(limit))
+    data_eo_list = list(eo_list_collection.find(query_eo, {'_id': 0}).sort('month_year', sort_direction).skip((page - 1) * limit).limit(limit))
     total_model = model_list_collection.count_documents(query_model)
-    data_model_list = list(model_list_collection.find(query_model, {'_id':0}).skip((model_page-1)*model_limit).limit(model_limit))
+    data_model_list = list(model_list_collection.find(query_model, {'_id':0}).sort('month_year', sort_direction).skip((model_page-1)*model_limit).limit(model_limit))
 
     for entry_list in [data_eo_list, data_model_list]:
         for entry in entry_list:
@@ -328,6 +334,7 @@ def profile_master_list(): # Renamed from profile
                     "premise_name": record_item["premise_name"],
                     "premise_area": record_item.get("premise_area", ""),
                     "premise_address": record_item.get("premise_address", ""),
+                    "created_at": created_at,
                     "month": created_at.month if created_at else "",
                     "year": created_at.year if created_at else ""
                 })
@@ -344,6 +351,8 @@ def profile_master_list(): # Renamed from profile
                 grouped_data[key]["pics"].append(pic_info)
 
     structured_data = list(grouped_data.values())
+    sort_order = request.args.get('sort_order', 'desc')
+    structured_data.sort(key=lambda x: x.get('created_at') or datetime.min, reverse=(sort_order == 'desc'))
     total_records = len(structured_data)
     total_pages = (total_records + limit - 1) // limit
     paginated_data = structured_data[(page - 1) * limit: page * limit]
@@ -366,7 +375,7 @@ def device_master_list(): # Renamed from view_device
     # ...
     records = list(device_list_collection.find(query)) # Original fetches all then groups
     # Grouping logic (must be copied from app.py)
-    grouped_data = defaultdict(lambda: { "company": "", "location": "", "sn": "", "model": "", "color": "", "volume": "", "current_eo": "", "e1_days": "", "e1_start": "", "e1_end": "", "e1_pause": "", "e1_work": "", "e2_days": "", "e2_start": "", "e2_end": "", "e2_pause": "", "e2_work": "", "e3_days": "", "e3_start": "", "e3_end": "", "e3_pause": "", "e3_work": "", "e4_days": "", "e4_start": "", "e4_end": "", "e4_pause": "", "e4_work": "", "created_at_month": "", "created_at_year": "", "tied_to_premise": ""})
+    grouped_data = defaultdict(lambda: { "company": "", "location": "", "sn": "", "model": "", "color": "", "volume": "", "current_eo": "", "e1_days": "", "e1_start": "", "e1_end": "", "e1_pause": "", "e1_work": "", "e2_days": "", "e2_start": "", "e2_end": "", "e2_pause": "", "e2_work": "", "e3_days": "", "e3_start": "", "e3_end": "", "e3_pause": "", "e3_work": "", "e4_days": "", "e4_start": "", "e4_end": "", "e4_pause": "", "e4_work": "", "created_at": None, "created_at_month": "", "created_at_year": "", "tied_to_premise": ""})
     for record in records:
         created_at = record.get("created_at")
         if "S/N" in record: # Assuming S/N is a key field for a device entry
@@ -379,9 +388,12 @@ def device_master_list(): # Renamed from view_device
                 # ... (E2, E3, E4 fields) ...
                 "e4_work": record.get("E4 - WORK"),
                 "tied_to_premise": record.get("tied_to_premise"),
+                "created_at": created_at,
                 "created_at_month": created_at.month if created_at else "", "created_at_year": created_at.year if created_at else ""
             })
     structured_data = list(grouped_data.values())
+    sort_order = request.args.get('sort_order', 'desc')
+    structured_data.sort(key=lambda x: x.get('created_at') or datetime.min, reverse=(sort_order == 'desc'))
     total_records = len(structured_data)
     total_pages = (total_records + limit - 1) // limit
     paginated_data = structured_data[(page - 1) * limit: page * limit]
@@ -445,7 +457,9 @@ def activity_logs_view(): # Renamed from get_logs
     # Build query (must be copied from app.py)
     # ...
     total_list = logs_collection.count_documents(query)
-    data_logs_list = logs_collection.find(query).sort("timestamp", -1).skip((page - 1) * limit).limit(limit)
+    sort_order = request.args.get('sort_order', 'desc')
+    sort_direction = -1 if sort_order == 'desc' else 1
+    data_logs_list = logs_collection.find(query).sort("timestamp", sort_direction).skip((page - 1) * limit).limit(limit)
     processed_data_logs_list = []
     for log_entry in data_logs_list: # Renamed loop var
         timestamp = log_entry.get("timestamp")

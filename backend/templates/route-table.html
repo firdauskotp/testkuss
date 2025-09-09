@@ -34,6 +34,13 @@
         <form method="get" action="{{ url_for('data_reports.route_table_view') }}" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                 <div>
+                    <label for="sort_order" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort by</label>
+                    <select id="sort_order" name="sort_order" onchange="this.form.submit()" class="tailwind-input-class">
+                        <option value="desc" {% if request.args.get('sort_order', 'desc') == 'desc' %}selected{% endif %}>Latest</option>
+                        <option value="asc" {% if request.args.get('sort_order') == 'asc' %}selected{% endif %}>Oldest</option>
+                    </select>
+                </div>
+                <div>
                     <label for="filter_rt_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
                     <input type="date" id="filter_rt_date" name="date"
                            value="{{ request.args.get('date', '') }}"

@@ -29,6 +29,13 @@
         <div id="filterFormContainer" class="hidden mt-6">
             <form method="get" action="{{ url_for('data_reports.reports') }}" class="space-y-6"> {# Assuming 'reports' is the correct endpoint for filtering #}
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
+                    <div>
+                        <label for="sort_order" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort by</label>
+                        <select id="sort_order" name="sort_order" onchange="this.form.submit()" class="tailwind-input-class">
+                            <option value="desc" {% if request.args.get('sort_order', 'desc') == 'desc' %}selected{% endif %}>Latest</option>
+                            <option value="asc" {% if request.args.get('sort_order') == 'asc' %}selected{% endif %}>Oldest</option>
+                        </select>
+                    </div>
                     {# Helper macro for form fields could be useful here if Jinja2 supports it easily in this context #}
                     {% for name, label, placeholder, type in [
                         ('month', 'Month (Fill in year too)', '10', 'text'),
