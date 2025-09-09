@@ -1,9 +1,13 @@
 # backend/blueprints/user_management_bp.py
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from bson import ObjectId # For delete operations
+import os
+from werkzeug.security import generate_password_hash
+from flask_mail import Message
+from .. import mail
 
 from ..col import login_collection, login_cust_collection, logs_collection # Relative imports
-from ..utils import log_activity # Relative import
+from ..utils import log_activity, generate_random_password # Relative import
 
 user_management_bp = Blueprint(
     'user_mgnt',
@@ -124,3 +128,66 @@ def delete_admin():
     else:
         flash("Admin user not found.", "danger")
     return redirect(url_for('.view_admins'))
+
+@user_management_bp.route('/change-password', methods=['POST'])
+def change_password():
+    user_id = request.form.get('user_id')
+    user_type = request.form.get('user_type')  # 'admin' or 'user'
+
+    if not user_id or not user_type:
+        flash("Invalid request. User ID and type are required.", "danger")
+        return redirect(request.referrer or url_for('.view_users'))
+
+    collection = login_collection if user_type == 'admin' else login_cust_collection
+
+    user = collection.find_one({'_id': ObjectId(user_id)})
+
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(request.referrer or url_for('.view_admins' if user_type == 'admin' else '.view_users'))
+
+    new_password = generate_random_password()
+    hashed_password = generate_password_hash(new_password)
+
+    collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'password': hashed_password}})
+
+    user_email = user.get('email')
+    if not user_email:
+        # Admins might not have an email, they use username
+        if user_type == 'admin':
+             # Attempt to find admin email from another source if needed, or just notify acting admin
+             pass
+        else:
+            flash("User does not have an email address.", "danger")
+            return redirect(url_for('.view_users'))
+
+
+    # Send email to the user
+    if user_email:
+        try:
+            msg_user = Message("Your Password Has Been Changed",
+                               sender=os.getenv('MAIL_SENDER_ADDRESS'),
+                               recipients=[user_email])
+            msg_user.body = f"Your password has been changed by an administrator. Your new password is: {new_password}"
+            mail.send(msg_user)
+            flash(f"Password for {user_email} has been changed and an email has been sent.", "success")
+        except Exception as e:
+            flash(f"Password was changed, but failed to send email to the user. Error: {e}", "warning")
+
+
+    # Send notification to the logged-in admin
+    admin_email = os.getenv('ADMIN_EMAIL_ADDRESS')
+    if admin_email and admin_email != user_email: # Avoid sending two emails if the admin changed their own password
+        try:
+            target_identifier = user_email if user_type == 'user' else user.get('username', 'N/A')
+            msg_admin = Message("Password Change Notification",
+                                sender=os.getenv('MAIL_SENDER_ADDRESS'),
+                                recipients=[admin_email])
+            msg_admin.body = f"The password for {user_type} '{target_identifier}' was changed by admin '{session['username']}'."
+            mail.send(msg_admin)
+        except Exception as e:
+            flash(f"Failed to send notification email to admin. Error: {e}", "warning")
+
+    log_activity(session["username"], f"changed password for {user_type} with ID: {user_id}", logs_collection)
+
+    return redirect(request.referrer or url_for('.view_admins' if user_type == 'admin' else '.view_users'))
