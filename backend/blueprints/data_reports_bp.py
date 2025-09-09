@@ -431,6 +431,7 @@ def route_table_view():
 
 
     total_records = route_list_collection.count_documents(query)
+    # The sorting logic below correctly handles the 'sort_order' parameter from the template.
     records = list(route_list_collection.find(query)
                    .sort("date", -1 if request.args.get("sort_order", "desc") == "desc" else 1)
                    .skip((page - 1) * limit).limit(limit))
@@ -484,7 +485,9 @@ def view_complaints_list():
 def view_remarks_by_type(remark_type):
     # This one is simpler
     is_urgent = True if remark_type == 'urgent' else False
-    remarks_list = list(remark_collection.find({'urgent': is_urgent}))
+    sort_order = request.args.get('sort_order', 'desc')
+    sort_direction = -1 if sort_order == 'desc' else 1
+    remarks_list = list(remark_collection.find({'urgent': is_urgent}).sort('_id', sort_direction))
     for r_item in remarks_list: # Renamed loop var
         if '_id' in r_item:
             r_item['_id_str'] = str(r_item['_id'])
