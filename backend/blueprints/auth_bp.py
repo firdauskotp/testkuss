@@ -81,7 +81,13 @@ def admin_login():
         
         try:
             # Database query with error handling
-            user = login_collection.find_one({"username": username})
+            user = login_collection.find_one({
+                "username": username,
+                "$or": [
+                    {"role": "admin"},
+                    {"role": {"$exists": False}}
+                ]
+            })
             
             # Constant-time comparison to prevent timing attacks
             if user and check_password_hash(user["password"], password):
@@ -109,6 +115,68 @@ def admin_login():
             return redirect(url_for(".admin_login"))
     
     return _admin_login_post()
+
+@auth_bp.route("/technician-login", methods=["GET", "POST"])
+@redirect_if_authenticated
+@handle_route_error
+def technician_login():
+    """Technician login with enhanced error handling and logging"""
+    from .. import limiter
+
+    if request.method == "GET":
+        current_app.logger.info("Technician login page accessed")
+        return render_template("technician-login.html")
+
+    # Apply rate limiting to POST requests
+    @limiter.limit("5 per minute")
+    def _technician_login_post():
+        current_app.logger.info("Technician login attempt started")
+
+        # Input validation
+        username = sanitize_input(request.form.get("username", "").strip(), 50)
+        password = request.form.get("password", "")
+
+        # Validate inputs
+        if not username or not password:
+            current_app.logger.warning(f"Technician login failed: Missing credentials - IP: {request.environ.get('REMOTE_ADDR')}")
+            flash("Username and password are required.", "danger")
+            return redirect(url_for(".technician_login"))
+
+        if not validate_input(username, 50) or not validate_input(password, 100):
+            current_app.logger.warning(f"Technician login failed: Invalid input format - IP: {request.environ.get('REMOTE_ADDR')}")
+            flash("Invalid username or password format.", "danger")
+            return redirect(url_for(".technician_login"))
+
+        try:
+            # Database query with error handling
+            user = login_collection.find_one({"username": username, "role": "technician"})
+
+            # Constant-time comparison to prevent timing attacks
+            if user and check_password_hash(user["password"], password):
+                # Successful login
+                session.permanent = True
+                session["user_id"] = str(user["_id"])
+                session["username"] = user["username"]
+                session["login_time"] = datetime.now().isoformat()
+                session["user_type"] = "technician"
+                current_app.logger.info(f"Session after login: {dict(session)}")
+                flash("Login successful!", "success")
+                log_activity(session["username"], "technician_login_success", logs_collection)
+                current_app.logger.info(f"Technician login successful: {username}")
+                return redirect(url_for("dashboard")) # Or a technician-specific dashboard
+            else:
+                # Failed login - log attempt
+                log_activity(username, "technician_login_failed", logs_collection)
+                current_app.logger.warning(f"Technician login failed: Invalid credentials for {username}")
+                flash("Invalid username or password.", "danger")
+                return redirect(url_for(".technician_login"))
+
+        except Exception as e:
+            current_app.logger.error(f"Technician login error: {str(e)} - Username: {username}")
+            flash("Login system temporarily unavailable.", "danger")
+            return redirect(url_for(".technician_login"))
+
+    return _technician_login_post()
 
 @auth_bp.route("/client-login", methods=["GET", "POST"])
 @redirect_if_authenticated
@@ -331,7 +399,8 @@ def register_admin(): # Admin registration
         login_collection.insert_one({
             'username': username,
             'email': email,
-            'password': hashed_password
+            'password': hashed_password,
+            'role': 'admin'
         })
 
         # Send email to the new admin
