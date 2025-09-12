@@ -15,28 +15,30 @@
 
     <!-- Filter Form Section -->
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Generate Report</h2>
         <form method="get" action="{{ url_for('data_reports.technician_work_report') }}" class="space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div>
                     <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
                     <input type="date" id="start_date" name="start_date"
                            value="{{ start_date or '' }}"
-                           required class="tailwind-input-class">
+                           required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                 </div>
                 <div>
                     <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
                     <input type="date" id="end_date" name="end_date"
                            value="{{ end_date or '' }}"
-                           required class="tailwind-input-class">
+                           required class="appearance-none block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-50">
                 </div>
             </div>
             <div class="pt-4 flex justify-end">
-                <button type="submit" class="tailwind-button-blue">Generate Report</button>
+                <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900">Generate Report</button>
             </div>
         </form>
     </div>
 
     <!-- Data Table Section -->
+    {% if report_data %}
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-0 sm:p-2">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -56,12 +58,15 @@
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row.premise_count }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ row.total_consumption | round(2) }}</td>
                     </tr>
-                    {% else %}
-                    <tr><td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">No data available for the selected date range. Please select a start and end date.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+    {% else %}
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8 text-center">
+        <p class="text-gray-500 dark:text-gray-400">No data available for the selected date range. Please select a start and end date to generate a report.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
