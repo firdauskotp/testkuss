@@ -40,6 +40,10 @@ def reports():
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
 
+        # Add sort_order parameter
+        sort_order = request.args.get('sort_order', 'desc')
+        sort_direction = -1 if sort_order == 'desc' else 1
+
         month_filter = request.args.get('month','').strip() # Renamed to avoid conflict
         year_filter = request.args.get('year','').strip()   # Renamed to avoid conflict
         EO_filter = request.args.get("EO")
