@@ -5,7 +5,10 @@ from datetime import datetime
 from bson import ObjectId # Make sure ObjectId is imported if used for _id string conversion (though not explicitly in this snippet)
 
 from ..col import collection,industry_list_collection # Customer cases/complaints
-from ..utils import handle_route_error, require_auth, sanitize_input, send_dynamic_email # Error handling utilities
+from ..utils import (
+    handle_route_error, require_auth, sanitize_input, send_dynamic_email,
+    send_customer_email, send_team_email
+)
 # For fs, mail and other utils, it's better if they are registered with the app and accessed via current_app or specific getters
 from backend import fs as main_fs_instance # GridFS instance from main app (e.g. backend/__init__.py or app.py)
 # from ..app import mail as main_mail_instance # If mail is needed in this blueprint
@@ -379,3 +382,138 @@ def save_all_industry_global_changes():
     except Exception as e:
         current_app.logger.error(f"Unexpected error in save_all_industry_global_changes: {str(e)}")
         return jsonify({'status': 'error', 'message': 'An unexpected error occurred. Please try again.'}), 500
+
+@staff_actions_bp.route("/new-case", methods=["GET", "POST"])
+@require_auth('admin')
+@handle_route_error
+def new_case():
+    """Form for technicians to create a new case on behalf of a customer."""
+    admin_username = session.get('username', 'unknown')
+
+    if request.method == "GET":
+        return render_template("technician-new-case-form.html")
+
+    current_app.logger.info(f"New case submission by admin: {admin_username}")
+
+    try:
+        case_no_count = collection.count_documents({})
+        case_no = case_no_count + 1
+
+        user_email = sanitize_input(request.form.get("email", ""), 200)
+        premise_name = sanitize_input(request.form.get("premise_name", ""), 200)
+
+        if not premise_name:
+            flash("Premise name is required.", "danger")
+            return render_template("technician-new-case-form.html")
+
+        if not user_email:
+            flash("Customer email is required.", "danger")
+            return render_template("technician-new-case-form.html")
+
+        devices_data = []
+        device_index = 0
+        while True:
+            model_field_name = f"devices[{device_index}][model]"
+            if model_field_name not in request.form or not request.form.get(model_field_name):
+                break
+
+            location = sanitize_input(request.form.get(f"devices[{device_index}][location]", ""), 100)
+            model = sanitize_input(request.form.get(model_field_name, ""), 100)
+            issues = request.form.getlist(f"devices[{device_index}][issues]")
+            remarks = sanitize_input(request.form.get(f"devices[{device_index}][remarks]", ""), 500)
+
+            if not model:
+                flash(f"Device {device_index + 1} model is required.", "danger")
+                return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+            image_file_name = f"devices[{device_index}][image]"
+            image_id = None
+            if image_file_name in request.files:
+                image_file = request.files[image_file_name]
+                if image_file and image_file.filename:
+                    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+                    filename = secure_filename(image_file.filename)
+                    if '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+                        image_file.seek(0, 2)
+                        file_size = image_file.tell()
+                        image_file.seek(0)
+
+                        if file_size > 5 * 1024 * 1024:
+                            flash(f"Image for device {device_index + 1} is too large. Maximum size is 5MB.", "danger")
+                            return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+                        image_data = image_file.read()
+                        image_id = main_fs_instance.put(image_data, filename=filename, content_type=image_file.content_type)
+                    else:
+                        flash(f"Invalid file type for device {device_index + 1}. Please use PNG, JPG, JPEG, or GIF.", "danger")
+                        return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+            devices_data.append({
+                "location": location,
+                "model": model,
+                "issues": issues,
+                "remarks": remarks,
+                "image_id": image_id
+            })
+            device_index += 1
+
+        if not devices_data:
+            flash("Please add details for at least one device.", "danger")
+            return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+        case_document = {
+            "case_no": case_no,
+            "user_email": user_email,
+            "premise_name": premise_name,
+            "devices": devices_data,
+            "created_at": datetime.now(),
+            "created_by": admin_username
+        }
+        collection.insert_one(case_document)
+        current_app.logger.info(f"Case #{case_no} created by admin: {admin_username} for customer: {user_email}")
+
+        try:
+            from backend.utils import format_devices_for_email
+
+            devices_summary, images_note = format_devices_for_email(devices_data)
+
+            send_customer_email(
+                template_key="help_request_new_case_created",
+                variables={
+                    "case_id": case_no,
+                    "premise_name": premise_name,
+                    "customer_email": user_email,
+                    "devices_summary": devices_summary
+                },
+                mail=main_mail_instance,
+                customer_email=user_email
+            )
+
+            admin_email = current_app.config.get('ADMIN_EMAIL_ADDRESS')
+            if admin_email:
+                send_team_email(
+                    template_key="team_help_request_new_case_received",
+                    variables={
+                        "case_id": case_no,
+                        "premise_name": premise_name,
+                        "customer_email": user_email,
+                        "devices_summary": devices_summary,
+                        "images_note": images_note,
+                        "device_location": devices_data[0]['location'] if devices_data else "",
+                        "issues": ", ".join(devices_data[0]['issues']) if devices_data else "",
+                        "remarks": devices_data[0]['remarks'] if devices_data else ""
+                    },
+                    mail=main_mail_instance,
+                    team_email=admin_email
+                )
+        except Exception as e:
+            current_app.logger.error(f"Email notification failed for case #{case_no}: {str(e)}")
+            flash(f"Case submitted, but email notifications failed: {e}", "warning")
+
+        flash(f"Case #{case_no} created successfully for {user_email}!", "success")
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        current_app.logger.error(f"Error creating new case by {admin_username}: {str(e)}")
+        flash("An error occurred while creating the case. Please try again.", "danger")
+        return render_template("technician-new-case-form.html")
