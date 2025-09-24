@@ -7,7 +7,7 @@ from datetime import datetime
 from functools import wraps
 
 # Assuming col.py and utils.py are in the parent directory (backend/)
-from ..col import login_collection, login_cust_collection, logs_collection
+from ..col import login_collection, login_cust_collection, logs_collection, tech_login_collection
 from ..utils import log_activity, handle_route_error, require_auth, sanitize_input, is_valid_email, send_dynamic_email
 
 auth_bp = Blueprint('auth', __name__, template_folder='../templates', static_folder='../static')
@@ -149,7 +149,7 @@ def technician_login():
 
         try:
             # Database query with error handling
-            user = login_collection.find_one({"username": username, "role": "technician"})
+            user = tech_login_collection.find_one({"username": username, "role": "technician"})
 
             # Constant-time comparison to prevent timing attacks
             if user and check_password_hash(user["password"], password):

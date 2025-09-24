@@ -16,6 +16,7 @@ login_collection=login_db['log']
 
 login_cust_db=mongo['login_cust']
 login_cust_collection=login_cust_db['logg']
+tech_login_collection=login_cust_db['tech_log']
 
 remark_db=mongo['remark']
 remark_collection=remark_db['cases']
@@ -39,6 +40,7 @@ refund_collection = dashboard_db['refund']
 industry_list_collection = dashboard_db['industry']
 logs_db=mongo['logs']
 logs_collection=logs_db['logs']
+
 
 test_db=mongo['test']
 test_collection=test_db['test']

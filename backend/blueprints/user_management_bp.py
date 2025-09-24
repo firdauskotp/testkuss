@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash
 from flask_mail import Message
 from .. import mail
 
-from ..col import login_collection, login_cust_collection, logs_collection # Relative imports
+from ..col import login_collection, login_cust_collection, logs_collection, tech_login_collection # Relative imports
 from ..utils import log_activity, generate_random_password # Relative import
 
 user_management_bp = Blueprint(
@@ -138,9 +138,9 @@ def view_technicians():
     if username_filter:
         query["username"] = {"$regex": username_filter, "$options": "i"}
 
-    total_list = login_collection.count_documents(query)
+    total_list = tech_login_collection.count_documents(query)
     technicians_list = list(
-        login_collection.find(query, {'username': 1, '_id': 1})
+        tech_login_collection.find(query, {'username': 1, '_id': 1})
         .skip((page - 1) * limit)
         .limit(limit)
     )
@@ -168,12 +168,12 @@ def add_technician():
             flash("Passwords do not match.", "danger")
             return redirect(url_for('.add_technician'))
 
-        if login_collection.find_one({'username': username}):
+        if tech_login_collection.find_one({'username': username}):
             flash("Username already exists.", "danger")
             return redirect(url_for('.add_technician'))
 
         hashed_password = generate_password_hash(password)
-        login_collection.insert_one({
+        tech_login_collection.insert_one({
             'username': username,
             'password': hashed_password,
             'role': 'technician'
@@ -188,10 +188,10 @@ def add_technician():
 def delete_technician():
     user_id_to_delete = request.form['user_id']
 
-    user_to_delete = login_collection.find_one({'_id': ObjectId(user_id_to_delete), 'role': 'technician'})
+    user_to_delete = tech_login_collection.find_one({'_id': ObjectId(user_id_to_delete), 'role': 'technician'})
     if user_to_delete:
         username_deleted = user_to_delete.get('username', 'Unknown')
-        login_collection.delete_one({'_id': ObjectId(user_id_to_delete)})
+        tech_login_collection.delete_one({'_id': ObjectId(user_id_to_delete)})
         flash(f"Technician user '{username_deleted}' deleted successfully!", "success")
         log_activity(session["username"], f"deleted technician user: {username_deleted}", logs_collection)
     else:
@@ -207,7 +207,9 @@ def change_password():
         flash("Invalid request. User ID and type are required.", "danger")
         return redirect(request.referrer or url_for('.view_users'))
 
-    if user_type in ['admin', 'technician']:
+    if user_type in ['technician']:
+        collection = tech_login_collection
+    elif user_type == 'admin':
         collection = login_collection
     else:
         collection = login_cust_collection
