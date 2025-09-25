@@ -94,6 +94,13 @@
       "sender_email": "no-reply@kussessentials.com",
       "receiver_email": "{{ email }}",
       "email_content": "Hello,<br><br>A new admin account has been created for you.<br><br><strong>Username:</strong> {{ username }}<br><strong>Password:</strong> {{ password }}<br><br>Please change your password after your first login.<br><br>Thank you,<br>Kuss Essentials"
+    },
+    "service_completed_notification": {
+      "subject": "Service Completed for {{ premise_name }}",
+      "sender_email": "no-reply@kussessentials.com",
+      "receiver_email": "{{ customer_email }}",
+      "email_content": "Hello from Kuss Essentials!<br><br>The service visit for <strong>{{ premise_name }}</strong> has been completed successfully.<br><br><strong>Technician:</strong> {{ technician }}<br><strong>Service Date:</strong> {{ service_date }}<br><strong>Devices Serviced:</strong> {{ devices_count }}<br><br>To view the complete service report, please open the attached PDF file.<br><br>Thank you for choosing Kuss Essentials.<br><br>Best regards,<br>Kuss Essentials Team",
+      "attachment_template": "service_report_{{ premise_name | replace(' ', '_') }}_{{ service_date }}.pdf"
     }
   }
   

@@ -415,6 +415,7 @@ def service():
     if request.method == 'POST':
         premise_name = request.form.get("premiseName")
         actions_taken = request.form.getlist("actions")
+        oil_refill_ml = request.form.get("oil_refill_ml")
         remarks = request.form.get("remarks")
         staff_name = request.form.get("staffName")
         signature = request.form.get("signature")
@@ -515,6 +516,7 @@ def service():
 
                     # Service Info
                     "actions_taken": actions_taken,
+                    "oil_refill_ml": float(oil_refill_ml) if oil_refill_ml and "Oil Refill" in actions_taken else None,
                     "remarks": remarks,
                     "staff_name": staff_name,
                     "signature": signature,
@@ -527,6 +529,33 @@ def service():
             services_collection.insert_many(service_records)
             log_activity(session["username"], f"submitted service for premise: {premise_name}", logs_collection)
             flash("Field service report submitted successfully!", "success")
+
+            # Send service completion email to customer
+            try:
+                # Get customer email from premise details
+                customer_email = premise_details.get("email")
+                if customer_email:
+                    from backend.utils import send_customer_email
+
+                    send_customer_email(
+                        template_key="service_completed_notification",
+                        variables={
+                            "technician": technician_name,
+                            "premise_name": premise_name,
+                            "customer_email": customer_email,
+                            "service_date": datetime.now().strftime('%Y-%m-%d'),
+                            "devices_count": len(service_records)
+                        },
+                        mail=mail,
+                        customer_email=customer_email
+                    )
+                    current_app.logger.info(f"Service completion email sent to {customer_email} for premise {premise_name}")
+                else:
+                    current_app.logger.warning(f"No customer email found for premise {premise_name}")
+            except Exception as e:
+                current_app.logger.error(f"Failed to send service completion email for premise {premise_name}: {str(e)}")
+                # Don't fail the service submission if email fails
+
         else:
             flash("No devices were serviced or found for the premise.", "warning")
 

@@ -75,13 +75,10 @@
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ user['email'] }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <form action="{{ url_for('user_mgnt.change_password') }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to change the password for this user?');">
-                                <input type="hidden" name="user_id" value="{{ user['_id'] }}">
-                                <input type="hidden" name="user_type" value="user">
-                                <button type="submit" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-600">
-                                    Change Password
-                                </button>
-                            </form>
+                            <button type="button" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-600 change-password-btn"
+                                    data-user-id="{{ user['_id'] }}" data-user-email="{{ user['email'] }}" data-modal-target="changePasswordModal" data-modal-toggle="changePasswordModal">
+                                Change Password
+                            </button>
                             <button type="button" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600 delete-user-btn ml-4"
                                     data-user-id="{{ user['_id'] }}" data-modal-target="deleteUserModal" data-modal-toggle="deleteUserModal">
                                 Remove
@@ -123,6 +120,42 @@
                 <div class="flex items-center justify-end p-6 space-x-2 border-t border-gray-300 dark:border-gray-700 rounded-b">
                     <button data-modal-hide="deleteUserModal" type="button" class="tailwind-button-gray">Cancel</button>
                     <button type="submit" class="tailwind-button-red">Delete User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="changePasswordModal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full">
+    <div class="relative p-4 w-full max-w-md h-full md:h-auto mx-auto flex items-center">
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full">
+            <div class="flex justify-between items-center p-5 border-b border-gray-300 dark:border-gray-700 rounded-t">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Change Password</h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="changePasswordModal">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+            <form id="changePasswordForm" method="POST" action="{{ url_for('user_mgnt.change_password') }}">
+                <input type="hidden" name="user_id" id="changePasswordUserIdInput">
+                <input type="hidden" name="user_type" value="user">
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label for="changePasswordEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">User Email</label>
+                        <input type="text" id="changePasswordEmail" class="tailwind-input-class" readonly>
+                    </div>
+                    <div>
+                        <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">New Password</label>
+                        <input type="password" id="newPassword" name="new_password" class="tailwind-input-class" placeholder="Enter new password (min 8 characters)" required>
+                    </div>
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="tailwind-input-class" placeholder="Confirm new password" required>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-6 space-x-2 border-t border-gray-300 dark:border-gray-700 rounded-b">
+                    <button data-modal-hide="changePasswordModal" type="button" class="tailwind-button-gray">Cancel</button>
+                    <button type="submit" class="tailwind-button-blue">Change Password</button>
                 </div>
             </form>
         </div>
@@ -176,6 +209,10 @@
             if (button.type === 'submit') button.classList.add(...tailwindButtonRed.split(' '));
             else if (button.type === 'button' && !button.classList.contains('bg-transparent')) button.classList.add(...tailwindButtonGray.split(' '));
         });
+         document.querySelectorAll('#changePasswordModal button').forEach(button => {
+            if (button.type === 'submit') button.classList.add(...tailwindButtonBlue.split(' '));
+            else if (button.type === 'button' && !button.classList.contains('bg-transparent')) button.classList.add(...tailwindButtonGray.split(' '));
+        });
 
         // Modal interactions
         const deleteUserModal = document.getElementById('deleteUserModal');
@@ -199,6 +236,57 @@
                 }
             });
         });
+
+        // Change Password Modal interactions
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const changePasswordUserIdInput = document.getElementById('changePasswordUserIdInput');
+        const changePasswordEmailInput = document.getElementById('changePasswordEmail');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const changePasswordForm = document.getElementById('changePasswordForm');
+
+        document.querySelectorAll('.change-password-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const userEmail = this.getAttribute('data-user-email');
+                if (changePasswordUserIdInput) changePasswordUserIdInput.value = userId;
+                if (changePasswordEmailInput) changePasswordEmailInput.value = userEmail;
+                if (newPasswordInput) newPasswordInput.value = '';
+                if (confirmPasswordInput) confirmPasswordInput.value = '';
+                if (changePasswordModal) {
+                    changePasswordModal.classList.remove('hidden');
+                    changePasswordModal.classList.add('flex');
+                }
+            });
+        });
+        document.querySelectorAll('[data-modal-hide="changePasswordModal"]').forEach(button => {
+            button.addEventListener('click', function() {
+                if (changePasswordModal) {
+                    changePasswordModal.classList.add('hidden');
+                    changePasswordModal.classList.remove('flex');
+                }
+            });
+        });
+
+        // Form validation for password change
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', function(e) {
+                const newPassword = newPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                if (newPassword !== confirmPassword) {
+                    e.preventDefault();
+                    alert('Passwords do not match. Please try again.');
+                    return false;
+                }
+
+                if (newPassword.length < 8) {
+                    e.preventDefault();
+                    alert('Password must be at least 8 characters long.');
+                    return false;
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

@@ -7,7 +7,7 @@ from flask_mail import Message
 from .. import mail
 
 from ..col import login_collection, login_cust_collection, logs_collection, tech_login_collection # Relative imports
-from ..utils import log_activity, generate_random_password # Relative import
+from ..utils import log_activity # Relative import
 
 user_management_bp = Blueprint(
     'user_mgnt',
@@ -202,9 +202,23 @@ def delete_technician():
 def change_password():
     user_id = request.form.get('user_id')
     user_type = request.form.get('user_type')  # 'admin', 'user', or 'technician'
+    new_password = request.form.get('new_password', '').strip()
 
     if not user_id or not user_type:
         flash("Invalid request. User ID and type are required.", "danger")
+        return redirect(request.referrer or url_for('.view_users'))
+
+    # Validate new password
+    if not new_password:
+        flash("Password cannot be empty.", "danger")
+        return redirect(request.referrer or url_for('.view_users'))
+
+    if len(new_password) < 8:
+        flash("Password must be at least 8 characters long.", "danger")
+        return redirect(request.referrer or url_for('.view_users'))
+
+    if len(new_password) > 100:
+        flash("Password is too long.", "danger")
         return redirect(request.referrer or url_for('.view_users'))
 
     if user_type in ['technician']:
@@ -225,7 +239,6 @@ def change_password():
         else:
             return redirect(request.referrer or url_for('.view_users'))
 
-    new_password = generate_random_password()
     hashed_password = generate_password_hash(new_password)
 
     collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'password': hashed_password}})
@@ -241,7 +254,7 @@ def change_password():
             msg_user = Message("Your Password Has Been Changed",
                                sender=os.getenv('MAIL_SENDER_ADDRESS'),
                                recipients=[user_email])
-            msg_user.body = f"Your password has been changed by an administrator. Your new password is: {new_password}"
+            msg_user.body = "Your password has been changed by an administrator. Please contact your administrator if you need your new password."
             mail.send(msg_user)
             flash(f"Password for {user_email} has been changed and an email has been sent.", "success")
         except Exception as e:

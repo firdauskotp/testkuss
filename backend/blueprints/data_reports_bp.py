@@ -740,3 +740,277 @@ def preservice_data():
                          all_technicians=all_technicians,
                          all_essential_oils=all_essential_oils,
                          all_device_models=all_device_models)
+
+@data_reports_bp.route('/technician-oil-usage')
+def technician_oil_usage():
+    """View technician essential oil usage report"""
+    # Allow both admin and technician access
+    user_type = session.get('user_type', '')
+
+    if user_type not in ['admin', 'technician']:
+        flash("Access denied. Only admins and technicians can access this page.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    # Get filter parameters
+    technician_filter = request.args.get('technician', '').strip()
+    month_filter = request.args.get('month', '').strip()
+    year_filter = request.args.get('year', '').strip()
+
+    # Build query for service records with oil refills
+    query = {
+        'actions_taken': {'$in': ['Oil Refill']},
+        'oil_refill_ml': {'$exists': True, '$ne': None}
+    }
+
+    if technician_filter:
+        query['technician'] = {'$regex': technician_filter, '$options': 'i'}
+
+    if month_filter and year_filter:
+        month_list = [int(m.strip()) for m in month_filter.split(',') if m.strip().isdigit()]
+        query['$expr'] = {
+            '$and': [
+                {'$in': [{'$month': '$month_year'}, month_list]},
+                {'$eq': [{'$year': '$month_year'}, int(year_filter)]}
+            ]
+        }
+    elif year_filter:
+        query['$expr'] = {'$eq': [{'$year': '$month_year'}, int(year_filter)]}
+
+    # Aggregate oil usage by technician, date, and device
+    pipeline = [
+        {'$match': query},
+        {'$group': {
+            '_id': {
+                'technician': '$technician',
+                'date': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$month_year'}},
+                'company': '$company',
+                'premise': '$Premise Name',
+                'device_sn': '$S/N',
+                'device_model': '$Model'
+            },
+            'total_ml': {'$sum': '$oil_refill_ml'},
+            'service_count': {'$sum': 1}
+        }},
+        {'$sort': {'_id.date': -1, '_id.technician': 1}}
+    ]
+
+    oil_usage_data = list(services_collection.aggregate(pipeline))
+
+    # Aggregate premises serviced by technician within the time period
+    premises_pipeline = [
+        {'$match': query},
+        {'$group': {
+            '_id': {
+                'technician': '$technician',
+                'premise': '$Premise Name',
+                'company': '$company'
+            }
+        }},
+        {'$group': {
+            '_id': '$_id.technician',
+            'premises_count': {'$sum': 1},
+            'companies': {'$addToSet': '$_id.company'}
+        }},
+        {'$sort': {'_id': 1}}
+    ]
+
+    premises_data = list(services_collection.aggregate(premises_pipeline))
+
+    # Get unique technicians for filter dropdown
+    technicians = services_collection.distinct('technician', {'actions_taken': {'$in': ['Oil Refill']}})
+
+    # Calculate summary statistics
+    total_usage = sum(item['total_ml'] for item in oil_usage_data)
+    total_services = sum(item['service_count'] for item in oil_usage_data)
+    total_premises = sum(item['premises_count'] for item in premises_data)
+
+    return render_template('technician-oil-usage.html',
+                         oil_usage_data=oil_usage_data,
+                         premises_data=premises_data,
+                         technicians=technicians,
+                         total_usage=total_usage,
+                         total_services=total_services,
+                         total_premises=total_premises,
+                         filters={
+                             'technician': technician_filter,
+                             'month': month_filter,
+                             'year': year_filter
+                         })
+
+@data_reports_bp.route('/technician-oil-usage-pdf')
+def technician_oil_usage_pdf():
+    """Generate PDF report for technician oil usage"""
+    # Allow both admin and technician access
+    user_type = session.get('user_type', '')
+
+    if user_type not in ['admin', 'technician']:
+        flash("Access denied. Only admins and technicians can access this page.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    # Get filter parameters
+    technician_filter = request.args.get('technician', '').strip()
+    month_filter = request.args.get('month', '').strip()
+    year_filter = request.args.get('year', '').strip()
+
+    # Build query for service records with oil refills
+    query = {
+        'actions_taken': {'$in': ['Oil Refill']},
+        'oil_refill_ml': {'$exists': True, '$ne': None}
+    }
+
+    if technician_filter:
+        query['technician'] = {'$regex': technician_filter, '$options': 'i'}
+
+    if month_filter and year_filter:
+        month_list = [int(m.strip()) for m in month_filter.split(',') if m.strip().isdigit()]
+        query['$expr'] = {
+            '$and': [
+                {'$in': [{'$month': '$month_year'}, month_list]},
+                {'$eq': [{'$year': '$month_year'}, int(year_filter)]}
+            ]
+        }
+    elif year_filter:
+        query['$expr'] = {'$eq': [{'$year': '$month_year'}, int(year_filter)]}
+
+    # Aggregate oil usage by technician, date, and device
+    pipeline = [
+        {'$match': query},
+        {'$group': {
+            '_id': {
+                'technician': '$technician',
+                'date': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$month_year'}},
+                'company': '$company',
+                'premise': '$Premise Name',
+                'device_sn': '$S/N',
+                'device_model': '$Model'
+            },
+            'total_ml': {'$sum': '$oil_refill_ml'},
+            'service_count': {'$sum': 1}
+        }},
+        {'$sort': {'_id.date': -1, '_id.technician': 1}}
+    ]
+
+    oil_usage_data = list(services_collection.aggregate(pipeline))
+
+    # Aggregate premises serviced by technician within the time period
+    premises_pipeline = [
+        {'$match': query},
+        {'$group': {
+            '_id': {
+                'technician': '$technician',
+                'premise': '$Premise Name',
+                'company': '$company'
+            }
+        }},
+        {'$group': {
+            '_id': '$_id.technician',
+            'premises_count': {'$sum': 1},
+            'companies': {'$addToSet': '$_id.company'}
+        }},
+        {'$sort': {'_id': 1}}
+    ]
+
+    premises_data = list(services_collection.aggregate(premises_pipeline))
+
+    # Calculate summary statistics
+    total_usage = sum(item['total_ml'] for item in oil_usage_data)
+    total_services = sum(item['service_count'] for item in oil_usage_data)
+    total_premises = sum(item['premises_count'] for item in premises_data)
+
+    # Generate PDF
+    from fpdf import FPDF
+    from datetime import datetime
+
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('Arial', 'B', 16)
+            self.cell(0, 10, 'Technician Oil Usage Report', 0, 1, 'C')
+            self.set_font('Arial', '', 10)
+            self.cell(0, 5, f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', 0, 1, 'C')
+            if technician_filter:
+                self.cell(0, 5, f'Technician: {technician_filter}', 0, 1, 'C')
+            if month_filter and year_filter:
+                self.cell(0, 5, f'Period: {month_filter}/{year_filter}', 0, 1, 'C')
+            elif year_filter:
+                self.cell(0, 5, f'Year: {year_filter}', 0, 1, 'C')
+            self.ln(10)
+
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Arial', 'I', 8)
+            self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font('Arial', '', 10)
+
+    # Summary section
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Summary', 0, 1)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(0, 6, f'Total Oil Used: {total_usage:.1f} ml', 0, 1)
+    pdf.cell(0, 6, f'Total Services: {total_services}', 0, 1)
+    pdf.cell(0, 6, f'Total Premises Serviced: {total_premises}', 0, 1)
+    pdf.cell(0, 6, f'Active Technicians: {len(premises_data)}', 0, 1)
+    pdf.ln(5)
+
+    # Premises by Technician section
+    if premises_data:
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Premises Serviced by Technician', 0, 1)
+        pdf.set_font('Arial', 'B', 9)
+        pdf.cell(60, 8, 'Technician', 1, 0, 'C')
+        pdf.cell(25, 8, 'Premises', 1, 0, 'C')
+        pdf.cell(0, 8, 'Companies', 1, 1, 'C')
+
+        pdf.set_font('Arial', '', 8)
+        for item in premises_data:
+            pdf.cell(60, 6, str(item['_id']), 1, 0)
+            pdf.cell(25, 6, str(item['premises_count']), 1, 0, 'C')
+            companies_str = ', '.join(item['companies'][:3])  # Limit to 3 companies
+            if len(item['companies']) > 3:
+                companies_str += '...'
+            pdf.cell(0, 6, companies_str, 1, 1)
+
+        pdf.ln(5)
+
+    # Oil Usage Details section
+    if oil_usage_data:
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Oil Usage Details', 0, 1)
+        pdf.set_font('Arial', 'B', 7)
+        pdf.cell(20, 6, 'Date', 1, 0, 'C')
+        pdf.cell(25, 6, 'Technician', 1, 0, 'C')
+        pdf.cell(30, 6, 'Company', 1, 0, 'C')
+        pdf.cell(35, 6, 'Premise', 1, 0, 'C')
+        pdf.cell(15, 6, 'Device', 1, 0, 'C')
+        pdf.cell(20, 6, 'Model', 1, 0, 'C')
+        pdf.cell(20, 6, 'Oil (ml)', 1, 0, 'C')
+        pdf.cell(15, 6, 'Services', 1, 1, 'C')
+
+        pdf.set_font('Arial', '', 6)
+        for item in oil_usage_data:
+            pdf.cell(20, 5, item['_id']['date'], 1, 0)
+            pdf.cell(25, 5, str(item['_id']['technician']), 1, 0)
+            pdf.cell(30, 5, str(item['_id']['company'])[:28], 1, 0)
+            pdf.cell(35, 5, str(item['_id']['premise'])[:33], 1, 0)
+            pdf.cell(15, 5, str(item['_id']['device_sn']), 1, 0)
+            pdf.cell(20, 5, str(item['_id']['device_model'])[:18], 1, 0)
+            pdf.cell(20, 5, f"{item['total_ml']:.1f}", 1, 0, 'R')
+            pdf.cell(15, 5, str(item['service_count']), 1, 1, 'C')
+
+    # Generate filename
+    filename = f"technician_oil_usage_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+    # Return PDF as response
+    response = pdf.output(dest='S')
+    response = response.encode('latin-1')
+
+    from flask import Response
+    return Response(
+        response,
+        mimetype='application/pdf',
+        headers={
+            'Content-Disposition': f'attachment; filename={filename}'
+        }
+    )
