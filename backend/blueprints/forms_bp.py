@@ -27,6 +27,15 @@ def is_admin_logged_in():
 
 @forms_bp.before_request
 def require_admin_login():
+    # Allow preservice routes for both admin and technician
+    if request.endpoint and 'preservice' in request.endpoint:
+        user_type = session.get('user_type', '')
+        if user_type not in ['admin', 'technician']:
+            flash("Access denied. Only admins and technicians can access this page.", "warning")
+            return redirect(url_for('auth.admin_login'))
+        return  # Allow access for admin/technician users
+    
+    # For other routes, require admin login
     if not is_admin_logged_in():
         flash("You must be logged in as an admin to access this page.", "warning")
         return redirect(url_for('auth.admin_login'))
@@ -276,11 +285,11 @@ def preservice_form():
     """Form for recording preservice essential oil requirements for technicians"""
     # Allow both admin and technician access
     user_type = session.get('user_type', '')
-    if user_type not in ['admin', 'technician']:
-        flash("Access denied.", "danger")
-        return redirect(url_for('auth.admin_login'))
-
     username = session.get('username', 'unknown')
+
+    if user_type not in ['admin', 'technician']:
+        flash("Access denied. Only admins and technicians can access this page.", "danger")
+        return redirect(url_for('auth.admin_login'))
 
     if request.method == 'POST':
         try:
@@ -354,10 +363,10 @@ def preservice_form():
     technicians = list(tech_login_collection.find({}, {'username': 1, '_id': 0}))
     technician_list = [tech['username'] for tech in technicians]
 
-    device_models = list(model_list_collection.find({}, {'model_name': 1, '_id': 0}).sort("order", 1))
-    device_model_list = [model['model_name'] for model in device_models if 'model_name' in model]
+    device_models = list(model_list_collection.find({}, {'model1': 1, '_id': 0}).sort("order", 1))
+    device_model_list = [model['model1'] for model in device_models if 'model1' in model]
 
-    essential_oils = list(eo_list_collection.find({}, {'EO2': 1, '_id': 0}))
+    essential_oils = list(eo_list_collection.find({}, {'EO2': 1, '_id': 0}).sort("order", 1))
     eo_list = [eo['EO2'] for eo in essential_oils if 'EO2' in eo]
 
     companies = services_collection.distinct('company')

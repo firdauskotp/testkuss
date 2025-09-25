@@ -33,6 +33,11 @@ def is_admin_or_technician_logged_in():
 
 @data_reports_bp.before_request
 def require_admin_or_technician_login():
+    # Allow preservice routes for both admin and technician (already handled in route)
+    if request.endpoint and 'preservice' in request.endpoint:
+        return  # Access control is handled in the route itself
+    
+    # For other routes, require admin or technician login
     if not is_admin_or_technician_logged_in():
         flash("You must be logged in as an admin or technician to access this page.", "warning")
         return redirect(url_for('auth.admin_login'))
@@ -710,8 +715,9 @@ def preservice_data():
     """View preservice essential oil requirements data"""
     # Allow both admin and technician access
     user_type = session.get('user_type', '')
+
     if user_type not in ['admin', 'technician']:
-        flash("Access denied.", "danger")
+        flash("Access denied. Only admins and technicians can access this page.", "danger")
         return redirect(url_for('auth.admin_login'))
 
     from ..col import preservice_collection, tech_login_collection, eo_list_collection, model_list_collection
@@ -723,11 +729,11 @@ def preservice_data():
     all_technicians = list(tech_login_collection.find({}, {'username': 1, '_id': 0}))
     all_technicians = [tech['username'] for tech in all_technicians]
 
-    all_essential_oils = list(eo_list_collection.find({}, {'EO2': 1, '_id': 0}))
+    all_essential_oils = list(eo_list_collection.find({}, {'EO2': 1, '_id': 0}).sort("order", 1))
     all_essential_oils = [eo['EO2'] for eo in all_essential_oils if 'EO2' in eo]
 
-    all_device_models = list(model_list_collection.find({}, {'model_name': 1, '_id': 0}).sort("order", 1))
-    all_device_models = [model['model_name'] for model in all_device_models if 'model_name' in model]
+    all_device_models = list(model_list_collection.find({}, {'model1': 1, '_id': 0}).sort("order", 1))
+    all_device_models = [model['model1'] for model in all_device_models if 'model1' in model]
 
     return render_template('preservice-data.html',
                          preservice_entries=preservice_entries,
