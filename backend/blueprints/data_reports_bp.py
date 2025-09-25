@@ -2,11 +2,11 @@
 from bson import ObjectId
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict # For profile route
 from urllib.parse import urlencode
 
-from backend.utils import log_activity, sanitize_input, send_customer_email, send_team_email # For pagination query string manipulation
+from backend.utils import log_activity, sanitize_input, send_customer_email, send_team_email, require_auth # For pagination query string manipulation
 
 # Assuming database collections and helpers are accessible
 from ..col import (
@@ -139,6 +139,8 @@ def reports():
         query_params_for_template = request.args.to_dict() # Pass all current args for pagination links
 
         total_entries = services_collection.count_documents(query)
+        sort_order = request.args.get('sort_order', 'desc')
+        sort_direction = -1 if sort_order == 'desc' else 1
         services_collection_list = services_collection.find(query, {'_id': 0}).sort('month_year', sort_direction).skip((page - 1) * limit).limit(limit)
 
         processed_data = []
@@ -410,8 +412,6 @@ def device_master_list(): # Renamed from view_device
                            pagination_base_url=url_for('.device_master_list'),
                            query_params=request.args.to_dict(), data=paginated_data)
 
-from datetime import datetime, timedelta
-
 @data_reports_bp.route('/route-table-view')
 def route_table_view():
     page = int(request.args.get('page', 1))
@@ -456,6 +456,8 @@ def route_table_view():
 
 @data_reports_bp.route('/activity-logs') # Original was /logs, function get_logs
 def activity_logs_view(): # Renamed from get_logs
+    # Log activity when viewing logs
+    log_activity(session["username"], "viewed activity logs", logs_collection)
     # ... (Full original content of get_logs function from app.py)
     # ... (Ensure all url_for for pagination are relative)
     page = int(request.args.get('page', 1))
@@ -1177,3 +1179,49 @@ def technician_oil_usage_pdf():
             'Content-Disposition': f'attachment; filename={filename}'
         }
     )
+
+
+
+@data_reports_bp.route("/api/recent-activities")
+@require_auth
+def get_recent_activities():
+    """API endpoint to fetch recent activities for real-time notifications"""
+    try:
+        # Get activities from the last 24 hours, excluding current user's activities
+        current_user = session.get("username")
+        since_time = datetime.now() - timedelta(hours=24)
+        
+        # Query for recent activities by other users
+        query = {
+            "timestamp": {"$gte": since_time},
+            "user": {"$ne": current_user}  # Exclude current user's activities
+        }
+        
+        # Get the 10 most recent activities
+        recent_activities = list(logs_collection.find(query).sort("timestamp", -1).limit(10))
+        
+        # Format the activities for JSON response
+        activities = []
+        for activity in recent_activities:
+            timestamp = activity.get("timestamp")
+            if isinstance(timestamp, datetime):
+                formatted_time = timestamp.strftime("%H:%M")
+                formatted_date = timestamp.strftime("%Y-%m-%d")
+            else:
+                formatted_time = "Unknown"
+                formatted_date = "Unknown"
+            
+            activities.append({
+                "user": activity.get("user", "Unknown"),
+                "action": activity.get("action", "Unknown action"),
+                "time": formatted_time,
+                "date": formatted_date,
+                "timestamp": timestamp.isoformat() if isinstance(timestamp, datetime) else None
+            })
+        
+        return jsonify({"activities": activities})
+    
+    except Exception as e:
+        current_app.logger.error(f"Error fetching recent activities: {e}")
+        return jsonify({"error": "Failed to fetch activities"}), 500
+

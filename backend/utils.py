@@ -497,6 +497,142 @@ def generate_change_form_pdf(data):
 
     return pdf.output(dest="S").encode('latin-1')
 
+def generate_discontinue_pdf(data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=14, style='B')
+    pdf.cell(200, 10, txt="Service Discontinuation Notice", ln=True, align="C")
+    pdf.set_font("Arial", size=10)
+    pdf.ln(10)
+
+    # Company and date info
+    pdf.set_font("Arial", "B", size=12)
+    pdf.cell(200, 10, txt="Discontinuation Details:", ln=True)
+    pdf.set_font("Arial", size=10)
+
+    pdf.cell(200, 8, txt=f"Company: {data.get('company', 'N/A')}", ln=True)
+    pdf.cell(200, 8, txt=f"Date: {data.get('date', 'N/A')}", ln=True)
+    pdf.cell(200, 8, txt=f"Submitted by: {data.get('user', 'N/A')}", ln=True)
+    pdf.ln(5)
+
+    # Premises
+    pdf.set_font("Arial", "B", size=10)
+    pdf.cell(200, 8, txt="Premises:", ln=True)
+    pdf.set_font("Arial", size=10)
+    premises = data.get('premises', [])
+    if premises:
+        for premise in premises:
+            pdf.cell(200, 6, txt=f"- {premise}", ln=True)
+    else:
+        pdf.cell(200, 6, txt="N/A", ln=True)
+    pdf.ln(5)
+
+    # Devices
+    pdf.set_font("Arial", "B", size=10)
+    pdf.cell(200, 8, txt="Devices Discontinued:", ln=True)
+    pdf.set_font("Arial", size=10)
+    devices = data.get('devices', [])
+    if devices:
+        for device in devices:
+            pdf.cell(200, 6, txt=f"- {device}", ln=True)
+    else:
+        pdf.cell(200, 6, txt="N/A", ln=True)
+    pdf.ln(10)
+
+    # Remarks
+    if data.get('remark'):
+        pdf.set_font("Arial", "B", size=10)
+        pdf.cell(200, 8, txt="Remarks:", ln=True)
+        pdf.set_font("Arial", size=10)
+        pdf.multi_cell(0, 6, txt=data['remark'])
+        pdf.ln(5)
+
+    # Footer
+    pdf.set_font("Arial", "I", size=8)
+    pdf.cell(200, 10, txt="This service has been discontinued as requested. Contact administration to reactivate.", ln=True, align="C")
+
+    return pdf.output(dest="S").encode('latin-1')
+
+def generate_change_completed_pdf(data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=14, style='B')
+    pdf.cell(200, 10, txt="Device Changes Completion Report", ln=True, align="C")
+    pdf.set_font("Arial", size=10)
+    pdf.ln(10)
+
+    # Company and completion info
+    pdf.set_font("Arial", "B", size=12)
+    pdf.cell(200, 10, txt="Completion Details:", ln=True)
+    pdf.set_font("Arial", size=10)
+
+    pdf.cell(200, 8, txt=f"Company: {data.get('company', 'N/A')}", ln=True)
+    pdf.cell(200, 8, txt=f"Confirmed By: {data.get('confirmed_by', 'N/A')}", ln=True)
+    pdf.cell(200, 8, txt=f"Completion Date: {data.get('confirmation_date', 'N/A')}", ln=True)
+    pdf.cell(200, 8, txt=f"Original Request Date: {data.get('date', 'N/A')}", ln=True)
+    pdf.ln(5)
+
+    # Changes summary
+    pdf.set_font("Arial", "B", size=10)
+    pdf.cell(200, 8, txt="Changes Implemented:", ln=True)
+    pdf.set_font("Arial", size=10)
+
+    # List the changes
+    if data.get('change_scent'):
+        pdf.cell(200, 6, txt=f"- Scent Change: {data.get('change_scent_to', 'N/A')}", ln=True)
+    if data.get('redo_settings'):
+        pdf.cell(200, 6, txt="- Settings Redone", ln=True)
+    if data.get('reduce_intensity'):
+        pdf.cell(200, 6, txt="- Intensity Reduced", ln=True)
+    if data.get('increase_intensity'):
+        pdf.cell(200, 6, txt="- Intensity Increased", ln=True)
+    if data.get('move_device'):
+        pdf.cell(200, 6, txt=f"- Device Moved: {data.get('move_device_to', 'N/A')}", ln=True)
+    if data.get('relocate_device'):
+        pdf.cell(200, 6, txt=f"- Device Relocated: {data.get('relocate_device_to', 'N/A')}", ln=True)
+
+    pdf.ln(5)
+
+    # Premises and Devices
+    pdf.set_font("Arial", "B", size=10)
+    pdf.cell(200, 8, txt="Affected Premises:", ln=True)
+    pdf.set_font("Arial", size=10)
+    premises = data.get('premises', [])
+    if premises:
+        for premise in premises:
+            pdf.cell(200, 6, txt=f"- {premise}", ln=True)
+    else:
+        pdf.cell(200, 6, txt="N/A", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", size=10)
+    pdf.cell(200, 8, txt="Affected Devices:", ln=True)
+    pdf.set_font("Arial", size=10)
+    devices = data.get('devices', [])
+    if devices:
+        for device in devices:
+            pdf.cell(200, 6, txt=f"- {device}", ln=True)
+    else:
+        pdf.cell(200, 6, txt="N/A", ln=True)
+
+    # Technician notes
+    if data.get('technician_notes'):
+        pdf.ln(5)
+        pdf.set_font("Arial", "B", size=10)
+        pdf.cell(200, 8, txt="Technician Notes:", ln=True)
+        pdf.set_font("Arial", size=10)
+        pdf.multi_cell(0, 6, txt=data['technician_notes'])
+
+    # Signature section
+    pdf.ln(10)
+    pdf.set_font("Arial", "B", size=10)
+    pdf.cell(200, 8, txt="Client Acknowledgment:", ln=True)
+    pdf.set_font("Arial", size=10)
+    pdf.cell(200, 6, txt="Signature: ___________________________", ln=True)
+    pdf.cell(200, 6, txt=f"Date: {data.get('confirmation_date', 'N/A')}", ln=True)
+
+    return pdf.output(dest="S").encode('latin-1')
+
 def generate_service_pdf(variables):
     """Generate PDF summary for completed service report."""
     from ..col import services_collection
@@ -580,6 +716,10 @@ def generate_file_for(template_key, variables):
         return generate_case_pdf(variables["case_id"])  # returns bytes
     if template_key == "change_form_confirmation":
         return generate_change_form_pdf(variables)
+    if template_key == "change_completed_notification":
+        return generate_change_completed_pdf(variables)
+    if template_key == "discontinue_notification":
+        return generate_discontinue_pdf(variables)
     if template_key == "service_completed_notification":
         return generate_service_pdf(variables)  # returns bytes
     else:

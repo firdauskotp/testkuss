@@ -18,6 +18,15 @@
             font-size: 0.7em;
             margin-left: 0.25em;
         }
+
+        /* Notification animation */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
     </style>
 </head>
 <body class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col min-h-screen">
@@ -55,6 +64,9 @@
                              <!-- <a href="{{ url_for('forms.service2') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Service Form (Simple)</a>
                             <a href="{{ url_for('forms.post_service') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Post-Service Form</a> -->
                             <a href="{{ url_for('data_reports.view_complaints_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Help Requests</a>
+                            {% if session.get('user_type') in ['admin', 'technician'] %}
+                            <a href="{{ url_for('forms.device_replacements') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Device Replacements</a>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -69,6 +81,7 @@
                             <a href="{{ url_for('user_mgnt.view_users') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Client Users</a>
                             <a href="{{ url_for('user_mgnt.view_admins') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Admins</a>
                             <a href="{{ url_for('user_mgnt.view_technicians') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Technicians</a>
+                            <a href="{{ url_for('forms.discontinued_clients') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Discontinued Clients</a>
                         </div>
                     </div>
                     {% endif %}
@@ -109,6 +122,10 @@
 
                     <a href="{{ url_for('auth.logout') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Logout</a>
                 </nav>
+
+                <!-- Real-time Notifications -->
+                <div id="notification-container" class="fixed top-20 right-4 z-50 space-y-2 max-w-sm"></div>
+
                 <button id="theme-toggle-btn" class="p-2 rounded-md hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
                     Theme
                 </button>
@@ -188,6 +205,97 @@
 
         // Current year in footer (optional, if you want it dynamic)
         // document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // Real-time Activity Notifications
+        let lastActivityTimestamp = null;
+        let notificationCheckInterval = null;
+
+        function createNotificationElement(activity) {
+            const notification = document.createElement('div');
+            notification.className = 'bg-green-500 text-white p-3 rounded-lg shadow-lg max-w-sm animate-fade-in relative';
+            notification.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="font-semibold text-sm">${activity.user}</div>
+                        <div class="text-xs opacity-90 mt-1">${activity.action}</div>
+                        <div class="text-xs opacity-75 mt-1">${activity.time}</div>
+                    </div>
+                    <button class="ml-2 text-white hover:text-gray-200 focus:outline-none" onclick="dismissNotification(this)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            // Auto-dismiss after 10 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 10000);
+
+            return notification;
+        }
+
+        function dismissNotification(button) {
+            const notification = button.closest('div');
+            notification.remove();
+        }
+
+        async function checkForNewActivities() {
+            try {
+                const response = await fetch('{{ url_for("data_reports.decorator") }}');
+                if (response.ok) {
+                    const data = await response.json();
+                    const activities = data.activities || [];
+
+                    // Filter for activities newer than our last check
+                    const newActivities = activities.filter(activity => {
+                        if (!lastActivityTimestamp) return true;
+                        const activityTime = new Date(activity.timestamp);
+                        return activityTime > lastActivityTimestamp;
+                    });
+
+                    // Update last timestamp
+                    if (activities.length > 0) {
+                        lastActivityTimestamp = new Date(activities[0].timestamp);
+                    }
+
+                    // Display new notifications
+                    const container = document.getElementById('notification-container');
+                    newActivities.forEach(activity => {
+                        const notificationElement = createNotificationElement(activity);
+                        container.appendChild(notificationElement);
+                    });
+                }
+            } catch (error) {
+                console.error('Error checking for new activities:', error);
+            }
+        }
+
+        function startNotificationPolling() {
+            // Check immediately
+            checkForNewActivities();
+
+            // Then check every 30 seconds
+            notificationCheckInterval = setInterval(checkForNewActivities, 30000);
+        }
+
+        function stopNotificationPolling() {
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+                notificationCheckInterval = null;
+            }
+        }
+
+        // Start polling when page loads (only if user is logged in)
+        {% if session.get('username') %}
+        document.addEventListener('DOMContentLoaded', startNotificationPolling);
+        {% endif %}
+
+        // Stop polling when page unloads
+        window.addEventListener('beforeunload', stopNotificationPolling);
     </script>
     {# Removed inline style block for .mobile-nav-link and .mobile-nav-heading #}
     {% block scripts %}{% endblock %}

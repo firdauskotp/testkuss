@@ -472,3 +472,6 @@ Data\ Flow\ \(Draft\).jpg
 .coverage
 backend/extra-install.txt
 question.html
+
+# YoYo AI version control directory
+.yoyo/

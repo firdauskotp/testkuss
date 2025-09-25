@@ -451,3 +451,340 @@ def test_remark_post_success(client, app, mocker):
     assert inserted_remark['urgent'] is True
 
     mock_log.assert_called_once()
+
+# --- Tests for discontinue functionality ---
+def test_change_form_post_collect_back_sends_email(client, app, mocker):
+    """Test that collect_back sends discontinue email to PIC"""
+    login_admin(client, mocker, app)
+
+    # Mock collections
+    mock_customer = {
+        "_id": "customer_id",
+        "company": "Test Company",
+        "email": "pic@testcompany.com"
+    }
+    mocker.patch('backend.blueprints.forms_bp.profile_list_collection.find_one', return_value=mock_customer)
+    mock_refund_insert = mocker.patch('backend.blueprints.forms_bp.refund_collection.insert_one')
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+    mock_email = mocker.patch('backend.blueprints.forms_bp.send_dynamic_email')
+
+    form_data = {
+        'companyName': 'Test Company',
+        'date': '2025-09-26',
+        'month': '09',
+        'year': '2025',
+        'premises': ['Premise 1'],
+        'devices': ['Device 1'],
+        'collectBack': 'on',
+        'remark': 'Test discontinue remark'
+    }
+
+    with app.test_request_context():
+        response = client.post(url_for('forms.change_form'), data=form_data, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('dashboard')
+
+    # Verify refund collection was used (not change_form_collection)
+    mock_refund_insert.assert_called_once()
+    inserted_data = mock_refund_insert.call_args[0][0]
+    assert inserted_data['collect_back'] is True
+    assert inserted_data['company'] == 'Test Company'
+
+    # Verify email was sent
+    mock_email.assert_called_once_with(
+        "discontinue_notification",
+        mocker.ANY,  # The data dict with customer_email added
+        mocker.ANY   # mail object
+    )
+
+    mock_log.assert_called()
+
+def test_change_form_post_device_replacement(client, app, mocker):
+    """Test that non-collect-back changes go to device_replacements collection"""
+    login_admin(client, mocker, app)
+
+    # Mock collections
+    mock_customer = {
+        "_id": "customer_id",
+        "company": "Test Company",
+        "email": "pic@testcompany.com"
+    }
+    mocker.patch('backend.blueprints.forms_bp.profile_list_collection.find_one', return_value=mock_customer)
+    mock_replacement_insert = mocker.patch('backend.blueprints.forms_bp.device_replacements_collection.insert_one')
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+
+    form_data = {
+        'companyName': 'Test Company',
+        'date': '2025-09-26',
+        'month': '09',
+        'year': '2025',
+        'premises': ['Premise 1'],
+        'devices': ['Device 1'],
+        'changeScent': 'on',
+        'changeScentText': 'Lavender',
+        'remark': 'Test change remark'
+    }
+
+    with app.test_request_context():
+        response = client.post(url_for('forms.change_form'), data=form_data, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('dashboard')
+
+    # Verify device_replacements collection was used
+    mock_replacement_insert.assert_called_once()
+    inserted_data = mock_replacement_insert.call_args[0][0]
+    assert inserted_data['status'] == 'pending'
+    assert inserted_data['change_scent'] is True
+    assert inserted_data['change_scent_to'] == 'Lavender'
+    assert 'submitted_at' in inserted_data
+
+    mock_log.assert_called()
+
+# --- Tests for device replacements workflow ---
+def test_device_replacements_get_unauthenticated(client, app):
+    """Test that device replacements page requires authentication"""
+    with app.test_request_context():
+        response = client.get(url_for('forms.device_replacements'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_device_replacements_get_authenticated(client, app, mocker):
+    """Test device replacements page loads for authenticated users"""
+    login_admin(client, mocker, app)
+
+    # Mock device replacements collection
+    mock_replacements = [
+        {
+            "_id": "replacement_id_1",
+            "company": "Test Company",
+            "status": "pending",
+            "submitted_at": datetime.now(),
+            "devices": ["Device 1"],
+            "premises": ["Premise 1"]
+        }
+    ]
+    mocker.patch('backend.blueprints.forms_bp.device_replacements_collection.find', return_value=mock_replacements)
+
+    with app.test_request_context():
+        response = client.get(url_for('forms.device_replacements'))
+
+    assert response.status_code == 200
+    assert b"Pending Device Replacements" in response.data
+
+def test_confirm_replacement_success(client, app, mocker):
+    """Test successful replacement confirmation"""
+    login_admin(client, mocker, app)
+
+    # Mock replacement data
+    mock_replacement = {
+        "_id": "replacement_id",
+        "company": "Test Company",
+        "devices": ["Device 1"],
+        "premises": ["Premise 1"],
+        "status": "pending"
+    }
+    mocker.patch('backend.blueprints.forms_bp.device_replacements_collection.find_one', return_value=mock_replacement)
+    mocker.patch('backend.blueprints.forms_bp.device_replacements_collection.update_one')
+    mocker.patch('backend.blueprints.forms_bp.profile_list_collection.find_one', return_value={"email": "pic@test.com"})
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+    mock_email = mocker.patch('backend.blueprints.forms_bp.send_dynamic_email')
+
+    form_data = {
+        'client_signature': 'signature_data',
+        'technician_notes': 'Changes completed successfully'
+    }
+
+    with app.test_request_context():
+        response = client.post(url_for('forms.confirm_replacement', replacement_id='replacement_id'),
+                              data=form_data, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('forms.device_replacements')
+
+    # Verify update was called
+    from backend.blueprints.forms_bp import device_replacements_collection
+    update_mock = mocker.patch.object(device_replacements_collection, 'update_one')
+    update_mock.assert_called_once()
+
+    # Verify email was sent
+    mock_email.assert_called_once_with(
+        "change_completed_notification",
+        mocker.ANY,
+        mocker.ANY
+    )
+
+    mock_log.assert_called()
+
+def test_confirm_replacement_not_found(client, app, mocker):
+    """Test confirmation with non-existent replacement ID"""
+    login_admin(client, mocker, app)
+
+    mocker.patch('backend.blueprints.forms_bp.device_replacements_collection.find_one', return_value=None)
+
+    with app.test_request_context():
+        response = client.get(url_for('forms.confirm_replacement', replacement_id='nonexistent_id'))
+
+    assert response.status_code == 302
+    assert response.location == url_for('forms.device_replacements')
+
+# --- Tests for discontinued clients management ---
+def test_discontinued_clients_get_unauthenticated(client, app):
+    """Test that discontinued clients page requires admin authentication"""
+    with app.test_request_context():
+        response = client.get(url_for('forms.discontinued_clients'), follow_redirects=False)
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_discontinued_clients_get_non_admin(client, app, mocker):
+    """Test that discontinued clients page requires admin user type"""
+    # Login as technician (non-admin)
+    mock_user_data = {"_id": "tech_id", "username": "technician", "password": "hashed_password"}
+    mocker.patch('backend.blueprints.auth_bp.login_collection.find_one', return_value=mock_user_data)
+    mocker.patch('backend.blueprints.auth_bp.check_password_hash', return_value=True)
+    mocker.patch('backend.blueprints.auth_bp.log_activity')
+
+    with app.app_context():
+        admin_login_url = url_for('auth.admin_login')
+    client.post(admin_login_url, data={'username': 'technician', 'password': 'password'})
+
+    # Mock session to be technician
+    with app.test_request_context():
+        with client.session_transaction() as sess:
+            sess['user_type'] = 'technician'
+
+        response = client.get(url_for('forms.discontinued_clients'), follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('auth.admin_login')
+
+def test_discontinued_clients_get_admin(client, app, mocker):
+    """Test discontinued clients page loads for admin users"""
+    login_admin(client, mocker, app)
+
+    # Mock discontinued clients
+    mock_discontinued = [
+        {
+            "_id": "discontinued_id_1",
+            "company": "Test Company",
+            "submitted_at": datetime.now(),
+            "devices": ["Device 1"],
+            "premises": ["Premise 1"]
+        }
+    ]
+    mocker.patch('backend.blueprints.forms_bp.refund_collection.find', return_value=mock_discontinued)
+
+    with app.test_request_context():
+        response = client.get(url_for('forms.discontinued_clients'))
+
+    assert response.status_code == 200
+    assert b"Discontinued Clients" in response.data
+
+def test_reactivate_client_success(client, app, mocker):
+    """Test successful client reactivation"""
+    login_admin(client, mocker, app)
+
+    # Mock discontinued client
+    mock_client = {
+        "_id": "client_id",
+        "company": "Test Company",
+        "premises": ["Premise 1"],
+        "devices": ["Device 1"]
+    }
+    mocker.patch('backend.blueprints.forms_bp.refund_collection.find_one', return_value=mock_client)
+    mock_log = mocker.patch('backend.blueprints.forms_bp.log_activity')
+
+    with app.test_request_context():
+        response = client.post(url_for('forms.reactivate_client', client_id='client_id'), follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('forms.discontinued_clients')
+
+    mock_log.assert_called_once()
+
+def test_reactivate_client_not_found(client, app, mocker):
+    """Test reactivation with non-existent client ID"""
+    login_admin(client, mocker, app)
+
+    mocker.patch('backend.blueprints.forms_bp.refund_collection.find_one', return_value=None)
+
+    with app.test_request_context():
+        response = client.post(url_for('forms.reactivate_client', client_id='nonexistent_id'), follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('forms.discontinued_clients')
+
+# --- Tests for PDF generation ---
+def test_generate_discontinue_pdf(app, mocker):
+    """Test discontinue PDF generation"""
+    from backend.utils import generate_discontinue_pdf
+
+    test_data = {
+        "company": "Test Company",
+        "date": "2025-09-26",
+        "user": "testuser",
+        "premises": ["Premise 1", "Premise 2"],
+        "devices": ["Device 1", "Device 2"],
+        "remark": "Test discontinue remark"
+    }
+
+    pdf_bytes = generate_discontinue_pdf(test_data)
+
+    # Verify PDF was generated (basic check)
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0
+    # PDF files start with %PDF-
+    assert pdf_bytes.startswith(b'%PDF-')
+
+def test_generate_change_completed_pdf(app, mocker):
+    """Test change completion PDF generation"""
+    from backend.utils import generate_change_completed_pdf
+
+    test_data = {
+        "company": "Test Company",
+        "confirmed_by": "technician1",
+        "confirmation_date": "2025-09-26",
+        "date": "2025-09-20",
+        "premises": ["Premise 1"],
+        "devices": ["Device 1"],
+        "change_scent": True,
+        "change_scent_to": "Lavender",
+        "technician_notes": "Changes completed successfully"
+    }
+
+    pdf_bytes = generate_change_completed_pdf(test_data)
+
+    # Verify PDF was generated
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0
+    assert pdf_bytes.startswith(b'%PDF-')
+
+# --- Tests for email template handling ---
+def test_generate_file_for_discontinue_notification(app, mocker):
+    """Test that generate_file_for handles discontinue notification"""
+    from backend.utils import generate_file_for
+
+    test_variables = {
+        "company": "Test Company",
+        "customer_email": "pic@test.com"
+    }
+
+    pdf_bytes = generate_file_for("discontinue_notification", test_variables)
+
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0
+
+def test_generate_file_for_change_completed_notification(app, mocker):
+    """Test that generate_file_for handles change completed notification"""
+    from backend.utils import generate_file_for
+
+    test_variables = {
+        "company": "Test Company",
+        "customer_email": "pic@test.com"
+    }
+
+    pdf_bytes = generate_file_for("change_completed_notification", test_variables)
+
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0

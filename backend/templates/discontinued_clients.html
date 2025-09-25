@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Discontinued Clients{% endblock %}
+{% block page_title %}Discontinued Clients Management{% endblock %}
+
+{% block head_extra %}
+    <style>
+        .client-card {
+            transition: all 0.3s ease;
+        }
+        .client-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto space-y-8">
+
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Discontinued Clients</h1>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Manage clients who have discontinued their service</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 text-sm rounded-md border
+                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                            " role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if discontinued %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for client in discontinued %}
+                <div class="client-card bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ client.company }}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ client.date }}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">By: {{ client.user }}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full">
+                            Discontinued
+                        </span>
+                    </div>
+
+                    <div class="space-y-3 mb-4">
+                        <div>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Premises:</span>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                {% for premise in client.premises %}
+                                    • {{ premise }}<br>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Devices:</span>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                {% for device in client.devices %}
+                                    • {{ device }}<br>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        {% if client.remark %}
+                        <div class="text-sm">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Remarks:</span>
+                            <p class="text-gray-600 dark:text-gray-400 mt-1">{{ client.remark }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex justify-end space-x-2">
+                        <form method="POST" action="{{ url_for('forms.reactivate_client', client_id=client._id) }}"
+                              onsubmit="return confirm('Are you sure you want to reactivate this client?')">
+                            <button type="submit"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Reactivate
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No discontinued clients</h3>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">All clients are currently active.</p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

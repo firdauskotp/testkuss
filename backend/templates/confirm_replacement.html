@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Device Replacement{% endblock %}
+{% block page_title %}Confirm Device Changes{% endblock %}
+
+{% block head_extra %}
+    <style>
+        .signature-pad {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background: white;
+        }
+        .signature-pad.dark {
+            border-color: #374151;
+            background: #1f2937;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-8">
+
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Confirm Device Changes</h1>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Review and confirm the requested device changes</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="space-y-3">
+                {% for category, message in messages %}
+                <div class="p-4 text-sm rounded-md border
+                            {% if category == 'danger' %} bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/50 {% endif %}
+                            {% if category == 'success' %} bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-500/50 {% endif %}
+                            " role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Replacement Details -->
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Change Request Details</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ replacement.company }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Submitted: {{ replacement.date }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">By: {{ replacement.user }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="px-3 py-1 text-sm font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full">
+                        Status: {{ replacement.status.title() }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Premises -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Premises</h4>
+                    <div class="space-y-1">
+                        {% for premise in replacement.premises %}
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            {{ premise }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Devices -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Devices</h4>
+                    <div class="space-y-1">
+                        {% for device in replacement.devices %}
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            {{ device }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Changes -->
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Requested Changes</h4>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% if replacement.change_scent %}
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Change Scent: <strong>{{ replacement.change_scent_to }}</strong></span>
+                        </div>
+                        {% endif %}
+
+                        {% if replacement.redo_settings %}
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Redo Settings</span>
+                        </div>
+                        {% endif %}
+
+                        {% if replacement.reduce_intensity %}
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Reduce Intensity</span>
+                        </div>
+                        {% endif %}
+
+                        {% if replacement.increase_intensity %}
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Increase Intensity</span>
+                        </div>
+                        {% endif %}
+
+                        {% if replacement.move_device %}
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Move Device: <strong>{{ replacement.move_device_to }}</strong></span>
+                        </div>
+                        {% endif %}
+
+                        {% if replacement.relocate_device %}
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Relocate Device: <strong>{{ replacement.relocate_device_to }}</strong></span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if replacement.remark %}
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Remarks</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">{{ replacement.remark }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Confirmation Form -->
+        <form method="POST" action="{{ url_for('forms.confirm_replacement', replacement_id=replacement._id) }}" class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Confirm Changes</h2>
+
+            <div class="space-y-6">
+                <!-- Technician Notes -->
+                <div>
+                    <label for="technician_notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Technician Notes (Optional)
+                    </label>
+                    <textarea id="technician_notes" name="technician_notes" rows="3"
+                              class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                              placeholder="Add any notes about the changes made..."></textarea>
+                </div>
+
+                <!-- Client Signature -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Client Signature
+                    </label>
+                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                        <canvas id="signature-pad" class="signature-pad w-full h-32"></canvas>
+                        <input type="hidden" id="client_signature" name="client_signature" required>
+                        <div class="mt-2 flex justify-between">
+                            <button type="button" id="clear-signature" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                                Clear Signature
+                            </button>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Please sign above</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4">
+                    <a href="{{ url_for('forms.device_replacements') }}"
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Confirm Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+// Signature pad functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('signature-pad');
+    const signatureInput = document.getElementById('client_signature');
+    const clearButton = document.getElementById('clear-signature');
+
+    // Set canvas size
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+
+    // Set initial canvas background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Drawing functions
+    function startDrawing(e) {
+        isDrawing = true;
+        ctx.beginPath();
+        ctx.moveTo(e.offsetX, e.offsetY);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        // Save signature as base64
+        signatureInput.value = canvas.toDataURL();
+    }
+
+    // Event listeners
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        startDrawing({
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top
+        });
+    });
+
+    canvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        draw({
+            offsetX: touch.clientX - rect.left,
+            offsetY: touch.clientY - rect.top
+        });
+    });
+
+    canvas.addEventListener('touchend', stopDrawing);
+
+    // Clear signature
+    clearButton.addEventListener('click', function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        signatureInput.value = '';
+    });
+
+    // Set initial stroke style
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+});
+</script>
+{% endblock %}

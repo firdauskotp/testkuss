@@ -101,6 +101,20 @@
       "receiver_email": "{{ customer_email }}",
       "email_content": "Hello from Kuss Essentials!<br><br>The service visit for <strong>{{ premise_name }}</strong> has been completed successfully.<br><br><strong>Technician:</strong> {{ technician }}<br><strong>Service Date:</strong> {{ service_date }}<br><strong>Devices Serviced:</strong> {{ devices_count }}<br><br>To view the complete service report, please open the attached PDF file.<br><br>Thank you for choosing Kuss Essentials.<br><br>Best regards,<br>Kuss Essentials Team",
       "attachment_template": "service_report_{{ premise_name | replace(' ', '_') }}_{{ service_date }}.pdf"
+    },
+    "discontinue_notification": {
+      "subject": "Service Discontinuation Notice for {{ company }}",
+      "sender_email": "no-reply@kussessentials.com",
+      "receiver_email": "{{ customer_email }}",
+      "email_content": "Hello from Kuss Essentials!<br><br>This email is to inform you that the service for the following devices at your premises has been discontinued as requested:<br><br><strong>Company:</strong> {{ company }}<br><strong>Premises:</strong> {{ premises | join(', ') }}<br><strong>Devices:</strong> {{ devices | join(', ') }}<br><strong>Discontinuation Date:</strong> {{ date }}<br><br>The devices have been collected back and the service has been terminated.<br><br>If you need to reactivate the service in the future, please contact our administration team.<br><br>Thank you for your business with Kuss Essentials.<br><br>Best regards,<br>Kuss Essentials Team",
+      "attachment_template": "discontinue_notice_{{ company | replace(' ', '_') }}_{{ date }}.pdf"
+    },
+    "change_completed_notification": {
+      "subject": "Device Changes Completed for {{ company }}",
+      "sender_email": "no-reply@kussessentials.com",
+      "receiver_email": "{{ customer_email }}",
+      "email_content": "Hello from Kuss Essentials!<br><br>The requested device changes for <strong>{{ company }}</strong> have been successfully completed.<br><br><strong>Changes Made:</strong><br>{{ changes_summary }}<br><strong>Confirmed By:</strong> {{ confirmed_by }}<br><strong>Completion Date:</strong> {{ confirmation_date }}<br><br>The changes have been implemented and the client signature has been obtained.<br><br>To view the complete change details, please open the attached PDF file.<br><br>Thank you for choosing Kuss Essentials.<br><br>Best regards,<br>Kuss Essentials Team",
+      "attachment_template": "change_completed_{{ company | replace(' ', '_') }}_{{ confirmation_date }}.pdf"
     }
   }
   

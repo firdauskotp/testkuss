@@ -10,7 +10,7 @@ from ..col import (
     eo_pack_collection, industry_list_collection, profile_list_collection,
     device_list_collection, route_list_collection, test_collection,
     change_collection as change_form_collection, # Renamed for clarity
-    refund_collection, logs_collection
+    refund_collection, device_replacements_collection, logs_collection
 )
 from ..utils import log_activity, safe_int, handle_route_error, require_auth, sanitize_input, send_dynamic_email
 from backend import mail
@@ -264,12 +264,15 @@ def change_form():
         if data["collect_back"]:
             refund_collection.insert_one(data)
             log_activity(session["username"],"collected back : " +str(data['premises']) + str(data['devices']),logs_collection)
-        else:
-            change_form_collection.insert_one(data)
-            log_activity(session["username"],"updated settings : " +str(data['premises']) + str(data['devices']),logs_collection)
             customer = profile_list_collection.find_one({"company": data["company"]})
             if customer and customer.get("email"):
-                send_dynamic_email("change_form_confirmation", {**data, "customer_email": customer["email"]}, mail)
+                send_dynamic_email("discontinue_notification", {**data, "customer_email": customer["email"]}, mail)
+        else:
+            # Save to device replacements for technician processing
+            data["status"] = "pending"  # pending, confirmed, completed
+            data["submitted_at"] = datetime.now()
+            device_replacements_collection.insert_one(data)
+            log_activity(session["username"],"submitted device replacement request : " +str(data['premises']) + str(data['devices']),logs_collection)
         flash("Data updated", "success")
         return redirect(url_for("dashboard"))
     companies = services_collection.distinct('company')
@@ -639,3 +642,126 @@ def remark():
         flash("Remark submitted successfully!", "success")
         return redirect(url_for('dashboard'))
     return render_template('remark.html', username=username)
+
+@forms_bp.route('/device-replacements', methods=['GET'])
+def device_replacements():
+    """View pending device replacements for technicians"""
+    user_type = session.get('user_type', '')
+    username = session.get('username', '')
+
+    if user_type not in ['admin', 'technician']:
+        flash("Access denied. Only admins and technicians can access this page.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    # Get pending replacements
+    replacements = list(device_replacements_collection.find({"status": "pending"}, sort=[("submitted_at", -1)]))
+
+    return render_template('device_replacements.html', replacements=replacements, username=username, user_type=user_type)
+
+@forms_bp.route('/confirm-replacement/<replacement_id>', methods=['GET', 'POST'])
+def confirm_replacement(replacement_id):
+    """Confirm and complete a device replacement"""
+    user_type = session.get('user_type', '')
+    username = session.get('username', '')
+
+    if user_type not in ['admin', 'technician']:
+        flash("Access denied. Only admins and technicians can access this page.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    try:
+        replacement = device_replacements_collection.find_one({"_id": ObjectId(replacement_id)})
+        if not replacement:
+            flash("Replacement request not found.", "danger")
+            return redirect(url_for('forms.device_replacements'))
+
+        if request.method == 'POST':
+            # Get form data
+            client_signature = request.form.get('client_signature')
+            technician_notes = request.form.get('technician_notes')
+
+            # Update the replacement record
+            update_data = {
+                "status": "completed",
+                "confirmed_by": username,
+                "confirmed_at": datetime.now(),
+                "client_signature": client_signature,
+                "technician_notes": technician_notes
+            }
+
+            device_replacements_collection.update_one(
+                {"_id": ObjectId(replacement_id)},
+                {"$set": update_data}
+            )
+
+            log_activity(username, f"confirmed device replacement for {replacement.get('company')} - {replacement.get('devices')}", logs_collection)
+
+            # Send completion email to customer
+            customer = profile_list_collection.find_one({"company": replacement["company"]})
+            if customer and customer.get("email"):
+                send_dynamic_email("change_completed_notification", {
+                    **replacement,
+                    "customer_email": customer["email"],
+                    "confirmed_by": username,
+                    "confirmation_date": datetime.now().strftime('%Y-%m-%d')
+                }, mail)
+
+            flash("Device replacement confirmed successfully!", "success")
+            return redirect(url_for('forms.device_replacements'))
+
+        return render_template('confirm_replacement.html', replacement=replacement, username=username)
+
+    except Exception as e:
+        current_app.logger.error(f"Error confirming replacement {replacement_id}: {str(e)}")
+        flash("An error occurred while processing the replacement.", "danger")
+        return redirect(url_for('forms.device_replacements'))
+
+@forms_bp.route('/discontinued-clients', methods=['GET'])
+def discontinued_clients():
+    """Admin interface to view and manage discontinued clients"""
+    user_type = session.get('user_type', '')
+    username = session.get('username', '')
+
+    if user_type != 'admin':
+        flash("Access denied. Only administrators can access this page.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    # Get all discontinued clients
+    discontinued = list(refund_collection.find(sort=[("submitted_at", -1)]))
+
+    return render_template('discontinued_clients.html', discontinued=discontinued, username=username)
+
+@forms_bp.route('/reactivate-client/<client_id>', methods=['POST'])
+def reactivate_client(client_id):
+    """Reactivate a discontinued client (admin only)"""
+    user_type = session.get('user_type', '')
+    username = session.get('username', '')
+
+    if user_type != 'admin':
+        flash("Access denied. Only administrators can perform this action.", "danger")
+        return redirect(url_for('forms.discontinued_clients'))
+
+    try:
+        # Find the discontinued client
+        client = refund_collection.find_one({"_id": ObjectId(client_id)})
+        if not client:
+            flash("Client not found.", "danger")
+            return redirect(url_for('forms.discontinued_clients'))
+
+        # Move from refund_collection back to active status
+        # This would typically involve updating the device status or creating a reactivation record
+        # For now, we'll just log the reactivation
+        log_activity(username, f"reactivated client {client.get('company')} - premises: {client.get('premises')}, devices: {client.get('devices')}", logs_collection)
+
+        # TODO: Implement actual reactivation logic
+        # This might involve:
+        # 1. Updating device_list_collection to set inactive: false
+        # 2. Moving the record to an active collection
+        # 3. Sending reactivation notification email
+
+        flash(f"Client {client.get('company')} has been marked for reactivation. Full reactivation logic to be implemented.", "success")
+
+    except Exception as e:
+        current_app.logger.error(f"Error reactivating client {client_id}: {str(e)}")
+        flash("An error occurred while reactivating the client.", "danger")
+
+    return redirect(url_for('forms.discontinued_clients'))
