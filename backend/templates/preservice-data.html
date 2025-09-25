@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Preservice Data{% endblock %}
+{% block page_title %}Preservice Essential Oil Requirements{% endblock %}
+
+{% block head_extra %}
+    {# Any page-specific CSS or JS links for this page #}
+{% endblock %}
+
+{% block content %}
+<div class="py-8 px-4 sm:px-6 lg:px-8 space-y-8">
+
+    <div class="flex justify-start mb-6">
+        <a href="{{ url_for('dashboard') }}"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Filter Form Section -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <button id="filterToggleButton"
+                class="w-full flex justify-between items-center py-3 px-4 text-left text-lg font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span>Show/Hide Filters</span>
+            <svg id="filterToggleIcon" class="w-5 h-5 transform transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </button>
+        <div id="filterFormContainer" class="hidden mt-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-4">
+                <!-- Date Filter -->
+                <div>
+                    <label for="date_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by Date</label>
+                    <input type="date" id="date_filter"
+                           class="tailwind-input-class">
+                </div>
+
+                <!-- Essential Oil Filter -->
+                <div>
+                    <label for="eo_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by Essential Oil</label>
+                    <select id="eo_filter" class="tailwind-input-class">
+                        <option value="">All Essential Oils</option>
+                        {% for eo in all_essential_oils %}
+                        <option value="{{ eo }}">{{ eo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Device Filter -->
+                <div>
+                    <label for="device_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by Device Model</label>
+                    <select id="device_filter" class="tailwind-input-class">
+                        <option value="">All Device Models</option>
+                        {% for model in all_device_models %}
+                        <option value="{{ model }}">{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Technician Filter -->
+                <div>
+                    <label for="technician_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter by Technician</label>
+                    <select id="technician_filter" class="tailwind-input-class">
+                        <option value="">All Technicians</option>
+                        {% for tech in all_technicians %}
+                        <option value="{{ tech }}">{{ tech }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button id="clear_filters" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table Section -->
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+        <div class="px-6 py-4 bg-indigo-600 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-white">Preservice Records</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Technician</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Company</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Premise</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Device Model</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Essential Oil</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Milliliters</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notes</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created By</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" id="preservice-table-body">
+                    {% for entry in preservice_entries %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.date.strftime('%Y-%m-%d') if entry.date else 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.technician }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.company }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.premise }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.device_model }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.essential_oil }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.milliliters }} ml
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.notes if entry.notes else '-' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.created_by }} ({{ entry.created_by_type }})
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No Data Message -->
+        {% if not preservice_entries %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No preservice entries found</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new preservice entry.</p>
+            <div class="mt-6">
+                <a href="{{ url_for('forms.preservice_form') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Add New Entry
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Accordion toggle for filter form
+    const filterToggleButton = document.getElementById('filterToggleButton');
+    const filterFormContainer = document.getElementById('filterFormContainer');
+    const filterToggleIcon = document.getElementById('filterToggleIcon');
+
+    if (filterToggleButton && filterFormContainer && filterToggleIcon) {
+        filterToggleButton.addEventListener('click', () => {
+            filterFormContainer.classList.toggle('hidden');
+            filterToggleIcon.classList.toggle('rotate-180');
+        });
+    }
+
+    const dateFilter = document.getElementById('date_filter');
+    const eoFilter = document.getElementById('eo_filter');
+    const deviceFilter = document.getElementById('device_filter');
+    const technicianFilter = document.getElementById('technician_filter');
+    const clearFiltersBtn = document.getElementById('clear_filters');
+    const tableBody = document.getElementById('preservice-table-body');
+
+    // Store original rows
+    const originalRows = Array.from(tableBody.querySelectorAll('tr'));
+
+    function filterTable() {
+        const dateValue = dateFilter.value;
+        const eoValue = eoFilter.value.toLowerCase();
+        const deviceValue = deviceFilter.value.toLowerCase();
+        const technicianValue = technicianFilter.value.toLowerCase();
+
+        originalRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 9) return; // Skip if not enough cells
+
+            const rowDate = cells[0].textContent.trim();
+            const rowEo = cells[5].textContent.trim().toLowerCase();
+            const rowDevice = cells[4].textContent.trim().toLowerCase();
+            const rowTechnician = cells[1].textContent.trim().toLowerCase();
+
+            const dateMatch = !dateValue || rowDate === dateValue;
+            const eoMatch = !eoValue || rowEo.includes(eoValue);
+            const deviceMatch = !deviceValue || rowDevice.includes(deviceValue);
+            const technicianMatch = !technicianValue || rowTechnician.includes(technicianValue);
+
+            if (dateMatch && eoMatch && deviceMatch && technicianMatch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Add event listeners
+    dateFilter.addEventListener('change', filterTable);
+    eoFilter.addEventListener('change', filterTable);
+    deviceFilter.addEventListener('change', filterTable);
+    technicianFilter.addEventListener('change', filterTable);
+
+    // Clear filters
+    clearFiltersBtn.addEventListener('click', function() {
+        dateFilter.value = '';
+        eoFilter.value = '';
+        deviceFilter.value = '';
+        technicianFilter.value = '';
+        originalRows.forEach(row => {
+            row.style.display = '';
+        });
+    });
+});
+</script>
+{% endblock %}

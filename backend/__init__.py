@@ -160,12 +160,19 @@ def clear_rate_limiter():
 
 # --- Dashboard Route ---
 @app.route("/dashboard")
-@require_auth('admin')
 @handle_route_error
 def dashboard():
     """Main dashboard route with enhanced error handling and logging"""
     username = session.get("username", "unknown")
-    app.logger.info(f"Dashboard accessed by admin: {username}")
+    user_type = session.get("user_type", "")
+    
+    # Check if user is authenticated as admin or technician
+    if user_type not in ["admin", "technician"] or not username:
+        current_app.logger.warning(f"Unauthorized access attempt to dashboard by {username} with type {user_type}")
+        flash("Please log in to access this page.", "warning")
+        return redirect(url_for('auth.admin_login'))
+    
+    app.logger.info(f"Dashboard accessed by {user_type}: {username}")
     
     try:
         # Fetch counts for dashboard cards with error handling
@@ -177,6 +184,7 @@ def dashboard():
         
         dashboard_data = {
             "username": username,
+            "user_type": user_type,
             "help_request_count": help_request_count,
             "change_count": change_count,
             "refund_count": refund_count,
@@ -193,6 +201,7 @@ def dashboard():
         # Return dashboard with default values if data loading fails
         return render_template("dashboard.html", 
                             username=username,
+                            user_type=user_type,
                             help_request_count=0,
                             change_count=0,
                             refund_count=0,

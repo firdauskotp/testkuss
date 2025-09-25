@@ -497,11 +497,91 @@ def generate_change_form_pdf(data):
 
     return pdf.output(dest="S").encode('latin-1')
 
+def generate_service_pdf(variables):
+    """Generate PDF summary for completed service report."""
+    from ..col import services_collection
+
+    # Get service data from variables
+    technician = variables.get('technician', 'Unknown')
+    premise_name = variables.get('premise_name', 'Unknown')
+    service_date = variables.get('service_date', datetime.now().strftime('%Y-%m-%d'))
+
+    # Query for the latest service records for this technician and premise
+    query = {
+        'technician': technician,
+        'Premise Name': premise_name,
+        'month_year': {
+            '$gte': datetime.now().replace(day=1),  # Current month
+            '$lt': datetime.now().replace(day=1, month=datetime.now().month + 1) if datetime.now().month < 12 else datetime.now().replace(day=1, year=datetime.now().year + 1, month=1)
+        }
+    }
+
+    service_records = list(services_collection.find(query).sort('month_year', -1).limit(10))
+
+    # Prepare PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=14, style='B')
+    pdf.cell(200, 10, txt="Service Report", ln=1, align="C")
+    pdf.set_font("Arial", size=10)
+    pdf.cell(200, 8, txt=f"Technician: {technician}", ln=1)
+    pdf.cell(200, 8, txt=f"Premise: {premise_name}", ln=1)
+    pdf.cell(200, 8, txt=f"Date: {service_date}", ln=1)
+    pdf.ln(5)
+
+    def add_field(label, value):
+        pdf.set_font("Arial", "B", size=10)
+        pdf.cell(50, 7, txt=label)
+        pdf.set_font("Arial", size=10)
+        if isinstance(value, bool):
+            pdf.multi_cell(0, 7, txt="Yes" if value else "No", ln=1)
+        elif isinstance(value, list):
+            if not value:
+                pdf.multi_cell(0, 7, txt="N/A", ln=1)
+            else:
+                for item in value:
+                    pdf.cell(5)
+                    pdf.multi_cell(0, 7, txt=f"- {item}", ln=1)
+        else:
+            pdf.multi_cell(0, 7, txt=str(value) if value else "N/A", ln=1)
+
+    if service_records:
+        pdf.set_font("Arial", "B", size=12)
+        pdf.cell(200, 10, txt="Service Details:", ln=1)
+        pdf.set_font("Arial", size=10)
+
+        for i, record in enumerate(service_records, start=1):
+            pdf.set_font("Arial", "B", size=10)
+            pdf.cell(0, 8, txt=f"Device {i} (S/N: {record.get('S/N', 'N/A')})", ln=1)
+            pdf.set_font("Arial", size=10)
+
+            add_field("Model:", record.get('Model'))
+            add_field("Location:", record.get('Location'))
+            add_field("Actions Taken:", record.get('actions_taken'))
+            add_field("Oil Refill (ml):", record.get('oil_refill_ml'))
+            add_field("Remarks:", record.get('remarks'))
+            add_field("Staff Name:", record.get('staff_name'))
+
+            if record.get('signature'):
+                pdf.ln(2)
+                pdf.set_font("Arial", "I", size=8)
+                pdf.cell(0, 5, txt="Signature: ___________________________", ln=1)
+                pdf.cell(0, 5, txt=f"Signed by: {record.get('staff_name', 'Staff')}", ln=1)
+
+            pdf.ln(5)
+    else:
+        pdf.cell(200, 10, txt="No service records found for this period.", ln=1)
+
+    # Return bytes
+    return pdf.output(dest="S").encode('latin-1')
+
 def generate_file_for(template_key, variables):
     if template_key == "case_completed_notification":
         return generate_case_pdf(variables["case_id"])  # returns bytes
     if template_key == "change_form_confirmation":
         return generate_change_form_pdf(variables)
+    if template_key == "service_completed_notification":
+        return generate_service_pdf(variables)  # returns bytes
     else:
         return b""
     

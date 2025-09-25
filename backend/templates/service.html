@@ -182,9 +182,15 @@
                                 ('Replaced Faulty Machine', 'Replaced Faulty Machine')
                             ] %}
                             <div class="flex items-center">
-                                <input id="action_{{ loop.index }}" name="actions" value="{{ action_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                                <input id="action_{{ loop.index }}" name="actions" value="{{ action_val }}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 action-checkbox" data-action="{{ action_val }}">
                                 <label for="action_{{ loop.index }}" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">{{ action_text }}</label>
                             </div>
+                            {% if action_val == 'Oil Refill' %}
+                            <div id="oil_refill_amount_container" class="ml-6 mt-2 hidden">
+                                <label for="oil_refill_ml" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Milliliters to Refill:</label>
+                                <input type="number" id="oil_refill_ml" name="oil_refill_ml" step="0.1" min="0.1" class="tailwind-input-class" placeholder="Enter milliliters (e.g., 5.0)">
+                            </div>
+                            {% endif %}
                             {% endfor %}
                         </div>
                     </div>
@@ -480,6 +486,23 @@
              }
         }
     });
+
+    // Oil Refill Amount Toggle
+    const oilRefillCheckbox = document.querySelector('input[value="Oil Refill"]');
+    const oilRefillAmountContainer = document.getElementById('oil_refill_amount_container');
+
+    if (oilRefillCheckbox && oilRefillAmountContainer) {
+        oilRefillCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                oilRefillAmountContainer.classList.remove('hidden');
+                document.getElementById('oil_refill_ml').required = true;
+            } else {
+                oilRefillAmountContainer.classList.add('hidden');
+                document.getElementById('oil_refill_ml').required = false;
+                document.getElementById('oil_refill_ml').value = '';
+            }
+        });
+    }
 
 </script>
 {% endblock %}

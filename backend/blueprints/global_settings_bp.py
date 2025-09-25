@@ -15,7 +15,7 @@ global_settings_bp = Blueprint(
 
 @global_settings_bp.before_request
 def require_admin_login():
-    if 'username' not in session:
+    if 'username' not in session or session.get('user_type') != 'admin':
         flash("You must be logged in as an admin to access this page.", "warning")
         return redirect(url_for('auth.admin_login'))
 

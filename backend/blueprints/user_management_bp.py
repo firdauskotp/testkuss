@@ -6,8 +6,8 @@ from werkzeug.security import generate_password_hash
 from flask_mail import Message
 from .. import mail
 
-from ..col import login_collection, login_cust_collection, logs_collection # Relative imports
-from ..utils import log_activity, generate_random_password # Relative import
+from ..col import login_collection, login_cust_collection, logs_collection, tech_login_collection # Relative imports
+from ..utils import log_activity # Relative import
 
 user_management_bp = Blueprint(
     'user_mgnt',
@@ -19,7 +19,7 @@ user_management_bp = Blueprint(
 
 # Helper to check admin session
 def is_admin_logged_in():
-    return 'username' in session
+    return 'username' in session and session.get('user_type') == 'admin'
 
 @user_management_bp.before_request
 def require_admin_login():
@@ -138,9 +138,9 @@ def view_technicians():
     if username_filter:
         query["username"] = {"$regex": username_filter, "$options": "i"}
 
-    total_list = login_collection.count_documents(query)
+    total_list = tech_login_collection.count_documents(query)
     technicians_list = list(
-        login_collection.find(query, {'username': 1, '_id': 1})
+        tech_login_collection.find(query, {'username': 1, '_id': 1})
         .skip((page - 1) * limit)
         .limit(limit)
     )
@@ -168,12 +168,12 @@ def add_technician():
             flash("Passwords do not match.", "danger")
             return redirect(url_for('.add_technician'))
 
-        if login_collection.find_one({'username': username}):
+        if tech_login_collection.find_one({'username': username}):
             flash("Username already exists.", "danger")
             return redirect(url_for('.add_technician'))
 
         hashed_password = generate_password_hash(password)
-        login_collection.insert_one({
+        tech_login_collection.insert_one({
             'username': username,
             'password': hashed_password,
             'role': 'technician'
@@ -188,10 +188,10 @@ def add_technician():
 def delete_technician():
     user_id_to_delete = request.form['user_id']
 
-    user_to_delete = login_collection.find_one({'_id': ObjectId(user_id_to_delete), 'role': 'technician'})
+    user_to_delete = tech_login_collection.find_one({'_id': ObjectId(user_id_to_delete), 'role': 'technician'})
     if user_to_delete:
         username_deleted = user_to_delete.get('username', 'Unknown')
-        login_collection.delete_one({'_id': ObjectId(user_id_to_delete)})
+        tech_login_collection.delete_one({'_id': ObjectId(user_id_to_delete)})
         flash(f"Technician user '{username_deleted}' deleted successfully!", "success")
         log_activity(session["username"], f"deleted technician user: {username_deleted}", logs_collection)
     else:
@@ -202,12 +202,28 @@ def delete_technician():
 def change_password():
     user_id = request.form.get('user_id')
     user_type = request.form.get('user_type')  # 'admin', 'user', or 'technician'
+    new_password = request.form.get('new_password', '').strip()
 
     if not user_id or not user_type:
         flash("Invalid request. User ID and type are required.", "danger")
         return redirect(request.referrer or url_for('.view_users'))
 
-    if user_type in ['admin', 'technician']:
+    # Validate new password
+    if not new_password:
+        flash("Password cannot be empty.", "danger")
+        return redirect(request.referrer or url_for('.view_users'))
+
+    if len(new_password) < 8:
+        flash("Password must be at least 8 characters long.", "danger")
+        return redirect(request.referrer or url_for('.view_users'))
+
+    if len(new_password) > 100:
+        flash("Password is too long.", "danger")
+        return redirect(request.referrer or url_for('.view_users'))
+
+    if user_type in ['technician']:
+        collection = tech_login_collection
+    elif user_type == 'admin':
         collection = login_collection
     else:
         collection = login_cust_collection
@@ -223,7 +239,6 @@ def change_password():
         else:
             return redirect(request.referrer or url_for('.view_users'))
 
-    new_password = generate_random_password()
     hashed_password = generate_password_hash(new_password)
 
     collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'password': hashed_password}})
@@ -239,7 +254,7 @@ def change_password():
             msg_user = Message("Your Password Has Been Changed",
                                sender=os.getenv('MAIL_SENDER_ADDRESS'),
                                recipients=[user_email])
-            msg_user.body = f"Your password has been changed by an administrator. Your new password is: {new_password}"
+            msg_user.body = "Your password has been changed by an administrator. Please contact your administrator if you need your new password."
             mail.send(msg_user)
             flash(f"Password for {user_email} has been changed and an email has been sent.", "success")
         except Exception as e:
