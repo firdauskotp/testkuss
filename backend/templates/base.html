@@ -34,9 +34,6 @@
                 <nav class="hidden md:flex items-center space-x-1 lg:space-x-2">
                     <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Dashboard</a>
 
-                    <!-- Preservice Form Link -->
-                    <a href="{{ url_for('forms.preservice_form') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Preservice</a>
-
                     <!-- Customer Management Dropdown -->
                     <div class="relative group">
                         <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Customer</button>
@@ -52,6 +49,7 @@
                     <div class="relative group">
                         <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Service</button>
                         <div class="absolute left-0 mt-0 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
+                            <a href="{{ url_for('forms.preservice_form') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Preservice</a>
                             <a href="{{ url_for('forms.pre_service') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add Routes</a>
                             <a href="{{ url_for('forms.service') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Service Form</a>
                              <!-- <a href="{{ url_for('forms.service2') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Service Form (Simple)</a>
@@ -90,8 +88,8 @@
                         <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Reports</button>
                         <div class="absolute right-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
                             <a href="{{ url_for('data_reports.reports') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">All Data Report</a>
-                            <a href="{{ url_for('data_reports.eo_list_func') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">EO/Models Report</a>
-                            <a href="{{ url_for('data_reports.pack_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Packing List Report</a>
+                            {# <a href="{{ url_for('data_reports.eo_list_func') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">EO/Models Report</a> #}
+                            {# <a href="{{ url_for('data_reports.pack_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Packing List Report</a> #}
                             <a href="{{ url_for('data_reports.route_table_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Route Table</a>
                             <a href="{{ url_for('data_reports.activity_logs_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Activity Log</a>
                             {% if session.get('user_type') == 'admin' %}
