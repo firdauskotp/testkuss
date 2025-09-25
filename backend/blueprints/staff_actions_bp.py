@@ -23,7 +23,7 @@ staff_actions_bp = Blueprint(
 
 # Helper to check admin session
 def is_admin_logged_in():
-    return 'username' in session
+    return 'username' in session and session.get('user_type') == 'admin'
 
 @staff_actions_bp.before_request
 def require_admin_login():

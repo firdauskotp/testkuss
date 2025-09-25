@@ -23,6 +23,9 @@ def redirect_if_authenticated(f):
             if user_type == "admin":
                 current_app.logger.info(f"Authenticated admin {username} redirected from auth page to dashboard")
                 return redirect(url_for("dashboard"))
+            elif user_type == "technician":
+                current_app.logger.info(f"Authenticated technician {username} redirected from auth page to dashboard")
+                return redirect(url_for("dashboard"))
             elif user_type == "customer":
                 current_app.logger.info(f"Authenticated customer {username} redirected from auth page to customer form")
                 return redirect(url_for("customer.customer_form"))

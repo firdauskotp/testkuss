@@ -34,6 +34,9 @@
                 <nav class="hidden md:flex items-center space-x-1 lg:space-x-2">
                     <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Dashboard</a>
 
+                    <!-- Preservice Form Link -->
+                    <a href="{{ url_for('forms.preservice_form') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700">Preservice</a>
+
                     <!-- Customer Management Dropdown -->
                     <div class="relative group">
                         <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Customer</button>
@@ -58,6 +61,7 @@
                     </div>
                     
                     <!-- User Management Dropdown -->
+                    {% if session.get('user_type') == 'admin' %}
                     <div class="relative group">
                         <button class="dropdown-toggle px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-700 focus:outline-none">Users</button>
                         <div class="absolute left-0 mt-0 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-20 hidden group-hover:block ring-1 ring-black ring-opacity-5">
@@ -69,6 +73,7 @@
                             <a href="{{ url_for('user_mgnt.view_technicians') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">View Technicians</a>
                         </div>
                     </div>
+                    {% endif %}
 
                     <!-- Global Settings Dropdown -->
                      <div class="relative group">
@@ -129,12 +134,14 @@
             <a href="{{ url_for('data_reports.view_complaints_list') }}" class="mobile-nav-link">Help Requests</a>
             
             <h3 class="mobile-nav-heading">User Management</h3>
+            {% if session.get('user_type') == 'admin' %}
             <a href="{{ url_for('auth.register') }}" class="mobile-nav-link">Add User</a>
             <a href="{{ url_for('auth.register_admin') }}" class="mobile-nav-link">Add Admin</a>
             <a href="{{ url_for('user_mgnt.add_technician') }}" class="mobile-nav-link">Add Technician</a>
             <a href="{{ url_for('user_mgnt.view_users') }}" class="mobile-nav-link">View Client Users</a>
             <a href="{{ url_for('user_mgnt.view_admins') }}" class="mobile-nav-link">View Admins</a>
             <a href="{{ url_for('user_mgnt.view_technicians') }}" class="mobile-nav-link">View Technicians</a>
+            {% endif %}
 
             <h3 class="mobile-nav-heading">Global Settings</h3>
             <a href="{{ url_for('global_settings.eo_global_view') }}" class="mobile-nav-link">Global EO List</a>

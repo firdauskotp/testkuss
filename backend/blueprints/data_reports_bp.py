@@ -1,11 +1,12 @@
 # backend/blueprints/data_reports_bp.py
 from bson import ObjectId
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
+from werkzeug.utils import secure_filename
 from datetime import datetime
 from collections import defaultdict # For profile route
 from urllib.parse import urlencode
 
-from backend.utils import log_activity # For pagination query string manipulation
+from backend.utils import log_activity, sanitize_input, send_customer_email, send_team_email # For pagination query string manipulation
 
 # Assuming database collections and helpers are accessible
 from ..col import (
@@ -15,7 +16,9 @@ from ..col import (
     logs_collection, profile_list_collection, device_list_collection,
     route_list_collection
 )
-# from ..utils import ... # if any utils are used directly by these routes
+# For fs, mail and other utils, it's better if they are registered with the app and accessed via current_app or specific getters
+from backend import fs as main_fs_instance # GridFS instance from main app (e.g. backend/__init__.py or app.py)
+from backend import mail as main_mail_instance
 
 data_reports_bp = Blueprint(
     'data_reports',
@@ -24,14 +27,14 @@ data_reports_bp = Blueprint(
     url_prefix='/reports' # All routes here will be prefixed with /reports
 )
 
-# Helper to check admin session
-def is_admin_logged_in():
-    return 'username' in session
+# Helper to check admin or technician session
+def is_admin_or_technician_logged_in():
+    return 'username' in session and session.get('user_type') in ['admin', 'technician']
 
 @data_reports_bp.before_request
-def require_admin_login():
-    if not is_admin_logged_in():
-        flash("You must be logged in as an admin to access this page.", "warning")
+def require_admin_or_technician_login():
+    if not is_admin_or_technician_logged_in():
+        flash("You must be logged in as an admin or technician to access this page.", "warning")
         return redirect(url_for('auth.admin_login'))
 
 @data_reports_bp.route('/all') # Original was /all-list in app.py
@@ -514,6 +517,10 @@ def delete_route():
 
 @data_reports_bp.route('/technician-work-report', methods=['GET'])
 def technician_work_report():
+    if session.get('user_type') != 'admin':
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('dashboard'))
+    
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
     report_data = []
@@ -557,3 +564,173 @@ def technician_work_report():
                            start_date=start_date_str,
                            end_date=end_date_str,
                            username=session.get('username'))
+
+@data_reports_bp.route('/technician-new-case', methods=['GET', 'POST'])
+def technician_new_case():
+    """Form for technicians to create a new case with customer email."""
+    technician_username = session.get('username', 'unknown')
+    user_type = session.get('user_type', '')
+    
+    # Only allow technicians and admins to access this
+    if user_type not in ['technician', 'admin']:
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    if request.method == "GET":
+        return render_template("technician-new-case-form.html")
+
+    current_app.logger.info(f"New case submission by {user_type}: {technician_username}")
+
+    try:
+        case_no_count = collection.count_documents({})
+        case_no = case_no_count + 1
+
+        user_email = sanitize_input(request.form.get("email", ""), 200)
+        premise_name = sanitize_input(request.form.get("premise_name", ""), 200)
+
+        if not premise_name:
+            flash("Premise name is required.", "danger")
+            return render_template("technician-new-case-form.html")
+
+        if not user_email:
+            flash("Customer email is required.", "danger")
+            return render_template("technician-new-case-form.html")
+
+        devices_data = []
+        device_index = 0
+        while True:
+            model_field_name = f"devices[{device_index}][model]"
+            if model_field_name not in request.form or not request.form.get(model_field_name):
+                break
+
+            location = sanitize_input(request.form.get(f"devices[{device_index}][location]", ""), 100)
+            model = sanitize_input(request.form.get(model_field_name, ""), 100)
+            issues = request.form.getlist(f"devices[{device_index}][issues]")
+            remarks = sanitize_input(request.form.get(f"devices[{device_index}][remarks]", ""), 500)
+
+            if not model:
+                flash(f"Device {device_index + 1} model is required.", "danger")
+                return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+            image_file_name = f"devices[{device_index}][image]"
+            image_id = None
+            if image_file_name in request.files:
+                image_file = request.files[image_file_name]
+                if image_file and image_file.filename:
+                    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+                    filename = secure_filename(image_file.filename)
+                    if '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+                        image_file.seek(0, 2)
+                        file_size = image_file.tell()
+                        image_file.seek(0)
+
+                        if file_size > 5 * 1024 * 1024:
+                            flash(f"Image for device {device_index + 1} is too large. Maximum size is 5MB.", "danger")
+                            return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+                        image_data = image_file.read()
+                        image_id = main_fs_instance.put(image_data, filename=filename, content_type=image_file.content_type)
+                    else:
+                        flash(f"Invalid file type for device {device_index + 1}. Please use PNG, JPG, JPEG, or GIF.", "danger")
+                        return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+            devices_data.append({
+                "location": location,
+                "model": model,
+                "issues": issues,
+                "remarks": remarks,
+                "image_id": image_id
+            })
+            device_index += 1
+
+        if not devices_data:
+            flash("Please add details for at least one device.", "danger")
+            return render_template("technician-new-case-form.html", premise_name=premise_name, email=user_email)
+
+        case_document = {
+            "case_no": case_no,
+            "user_email": user_email,
+            "premise_name": premise_name,
+            "devices": devices_data,
+            "created_at": datetime.now(),
+            "created_by": technician_username,
+            "created_by_type": user_type
+        }
+        collection.insert_one(case_document)
+        current_app.logger.info(f"Case #{case_no} created by {user_type}: {technician_username} for customer: {user_email}")
+
+        try:
+            from backend.utils import format_devices_for_email
+
+            devices_summary, images_note = format_devices_for_email(devices_data)
+
+            send_customer_email(
+                template_key="help_request_new_case_created",
+                variables={
+                    "case_id": case_no,
+                    "premise_name": premise_name,
+                    "customer_email": user_email,
+                    "devices_summary": devices_summary
+                },
+                mail=main_mail_instance,
+                customer_email=user_email
+            )
+
+            admin_email = current_app.config.get('ADMIN_EMAIL_ADDRESS')
+            if admin_email:
+                send_team_email(
+                    template_key="team_help_request_new_case_received",
+                    variables={
+                        "case_id": case_no,
+                        "premise_name": premise_name,
+                        "customer_email": user_email,
+                        "devices_summary": devices_summary,
+                        "images_note": images_note,
+                        "device_location": devices_data[0]['location'] if devices_data else "",
+                        "issues": ", ".join(devices_data[0]['issues']) if devices_data else "",
+                        "remarks": devices_data[0]['remarks'] if devices_data else ""
+                    },
+                    mail=main_mail_instance,
+                    team_email=admin_email
+                )
+        except Exception as e:
+            current_app.logger.error(f"Email notification failed for case #{case_no}: {str(e)}")
+            flash(f"Case submitted, but email notifications failed: {e}", "warning")
+
+        flash(f"Case #{case_no} created successfully for {user_email}!", "success")
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        current_app.logger.error(f"Error creating new case by {technician_username}: {str(e)}")
+        flash("An error occurred while creating the case. Please try again.", "danger")
+        return render_template("technician-new-case-form.html")
+
+@data_reports_bp.route('/preservice-data')
+def preservice_data():
+    """View preservice essential oil requirements data"""
+    # Allow both admin and technician access
+    user_type = session.get('user_type', '')
+    if user_type not in ['admin', 'technician']:
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    from ..col import preservice_collection, tech_login_collection, eo_list_collection, model_list_collection
+
+    # Get all preservice entries, sorted by date descending
+    preservice_entries = list(preservice_collection.find().sort("date", -1))
+
+    # Get filter options
+    all_technicians = list(tech_login_collection.find({}, {'username': 1, '_id': 0}))
+    all_technicians = [tech['username'] for tech in all_technicians]
+
+    all_essential_oils = list(eo_list_collection.find({}, {'EO2': 1, '_id': 0}))
+    all_essential_oils = [eo['EO2'] for eo in all_essential_oils if 'EO2' in eo]
+
+    all_device_models = list(model_list_collection.find({}, {'model_name': 1, '_id': 0}).sort("order", 1))
+    all_device_models = [model['model_name'] for model in all_device_models if 'model_name' in model]
+
+    return render_template('preservice-data.html',
+                         preservice_entries=preservice_entries,
+                         all_technicians=all_technicians,
+                         all_essential_oils=all_essential_oils,
+                         all_device_models=all_device_models)

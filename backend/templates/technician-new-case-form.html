@@ -34,7 +34,7 @@
         {% endwith %}
 
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8 sm:p-10">
-            <form id="caseForm" method="POST" action="{{ url_for('staff.new_case') }}" enctype="multipart/form-data" class="space-y-6">
+            <form id="caseForm" method="POST" action="{{ url_for('data_reports.technician_new_case') }}" enctype="multipart/form-data" class="space-y-6">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Customer Email</label>
                     <input type="email" id="email" name="email" required

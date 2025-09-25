@@ -5,9 +5,10 @@ from werkzeug.utils import secure_filename
 from bson import ObjectId
 
 from ..col import (
-    services_collection, route_list_collection, remark_collection,
-    profile_list_collection, device_list_collection, test_collection,
-    model_list_collection, eo_pack_collection, industry_list_collection,
+    collection, login_collection, login_cust_collection, tech_login_collection,
+    remark_collection, services_collection, eo_list_collection, model_list_collection,
+    eo_pack_collection, industry_list_collection, profile_list_collection,
+    device_list_collection, route_list_collection, test_collection,
     change_collection as change_form_collection, # Renamed for clarity
     refund_collection, logs_collection
 )
@@ -22,7 +23,7 @@ forms_bp = Blueprint(
 )
 
 def is_admin_logged_in():
-    return 'username' in session
+    return 'username' in session and session.get('user_type') == 'admin'
 
 @forms_bp.before_request
 def require_admin_login():
@@ -269,6 +270,104 @@ def change_form():
     return render_template('change-form.html', username=session.get('username'),
                            companies=companies, premises=premises_for_template,
                            current_date=datetime.now().strftime('%Y-%m-%d'))
+
+@forms_bp.route('/preservice-form', methods=['GET', 'POST'])
+def preservice_form():
+    """Form for recording preservice essential oil requirements for technicians"""
+    # Allow both admin and technician access
+    user_type = session.get('user_type', '')
+    if user_type not in ['admin', 'technician']:
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.admin_login'))
+
+    username = session.get('username', 'unknown')
+
+    if request.method == 'POST':
+        try:
+            # Get form data
+            date_str = request.form.get('date')
+            technician = request.form.get('technician')
+            device_model = request.form.get('device_model')
+            essential_oil = request.form.get('essential_oil')
+            milliliters = request.form.get('milliliters')
+            company = request.form.get('company')
+            premise = request.form.get('premise')
+            notes = request.form.get('notes', '')
+
+            # Validate required fields
+            if not all([date_str, technician, device_model, essential_oil, milliliters, company, premise]):
+                flash("All fields except notes are required.", "danger")
+                return redirect(url_for('forms.preservice_form'))
+
+            # Convert date and validate
+            try:
+                date_obj = datetime.fromisoformat(date_str.rstrip("Z")) if date_str else None
+                if not date_obj:
+                    raise ValueError("Invalid date")
+            except Exception:
+                flash("Invalid date format.", "danger")
+                return redirect(url_for('forms.preservice_form'))
+
+            # Convert milliliters to float
+            try:
+                milliliters_float = float(milliliters)
+                if milliliters_float <= 0:
+                    raise ValueError("Must be positive")
+            except Exception:
+                flash("Milliliters must be a positive number.", "danger")
+                return redirect(url_for('forms.preservice_form'))
+
+            # Create preservice entry
+            preservice_entry = {
+                "date": date_obj,
+                "technician": technician,
+                "device_model": device_model,
+                "essential_oil": essential_oil,
+                "milliliters": milliliters_float,
+                "company": company,
+                "premise": premise,
+                "notes": notes,
+                "created_by": username,
+                "created_by_type": user_type,
+                "created_at": datetime.now()
+            }
+
+            # Import preservice_collection
+            from ..col import preservice_collection
+
+            # Insert into database
+            preservice_collection.insert_one(preservice_entry)
+
+            # Log activity
+            log_activity(username, f"preservice entry created for {technician} - {device_model} - {essential_oil}", logs_collection)
+
+            flash(f"Preservice entry created successfully for {technician}!", "success")
+            return redirect(url_for('forms.preservice_form'))
+
+        except Exception as e:
+            current_app.logger.error(f"Error creating preservice entry by {username}: {str(e)}")
+            flash("An error occurred while creating the preservice entry.", "danger")
+            return redirect(url_for('forms.preservice_form'))
+
+    # GET request - show form
+    # Get data for dropdowns
+    technicians = list(tech_login_collection.find({}, {'username': 1, '_id': 0}))
+    technician_list = [tech['username'] for tech in technicians]
+
+    device_models = list(model_list_collection.find({}, {'model_name': 1, '_id': 0}).sort("order", 1))
+    device_model_list = [model['model_name'] for model in device_models if 'model_name' in model]
+
+    essential_oils = list(eo_list_collection.find({}, {'EO2': 1, '_id': 0}))
+    eo_list = [eo['EO2'] for eo in essential_oils if 'EO2' in eo]
+
+    companies = services_collection.distinct('company')
+
+    return render_template('preservice-form.html',
+                         technicians=technician_list,
+                         device_models=device_model_list,
+                         essential_oils=eo_list,
+                         companies=companies,
+                         current_date=datetime.now().strftime('%Y-%m-%d'))
 
 @forms_bp.route('/pre-service', methods=['GET', 'POST'])
 def pre_service():
