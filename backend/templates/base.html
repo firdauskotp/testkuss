@@ -94,7 +94,9 @@
                             <a href="{{ url_for('data_reports.pack_list') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Packing List Report</a>
                             <a href="{{ url_for('data_reports.route_table_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Route Table</a>
                             <a href="{{ url_for('data_reports.activity_logs_view') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Activity Log</a>
+                            {% if session.get('user_type') == 'admin' %}
                             <a href="{{ url_for('data_reports.technician_oil_usage') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Technician Oil Usage</a>
+                            {% endif %}
                         </div>
                     </div>
                      <!-- Remarks Dropdown -->

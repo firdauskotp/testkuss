@@ -88,6 +88,12 @@
         </a>
         {% endif %}
         {% if user_type == 'admin' %}
+        <a href="{{ url_for('data_reports.technician_oil_usage') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
+          <svg class="w-10 h-10 mb-3 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          <p class="text-gray-700 dark:text-gray-300 font-semibold">Oil Usage Report</p>
+        </a>
+        {% endif %}
+        {% if user_type == 'admin' %}
         <a href="{{ url_for('staff.new_case') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">
         {% else %}
         <a href="{{ url_for('data_reports.technician_new_case') }}" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col items-center justify-center text-center">

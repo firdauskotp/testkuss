@@ -530,7 +530,31 @@ def technician_work_report():
     end_date_str = request.args.get('end_date')
     report_data = []
 
-    if start_date_str and end_date_str:
+    # Show all data if no filters are applied
+    if not start_date_str and not end_date_str:
+        # Get all technician work data without date filters
+        pipeline = [
+            {
+                '$group': {
+                    '_id': '$technician',
+                    'total_services': {'$sum': 1},
+                    'total_consumption': {'$sum': '$Consumption'},
+                    'unique_premises': {'$addToSet': '$Premise Name'}
+                }
+            },
+            {
+                '$project': {
+                    'technician_name': '$_id',
+                    'total_services': 1,
+                    'total_consumption': 1,
+                    'premise_count': {'$size': '$unique_premises'},
+                    '_id': 0
+                }
+            },
+            {'$sort': {'total_services': -1}}
+        ]
+        report_data = list(services_collection.aggregate(pipeline))
+    elif start_date_str and end_date_str:
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
@@ -569,6 +593,145 @@ def technician_work_report():
                            start_date=start_date_str,
                            end_date=end_date_str,
                            username=session.get('username'))
+
+@data_reports_bp.route('/technician-work-report-pdf')
+def technician_work_report_pdf():
+    """Generate PDF report for technician work report"""
+    if session.get('user_type') != 'admin':
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('dashboard'))
+
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    report_data = []
+
+    # Show all data if no filters are applied
+    if not start_date_str and not end_date_str:
+        # Get all technician work data without date filters
+        pipeline = [
+            {
+                '$group': {
+                    '_id': '$technician',
+                    'total_services': {'$sum': 1},
+                    'total_consumption': {'$sum': '$Consumption'},
+                    'unique_premises': {'$addToSet': '$Premise Name'}
+                }
+            },
+            {
+                '$project': {
+                    'technician_name': '$_id',
+                    'total_services': 1,
+                    'total_consumption': 1,
+                    'premise_count': {'$size': '$unique_premises'},
+                    '_id': 0
+                }
+            },
+            {'$sort': {'total_services': -1}}
+        ]
+        report_data = list(services_collection.aggregate(pipeline))
+    elif start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
+
+            match_stage = {'month_year': {'$gte': start_date, '$lt': end_date}}
+
+            pipeline = [
+                {'$match': match_stage},
+                {
+                    '$group': {
+                        '_id': '$technician',
+                        'total_services': {'$sum': 1},
+                        'total_consumption': {'$sum': '$Consumption'},
+                        'unique_premises': {'$addToSet': '$Premise Name'}
+                    }
+                },
+                {
+                    '$project': {
+                        'technician_name': '$_id',
+                        'total_services': 1,
+                        'total_consumption': 1,
+                        'premise_count': {'$size': '$unique_premises'},
+                        '_id': 0
+                    }
+                },
+                {'$sort': {'total_services': -1}}
+            ]
+            report_data = list(services_collection.aggregate(pipeline))
+        except ValueError:
+            flash("Invalid date format. Please use YYYY-MM-DD.", "warning")
+            return redirect(url_for('.technician_work_report'))
+
+    # Generate PDF
+    from fpdf import FPDF
+
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('Arial', 'B', 16)
+            self.cell(0, 10, 'Technician Work Report', 0, 1, 'C')
+            self.set_font('Arial', '', 10)
+            self.cell(0, 5, f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', 0, 1, 'C')
+            if start_date_str and end_date_str:
+                self.cell(0, 5, f'Period: {start_date_str} to {end_date_str}', 0, 1, 'C')
+            else:
+                self.cell(0, 5, 'All Time Data', 0, 1, 'C')
+            self.ln(10)
+
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Arial', 'I', 8)
+            self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font('Arial', '', 10)
+
+    # Summary section
+    if report_data:
+        total_services = sum(item['total_services'] for item in report_data)
+        total_consumption = sum(item['total_consumption'] for item in report_data)
+        total_premises = sum(item['premise_count'] for item in report_data)
+
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Summary', 0, 1)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(0, 6, f'Total Services: {total_services}', 0, 1)
+        pdf.cell(0, 6, f'Total Consumption: {total_consumption:.2f}', 0, 1)
+        pdf.cell(0, 6, f'Total Premises Serviced: {total_premises}', 0, 1)
+        pdf.cell(0, 6, f'Active Technicians: {len(report_data)}', 0, 1)
+        pdf.ln(5)
+
+        # Technician Details section
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Technician Performance Details', 0, 1)
+        pdf.set_font('Arial', 'B', 9)
+        pdf.cell(50, 8, 'Technician', 1, 0, 'C')
+        pdf.cell(30, 8, 'Total Services', 1, 0, 'C')
+        pdf.cell(35, 8, 'Total Consumption', 1, 0, 'C')
+        pdf.cell(30, 8, 'Premises Count', 1, 1, 'C')
+
+        pdf.set_font('Arial', '', 8)
+        for item in report_data:
+            pdf.cell(50, 6, str(item['technician_name']), 1, 0)
+            pdf.cell(30, 6, str(item['total_services']), 1, 0, 'C')
+            pdf.cell(35, 6, f"{item['total_consumption']:.2f}", 1, 0, 'R')
+            pdf.cell(30, 6, str(item['premise_count']), 1, 1, 'C')
+
+    # Generate filename
+    filename = f"technician_work_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+    # Return PDF as response
+    response = pdf.output(dest='S')
+    response = response.encode('latin-1')
+
+    from flask import Response
+    return Response(
+        response,
+        mimetype='application/pdf',
+        headers={
+            'Content-Disposition': f'attachment; filename={filename}'
+        }
+    )
 
 @data_reports_bp.route('/technician-new-case', methods=['GET', 'POST'])
 def technician_new_case():
@@ -744,11 +907,11 @@ def preservice_data():
 @data_reports_bp.route('/technician-oil-usage')
 def technician_oil_usage():
     """View technician essential oil usage report"""
-    # Allow both admin and technician access
+    # Admin-only access
     user_type = session.get('user_type', '')
 
-    if user_type not in ['admin', 'technician']:
-        flash("Access denied. Only admins and technicians can access this page.", "danger")
+    if user_type != 'admin':
+        flash("Access denied. Only admins can access this page.", "danger")
         return redirect(url_for('auth.admin_login'))
 
     # Get filter parameters
