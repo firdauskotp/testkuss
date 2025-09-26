@@ -1225,3 +1225,50 @@ def get_recent_activities():
         current_app.logger.error(f"Error fetching recent activities: {e}")
         return jsonify({"error": "Failed to fetch activities"}), 500
 
+@data_reports_bp.route('/discontinued-clients')
+def discontinued_clients():
+    """Display a paginated list of discontinued clients."""
+    if 'username' not in session:
+        return redirect(url_for('auth.admin_login'))
+
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+
+    query = {"discontinued": True}
+
+    total_records = profile_list_collection.count_documents(query)
+    records = list(profile_list_collection.find(query).skip((page - 1) * limit).limit(limit))
+
+    total_pages = (total_records + limit - 1) // limit
+
+    return render_template('discontinued-clients.html',
+                           data=records,
+                           page=page,
+                           total_pages=total_pages,
+                           limit=limit,
+                           pagination_base_url=url_for('.discontinued_clients'),
+                           query_params=request.args.to_dict())
+
+@data_reports_bp.route('/device-replacements')
+def device_replacements():
+    """Display a paginated list of devices needing replacement."""
+    if 'username' not in session:
+        return redirect(url_for('auth.admin_login'))
+
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+
+    query = {"replacement": True}
+
+    total_records = device_list_collection.count_documents(query)
+    records = list(device_list_collection.find(query).skip((page - 1) * limit).limit(limit))
+
+    total_pages = (total_records + limit - 1) // limit
+
+    return render_template('device-replacements.html',
+                           data=records,
+                           page=page,
+                           total_pages=total_pages,
+                           limit=limit,
+                           pagination_base_url=url_for('.device_replacements'),
+                           query_params=request.args.to_dict())
