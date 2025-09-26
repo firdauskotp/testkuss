@@ -14,7 +14,7 @@ from ..col import (
     empty_bottles_list_collection, straw_list_collection, eo_list_collection,
     model_list_collection, remark_collection, collection as complaint_collection,
     logs_collection, profile_list_collection, device_list_collection,
-    route_list_collection
+    route_list_collection, change_collection, refund_collection
 )
 # For fs, mail and other utils, it's better if they are registered with the app and accessed via current_app or specific getters
 from backend import fs as main_fs_instance # GridFS instance from main app (e.g. backend/__init__.py or app.py)
@@ -1234,10 +1234,9 @@ def discontinued_clients():
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
 
-    query = {"discontinued": True}
-
-    total_records = profile_list_collection.count_documents(query)
-    records = list(profile_list_collection.find(query).skip((page - 1) * limit).limit(limit))
+    # Use the correct collection and no extra query is needed
+    total_records = refund_collection.count_documents({})
+    records = list(refund_collection.find({}).skip((page - 1) * limit).limit(limit))
 
     total_pages = (total_records + limit - 1) // limit
 
@@ -1258,10 +1257,9 @@ def device_replacements():
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
 
-    query = {"replacement": True}
-
-    total_records = device_list_collection.count_documents(query)
-    records = list(device_list_collection.find(query).skip((page - 1) * limit).limit(limit))
+    # Use the correct collection and no extra query is needed
+    total_records = change_collection.count_documents({})
+    records = list(change_collection.find({}).skip((page - 1) * limit).limit(limit))
 
     total_pages = (total_records + limit - 1) // limit
 

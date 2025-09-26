@@ -19,7 +19,7 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        {% for header in ['Company', 'Industry', 'Premise Name', 'Premise Area', 'Premise Address', 'PIC Name', 'PIC Designation', 'PIC Contact', 'PIC Email'] %}
+                        {% for header in ['User', 'Company', 'Submission Date', 'Effective Month/Year', 'Affected Premises', 'Reason', 'Remark'] %}
                         <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">{{ header }}</th>
                         {% endfor %}
                     </tr>
@@ -27,20 +27,26 @@
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for item in data %}
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.company }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.industry }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.premise_name }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.premise_area }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.premise_address }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.name }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.designation }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.contact }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.email }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.get('user', 'N/A') }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.get('company', 'N/A') }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.get('date').strftime('%Y-%m-%d') if item.get('date') else 'N/A' }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.get('month_year').strftime('%b %Y') if item.get('month_year') else 'N/A' }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                            <ul class="list-disc list-inside">
+                            {% for premise in item.get('affected_premises', []) %}
+                                <li>{{ premise }}</li>
+                            {% else %}
+                                <li>N/A</li>
+                            {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ item.get('reason', 'N/A') }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ item.get('remark', 'N/A') }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="9" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
-                            No discontinued clients found.
+                        <td colspan="7" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
+                            No discontinued client records found.
                         </td>
                     </tr>
                     {% endfor %}
